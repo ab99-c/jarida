@@ -1,7 +1,6 @@
-# Project TODO - Responsive Newspaper Layout
+# Project TODO - Final GitHub Push & Vercel Sync
 
-- [x] تحليل طلب المستخدم وتوثيق متطلبات الجريدة المفتوحة (Double-page on desktop/laptop, single-page on mobile)
-- [x] تعديل `client/src/pages/Home.tsx` لتحسين تخطيط العرض المزدوج (Double-page spread) وإزالة الفراغات البيضاء
-- [x] ضبط التجاوب مع الهواتف والأجهزة اللوحية (Mobile / Tablet breakpoints) لعرض صفحة واحدة مريحة
-- [x] تشغيل اختبارات Vitest والـ Build والتأكد من خلو المشروع من أخطاء TypeScript
-- [x] التقاط صور لقطات شاشة للتحقق البصري وحفظ checkpoint نهائي وتسليم النتيجة
+- [ ] التحقق من حالة git والفرع الرئيسي `main`
+- [ ] إجراء git add وgit commit وgit push إلى `ab99-c/jarida`
+- [ ] التحقق من أن Vercel التقط الـ commit الجديد وأنشأ Production Deployment ناجح
+- [ ] فحص الرابط الإنتاجي والتأكد من عمل التعديلات البصرية الجديدة
