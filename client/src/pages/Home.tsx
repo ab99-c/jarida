@@ -6,6 +6,7 @@ export default function Home() {
   const [currentPage, setCurrentPage] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [isAutoPlaying, setIsAutoPlaying] = useState(true);
 
   const { data: dailyData, refetch } = trpc.jarida.getDailyEdition.useQuery();
   const refreshMutation = trpc.jarida.refreshFeed.useMutation({
@@ -74,6 +75,20 @@ export default function Home() {
   const itemsPerPage = isMobile ? 1 : 2;
   const totalPages = Math.ceil(processedArticles.length / itemsPerPage);
 
+  // Auto-flip effect with prefers-reduced-motion check
+  useEffect(() => {
+    if (!isAutoPlaying) return;
+    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    if (mediaQuery.matches) return;
+
+    const interval = setInterval(() => {
+      setCurrentPage(prev => (prev < totalPages - 1 ? prev + 1 : 0));
+      playFlipSound();
+    }, 8000); // Flip page every 8 seconds automatically
+
+    return () => clearInterval(interval);
+  }, [isAutoPlaying, totalPages, isMuted]);
+
   const nextPage = () => {
     if (currentPage < totalPages - 1) {
       playFlipSound();
@@ -105,6 +120,14 @@ export default function Home() {
         >
           <RefreshCw className={`w-3.5 h-3.5 ${refreshMutation.isPending ? "animate-spin" : ""}`} />
           <span>تحديث</span>
+        </button>
+        <span className="text-xs text-[#a39371]">|</span>
+        <button
+          onClick={() => setIsAutoPlaying(!isAutoPlaying)}
+          className={`flex items-center gap-1 text-xs px-2 py-0.5 rounded transition ${isAutoPlaying ? "bg-[#d3c49b]/60 text-black font-bold" : "text-[#554a32] hover:text-black"}`}
+          title={isAutoPlaying ? "إيقاف التقليب التلقائي" : "تشغيل التقليب التلقائي"}
+        >
+          <span>{isAutoPlaying ? "تقليب تلقائي: مفعل" : "تقليب تلقائي: متوقف"}</span>
         </button>
         <span className="text-xs text-[#a39371]">|</span>
         <button

@@ -1,6 +1,8 @@
-# Project TODO - Final GitHub Push & Vercel Sync
+# Project TODO - Full Automation (Flip & Daily Sync)
 
-- [x] التحقق من حالة git والفرع الرئيسي `main`
-- [x] إجراء git add وgit commit وgit push إلى `ab99-c/jarida`
-- [x] التحقق من أن Vercel التقط الـ commit الجديد وأنشأ Production Deployment ناجح
-- [x] فحص الرابط الإنتاجي والتأكد من عمل التعديلات البصرية الجديدة
+- [ ] تصميم وزيادة خاصية حركة الورق الأوتوماتيكية في الواجهة (Auto-flip animation) مع خيار التوقيف والتشغيل واحترام `prefers-reduced-motion`
+- [ ] إضافة دالة التحديث اليومي الأوتوماتيكية للأخبار (Idempotent RSS fetcher & daily edition creator)
+- [ ] ضبط heartbeat / cron job اليومي لتحديث المحتوى بشكل دوري وثابت
+- [ ] إعداد آلية المزامنة والتحديث التلقائي إلى GitHub و Vercel
+- [ ] تشغيل اختبارات Vitest والـ Build والتأكد من استقرار المنظومة
+- [ ] حفظ checkpoint نهائي وتسليم التقرير للمستخدم
