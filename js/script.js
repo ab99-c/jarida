@@ -4,6 +4,7 @@ const indicator = document.querySelector('#indicator');
 const previous = document.querySelector('#btnPrev');
 const next = document.querySelector('#btnNext');
 let current = 0;
+const flipSound = new Audio('assets/page-flip.mp3');
 
 function update() {
   const left = current * 2 + 1;
@@ -17,6 +18,9 @@ function goNext() {
   if (current >= total) return;
   const idx = current;
   const sheet = sheets[idx];
+  
+  flipSound.currentTime = 0;
+  flipSound.play().catch(e => console.log("Audio play failed:", e));
   
   sheet.classList.add('flipping');
   sheet.classList.add('flipped');
@@ -39,6 +43,9 @@ function goPrevious() {
   current -= 1;
   const idx = current;
   const sheet = sheets[idx];
+  
+  flipSound.currentTime = 0;
+  flipSound.play().catch(e => console.log("Audio play failed:", e));
   
   sheet.classList.add('flipping');
   sheet.style.zIndex = total - idx;
