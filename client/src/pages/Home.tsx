@@ -8,10 +8,11 @@ export default function Home() {
   const [isMobile, setIsMobile] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  const { data: articles, isLoading, refetch } = (trpc as any).jarida.list.useQuery();
-  const refreshMutation = (trpc as any).jarida.refresh.useMutation({
+  const { data: dailyData, isLoading, refetch } = trpc.jarida.getDailyEdition.useQuery();
+  const refreshMutation = trpc.jarida.refreshFeed.useMutation({
     onSuccess: () => refetch(),
   });
+  const articles = dailyData?.articles;
 
   useEffect(() => {
     const handleResize = () => {
