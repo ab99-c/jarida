@@ -1,7 +1,5 @@
 const sheets = document.querySelectorAll('.fb-sheet');
 const totalSheets = sheets.length;
-const previous = document.querySelector('#btnPrev');
-const next = document.querySelector('#btnNext');
 let current = 0;
 
 function isMobile() {
@@ -10,16 +8,6 @@ function isMobile() {
 
 function getTotalPages() {
   return isMobile() ? totalSheets * 2 : totalSheets;
-}
-
-function update() {
-  if (isMobile()) {
-    previous.disabled = current === 0;
-    next.disabled = current === getTotalPages() - 1;
-  } else {
-    previous.disabled = current === 0;
-    next.disabled = current === totalSheets;
-  }
 }
 
 const flipSound = new Audio('assets/page-flip.mp3');
@@ -45,7 +33,6 @@ function goNext() {
       sheet.style.zIndex = 1;
     }
     current += 1;
-    update();
   } else {
     if (current >= totalSheets) return;
     const idx = current;
@@ -64,7 +51,6 @@ function goNext() {
     }, 1100);
 
     current += 1;
-    update();
   }
 }
 
@@ -80,7 +66,6 @@ function goPrevious() {
       sheet.classList.remove('flipped');
       sheet.style.zIndex = totalSheets - sheetIdx;
     }
-    update();
   } else {
     if (current <= 0) return;
     current -= 1;
@@ -98,21 +83,16 @@ function goPrevious() {
     setTimeout(() => {
       sheet.classList.remove('flipping');
     }, 1100);
-
-    update();
   }
 }
-
-next.addEventListener('click', (e) => { e.stopPropagation(); goNext(); });
-previous.addEventListener('click', (e) => { e.stopPropagation(); goPrevious(); });
 
 document.querySelector('#book').addEventListener('click', event => {
   const rect = event.currentTarget.getBoundingClientRect();
   const x = event.clientX - rect.left;
   const percentage = x / rect.width;
   
-  if (percentage > 0.6) goNext();
-  else if (percentage < 0.4) goPrevious();
+  if (percentage > 0.5) goNext();
+  else goPrevious();
 });
 
 document.addEventListener('keydown', event => {
@@ -140,9 +120,3 @@ document.addEventListener('touchend', e => {
     else goPrevious();
   }
 }, {passive: true});
-
-window.addEventListener('resize', () => {
-  update();
-});
-
-update();
