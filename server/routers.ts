@@ -2,9 +2,12 @@ import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
+import { getDb } from "./db";
+import { articles } from "../drizzle/schema";
+import { desc } from "drizzle-orm";
+import { fetchAndStoreRSS } from "./services/rss";
 
 export const appRouter = router({
-    // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
   system: systemRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
@@ -17,12 +20,41 @@ export const appRouter = router({
     }),
   }),
 
-  // TODO: add feature routers here, e.g.
-  // todo: router({
-  //   list: protectedProcedure.query(({ ctx }) =>
-  //     db.getUserTodos(ctx.user.id)
-  //   ),
-  // }),
+  jarida: router({
+    getDailyEdition: publicProcedure.query(async () => {
+      const db = await getDb();
+      if (!db) return { date: new Date(), sections: {}, articles: [] };
+      
+      const list = await db.select().from(articles).orderBy(desc(articles.publishedAt)).limit(40);
+      
+      // Group articles by category (sections)
+      const sections: Record<string, typeof list> = {};
+      for (const article of list) {
+        const cat = article.category || "عام";
+        if (!sections[cat]) {
+          sections[cat] = [];
+        }
+        sections[cat].push(article);
+      }
+
+      return {
+        date: new Date(),
+        editionTitle: "جريدة الأفق - الإصدار اليومي المتجدد",
+        sections,
+        articles: list,
+      };
+    }),
+    getArticles: publicProcedure.query(async () => {
+      const db = await getDb();
+      if (!db) return [];
+      const list = await db.select().from(articles).orderBy(desc(articles.publishedAt)).limit(30);
+      return list;
+    }),
+    refreshFeed: publicProcedure.mutation(async () => {
+      const result = await fetchAndStoreRSS();
+      return result;
+    }),
+  }),
 });
 
 export type AppRouter = typeof appRouter;
