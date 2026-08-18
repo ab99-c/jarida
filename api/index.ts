@@ -1,0 +1,45 @@
+import "dotenv/config";
+import express from "express";
+import { createExpressMiddleware } from "@trpc/server/adapters/express";
+import path from "path";
+import fs from "fs";
+import { registerOAuthRoutes } from "../server/_core/oauth";
+import { registerStorageProxy } from "../server/_core/storageProxy";
+import { appRouter } from "../server/routers";
+import { createContext } from "../server/_core/context";
+
+const app = express();
+
+app.use(express.json({ limit: "50mb" }));
+app.use(express.urlencoded({ limit: "50mb", extended: true }));
+
+registerStorageProxy(app);
+registerOAuthRoutes(app);
+
+// tRPC API
+app.use(
+  "/api/trpc",
+  createExpressMiddleware({
+    router: appRouter,
+    createContext,
+  })
+);
+
+// Serve static assets from dist/public (or client/public fallback)
+const staticDistPath = path.resolve(import.meta.dirname, "..", "dist", "public");
+const fallbackStaticPath = path.resolve(import.meta.dirname, "..", "client", "public");
+const resolvedStaticPath = fs.existsSync(staticDistPath) ? staticDistPath : fallbackStaticPath;
+
+app.use(express.static(resolvedStaticPath));
+
+// Fallback to index.html for SPA routing
+app.use("*", (_req, res) => {
+  const indexPath = path.resolve(resolvedStaticPath, "index.html");
+  if (fs.existsSync(indexPath)) {
+    res.sendFile(indexPath);
+  } else {
+    res.status(404).send("Jarida application build not found. Please check deployment build logs.");
+  }
+});
+
+export default app;

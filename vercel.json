@@ -1,0 +1,19 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "pnpm build",
+  "outputDirectory": "dist/public",
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api"
+    },
+    {
+      "source": "/manus-storage/(.*)",
+      "destination": "/api"
+    },
+    {
+      "source": "/((?!api/|_next/|assets/|favicon.ico).*)",
+      "destination": "/api"
+    }
+  ]
+}
