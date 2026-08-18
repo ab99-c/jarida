@@ -1,7 +1,7 @@
-# Project TODO - Automated Daily GitHub & Vercel Sync (Completed)
+# Project TODO - Actual GitHub Push Verification
 
-- [x] تصميم سكربت دمج وجدولة التحديث اليومي للأخبار ورفعها أوتوماتيكياً لـ GitHub (Daily auto-commit & push script)
-- [x] ربط السكربت بخدمة Vercel عبر الـ Git integration لتوليد Production Deployment تلقائياً عند كل push
-- [x] توثيق معايير الأمان (عدم تسريب الأسرار، الاعتماد على Environment Variables حصرياً)
-- [x] إضافة اختبارات وحدوية (Unit tests) للتحقق من سلامة عملية التحديث والتحضير للـ commit
-- [x] حفظ checkpoint نهائي وتسليم التقرير للمستخدم
+- [ ] فحص حالة المستودع المحلي والتأكد من الملفات غير المرفوعة (مثل scripts/auto-sync.mjs و docs/security-and-automation.md)
+- [ ] تنفيذ git add و git commit و git push فعلي إلى فرع main في مستودع GitHub `ab99-c/jarida`
+- [ ] التحقق من SHA للـ commit الجديد على GitHub
+- [ ] التأكد من قيام Vercel بسحب الـ commit الجديد وبدء Production Deployment
+- [ ] حفظ checkpoint نهائي وتسليم النتيجة
