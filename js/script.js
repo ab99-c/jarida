@@ -17,11 +17,19 @@ function goNext() {
   if (current >= total) return;
   const idx = current;
   const sheet = sheets[idx];
+  
+  sheet.classList.add('flipping');
   sheet.classList.add('flipped');
+  
   // Dynamic Z-index management
   setTimeout(() => { 
     sheet.style.zIndex = total + idx + 1; 
-  }, 400);
+  }, 600);
+  
+  setTimeout(() => {
+    sheet.classList.remove('flipping');
+  }, 1200);
+
   current += 1;
   update();
 }
@@ -31,10 +39,18 @@ function goPrevious() {
   current -= 1;
   const idx = current;
   const sheet = sheets[idx];
+  
+  sheet.classList.add('flipping');
   sheet.style.zIndex = total - idx;
+  
   setTimeout(() => {
     sheet.classList.remove('flipped');
   }, 20);
+  
+  setTimeout(() => {
+    sheet.classList.remove('flipping');
+  }, 1200);
+
   update();
 }
 
@@ -73,12 +89,10 @@ document.addEventListener('touchend', e => {
   const dx = touchStartX - touchEndX;
   const dy = touchStartY - touchEndY;
   
-  // Horizontal swipe detection
   if (Math.abs(dx) > 50 && Math.abs(dy) < 100) {
-    if (dx > 0) goNext(); // Swipe left to go next
-    else goPrevious();    // Swipe right to go back
+    if (dx > 0) goNext();
+    else goPrevious();
   }
 }, {passive: true});
 
-// Initial update
 update();

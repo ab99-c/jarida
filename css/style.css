@@ -17,42 +17,36 @@ body{
   display: flex;
   justify-content: center;
   align-items: center;
-  background: #121212;
+  background: radial-gradient(circle at center, #222 0%, #0a0a0a 100%);
   font-family: var(--font-util);
   color: var(--ink);
-  overflow-x: hidden;
+  overflow: hidden;
   touch-action: manipulation;
 }
 
 .fb-wrapper{
   width: 100%;
   max-width: 1200px;
-  padding: 10px;
+  padding: 15px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 15px;
+  gap: 20px;
 }
 
-/* The Book Container - Aspect Ratio 4:3ish */
 .fb-book{
   position: relative;
   width: 95vw;
   max-width: 900px;
-  /* Maintain aspect ratio across devices */
   aspect-ratio: 1.4 / 1; 
-  perspective: 2500px;
+  perspective: 3000px;
   background: #000;
-  box-shadow: 0 30px 80px rgba(0,0,0,0.9);
+  box-shadow: 0 50px 100px rgba(0,0,0,0.9);
 }
 
-/* For very small screens, adjust height if needed */
 @media (max-width: 600px) {
-  .fb-book {
-    aspect-ratio: 0.8 / 1; /* Taller on mobile to show one page better or scaled spread */
-    width: 98vw;
-  }
+  .fb-book { aspect-ratio: 0.8 / 1; width: 98vw; }
 }
 
 .fb-spine{
@@ -60,10 +54,11 @@ body{
   z-index: 100;
   top: 0;
   left: 50%;
-  width: 2px;
+  width: 4px;
   height: 100%;
   transform: translateX(-50%);
-  background: rgba(0,0,0,0.15);
+  background: linear-gradient(to right, rgba(0,0,0,0.4), rgba(0,0,0,0.1) 50%, rgba(0,0,0,0.4));
+  box-shadow: 0 0 10px rgba(0,0,0,0.5);
 }
 
 .fb-sheet{
@@ -74,191 +69,184 @@ body{
   height: 100%;
   transform-origin: left center;
   transform-style: preserve-3d;
-  transition: transform 0.8s cubic-bezier(.4,0,.2,1);
+  transition: transform 1.2s cubic-bezier(.645, .045, .355, 1);
   cursor: pointer;
   z-index: 1;
 }
 
-.fb-sheet.flipped{ transform: rotateY(-180deg); }
+/* Enhanced Flip with Lifting Effect */
+.fb-sheet.flipped{ 
+  transform: rotateY(-180deg) translateZ(1px); 
+}
 
 .fb-face{
   position: absolute;
   width: 100%;
   height: 100%;
   overflow: hidden;
-  border: 1px solid #d0d0d0;
+  border: 1px solid #dcdcdc;
   backface-visibility: hidden;
   background-color: var(--paper);
   background-image: 
-    linear-gradient(to right, rgba(0,0,0,0.03) 0%, transparent 5%, transparent 95%, rgba(0,0,0,0.03) 100%),
+    linear-gradient(to right, rgba(0,0,0,0.02) 0%, transparent 5%, transparent 95%, rgba(0,0,0,0.02) 100%),
     url("https://www.transparenttextures.com/patterns/paper-fibers.png");
 }
 
-.fb-front{ border-radius: 0 2px 2px 0; }
-.fb-back{ transform: rotateY(180deg); border-radius: 2px 0 0 2px; }
+.fb-front{ border-radius: 0 3px 3px 0; }
+.fb-back{ transform: rotateY(180deg); border-radius: 3px 0 0 3px; }
 
-/* Shadows for realism */
+/* Dynamic Shadow Overlay for Folding Effect */
+.fb-shadow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 20;
+  opacity: 0;
+  transition: opacity 0.6s;
+}
+
+.fb-sheet.flipping .fb-shadow {
+  opacity: 1;
+}
+
+/* Shadow gradient that moves during flip */
+.fb-front .fb-shadow {
+  background: linear-gradient(to right, rgba(0,0,0,0) 30%, rgba(0,0,0,0.15) 50%, rgba(0,0,0,0) 70%);
+  background-size: 200% 100%;
+  animation: shadow-move 1.2s ease-in-out;
+}
+
+.fb-back .fb-shadow {
+  background: linear-gradient(to left, rgba(0,0,0,0) 30%, rgba(0,0,0,0.15) 50%, rgba(0,0,0,0) 70%);
+  background-size: 200% 100%;
+  animation: shadow-move 1.2s ease-in-out reverse;
+}
+
+@keyframes shadow-move {
+  0% { background-position: 200% 0; }
+  100% { background-position: -100% 0; }
+}
+
+/* Crease Shadow */
 .fb-face::after {
   content: "";
   position: absolute;
   top: 0;
-  width: 40px;
+  width: 50px;
   height: 100%;
-  z-index: 10;
+  z-index: 5;
   pointer-events: none;
 }
-.fb-front::after { left: 0; background: linear-gradient(to right, rgba(0,0,0,0.08), transparent); }
-.fb-back::after { right: 0; background: linear-gradient(to left, rgba(0,0,0,0.08), transparent); }
+.fb-front::after { left: 0; background: linear-gradient(to right, rgba(0,0,0,0.12), transparent); }
+.fb-back::after { right: 0; background: linear-gradient(to left, rgba(0,0,0,0.12), transparent); }
 
 .fb-content{
   width: 100%;
   height: 100%;
-  padding: 4%; /* Responsive padding */
+  padding: 5%;
   display: flex;
   flex-direction: column;
   overflow-y: auto;
-  scrollbar-width: thin;
+  scrollbar-width: none;
 }
+.fb-content::-webkit-scrollbar { display: none; }
 
-/* Header & Masthead */
-.np-header { text-align: center; margin-bottom: 8px; }
+/* Header & Typography */
+.np-header { text-align: center; margin-bottom: 12px; }
 .np-logo-area {
   display: flex;
   justify-content: center;
   align-items: baseline;
-  gap: 8px;
-  border-bottom: 2px solid var(--ink);
-  padding-bottom: 4px;
+  gap: 10px;
+  border-bottom: 3px solid var(--ink);
+  padding-bottom: 6px;
 }
-.np-logo-main { font-family: var(--font-mast); font-size: clamp(24px, 5vw, 42px); font-weight: 900; }
-.np-logo-sub { font-family: var(--font-body); font-size: clamp(10px, 2vw, 14px); font-weight: bold; }
+.np-logo-main { font-family: var(--font-mast); font-size: clamp(28px, 6vw, 48px); font-weight: 900; letter-spacing: -1px; }
+.np-logo-sub { font-family: var(--font-body); font-size: clamp(12px, 2.5vw, 16px); font-weight: bold; }
 
 .np-info-bar {
   display: flex;
   justify-content: space-between;
-  font-size: clamp(8px, 1.5vw, 10px);
+  font-size: clamp(9px, 2vw, 12px);
   font-weight: bold;
-  padding: 3px 0;
+  padding: 5px 0;
   border-bottom: 1px solid var(--ink);
-  margin-bottom: 8px;
+  margin-bottom: 15px;
 }
 
-/* Typography */
 .np-headline-main {
   font-family: var(--font-mast);
-  font-size: clamp(16px, 3.5vw, 26px);
+  font-size: clamp(20px, 4.5vw, 32px);
   font-weight: 900;
-  line-height: 1.2;
-  margin-bottom: 8px;
-  text-align: center;
-}
-.np-sub-headline {
-  font-size: clamp(10px, 2vw, 13px);
-  font-weight: bold;
-  color: var(--ink-muted);
-  margin-bottom: 10px;
+  line-height: 1.1;
+  margin-bottom: 12px;
   text-align: center;
 }
 
-/* Grid System */
-.np-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  flex-grow: 1;
-}
+.np-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; flex-grow: 1; }
 @media (max-width: 500px) {
   .np-grid { grid-template-columns: 1fr; }
   .np-col-left { border-left: none !important; padding-left: 0 !important; }
 }
 
-.np-col { display: flex; flex-direction: column; gap: 8px; }
-.np-col-left { border-left: 1px solid #ddd; padding-left: 10px; }
+.np-col { display: flex; flex-direction: column; gap: 12px; }
+.np-col-left { border-left: 1px solid #ddd; padding-left: 15px; }
 
-.np-article-box { border-bottom: 1px solid #eee; padding-bottom: 8px; margin-bottom: 4px; }
 .np-article-title {
   font-family: var(--font-mast);
-  font-size: clamp(12px, 2.5vw, 16px);
+  font-size: clamp(14px, 3vw, 18px);
   font-weight: bold;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
   color: var(--news-blue);
+  border-bottom: 1px solid var(--news-blue);
+  display: inline-block;
 }
-.np-article-text {
-  font-size: clamp(9px, 2vw, 11px);
-  line-height: 1.5;
-  text-align: justify;
-}
+.np-article-text { font-size: clamp(10px, 2.2vw, 12px); line-height: 1.7; text-align: justify; }
 
-/* Media & Images */
 .np-media {
-  position: relative;
   width: 100%;
   aspect-ratio: 16/9;
-  background: #222;
-  border: 1px solid var(--ink);
-  margin: 5px 0;
+  background: #eee;
+  border: 1px solid #000;
+  margin: 8px 0;
   overflow: hidden;
 }
-.np-media img { width: 100%; height: 100%; object-fit: cover; filter: grayscale(100%) contrast(110%); }
+.np-media img { width: 100%; height: 100%; object-fit: cover; filter: grayscale(100%); }
 
 .np-footer-bar {
   margin-top: auto;
   background: var(--news-blue);
   color: white;
-  padding: 6px 10px;
+  padding: 10px 15px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: clamp(8px, 1.8vw, 10px);
+  font-size: clamp(9px, 2vw, 11px);
   font-weight: bold;
 }
-.np-footer-tag { background: white; color: var(--news-blue); padding: 1px 6px; border-radius: 8px; }
+.np-footer-tag { background: white; color: var(--news-blue); padding: 2px 10px; border-radius: 12px; }
 
-/* Controls Section */
-.fb-controls {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  width: 100%;
-}
+/* Controls */
+.fb-controls { display: flex; align-items: center; justify-content: center; gap: 20px; width: 100%; }
 .fb-btn {
-  padding: 10px 20px;
-  background: #333;
+  padding: 12px 30px;
+  background: #222;
   color: #fff;
-  border: none;
-  border-radius: 25px;
+  border: 1px solid #444;
+  border-radius: 30px;
   cursor: pointer;
   font-weight: bold;
-  font-size: clamp(12px, 2.5vw, 14px);
-  transition: background 0.3s;
+  font-size: 14px;
+  transition: all 0.3s;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
 }
-.fb-btn:hover { background: #555; }
-.fb-btn:disabled { opacity: 0.3; cursor: not-allowed; }
-.fb-indicator { color: #fff; font-weight: bold; font-size: clamp(12px, 2.5vw, 16px); min-width: 80px; text-align: center; }
+.fb-btn:hover:not(:disabled) { background: var(--news-blue); border-color: var(--news-blue); transform: translateY(-2px); }
+.fb-btn:disabled { opacity: 0.2; cursor: not-allowed; }
+.fb-indicator { color: #fff; font-weight: bold; font-size: 18px; min-width: 100px; text-align: center; }
 
-.fb-page-num {
-  position: absolute;
-  bottom: 5px;
-  font-size: 9px;
-  font-weight: bold;
-  color: #888;
-}
-.fb-front .fb-page-num { right: 8px; }
-.fb-back .fb-page-num { left: 8px; }
-
-.fb-hint { color: #666; font-size: 10px; margin-top: 5px; text-align: center; }
-
-/* Responsive adjustments for Tablet/Mobile */
-@media (max-width: 800px) {
-  .fb-book { width: 95vw; height: auto; aspect-ratio: 1.2 / 1; }
-  .fb-content { padding: 3%; }
-}
-
-@media (max-width: 480px) {
-  .fb-book { aspect-ratio: 0.75 / 1; }
-  .np-logo-main { font-size: 28px; }
-  .np-headline-main { font-size: 18px; }
-  .np-article-text { line-height: 1.4; }
-  .fb-btn { padding: 8px 15px; }
-}
+.fb-page-num { position: absolute; bottom: 8px; font-size: 11px; font-weight: bold; color: #aaa; }
+.fb-front .fb-page-num { right: 12px; }
+.fb-back .fb-page-num { left: 12px; }
