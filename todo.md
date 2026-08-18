@@ -1,8 +1,7 @@
-# Project TODO - Full Automation (Flip & Daily Sync)
+# Project TODO - Automated Daily GitHub & Vercel Sync
 
-- [ ] تصميم وزيادة خاصية حركة الورق الأوتوماتيكية في الواجهة (Auto-flip animation) مع خيار التوقيف والتشغيل واحترام `prefers-reduced-motion`
-- [ ] إضافة دالة التحديث اليومي الأوتوماتيكية للأخبار (Idempotent RSS fetcher & daily edition creator)
-- [ ] ضبط heartbeat / cron job اليومي لتحديث المحتوى بشكل دوري وثابت
-- [ ] إعداد آلية المزامنة والتحديث التلقائي إلى GitHub و Vercel
-- [ ] تشغيل اختبارات Vitest والـ Build والتأكد من استقرار المنظومة
+- [ ] تصميم سكربت دمج وجدولة التحديث اليومي للأخبار ورفعها أوتوماتيكياً لـ GitHub (Daily auto-commit & push script)
+- [ ] ربط السكربت بخدمة Vercel عبر الـ Webhook أو الـ Git integration لتوليد Production Deployment تلقائياً عند كل push
+- [ ] توثيق معايير الأمان (عدم تسريب الأسرار، الاعتماد على Environment Variables حصرياً)
+- [ ] إضافة اختبارات وحدوية (Unit tests) للتحقق من سلامة عملية التحديث والتحضير للـ commit
 - [ ] حفظ checkpoint نهائي وتسليم التقرير للمستخدم
