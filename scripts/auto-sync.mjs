@@ -30,8 +30,8 @@ try {
   console.log(`[AutoSync] Committing with message: "${commitMsg}"`);
   execSync(`git commit -m "${commitMsg}"`, { stdio: "inherit" });
 
-  console.log("[AutoSync] Pushing to GitHub (origin/main)...");
-  execSync("git push origin main", { stdio: "inherit" });
+  console.log("[AutoSync] Pushing to GitHub (github/main)...");
+  execSync("git push github main", { stdio: "inherit" });
 
   console.log("[AutoSync] Successfully pushed to GitHub! Vercel production deployment is now triggered.");
 } catch (error) {

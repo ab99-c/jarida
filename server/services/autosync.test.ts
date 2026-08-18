@@ -3,9 +3,12 @@ import fs from "fs";
 import path from "path";
 
 describe("AutoSync and Security Documentation", () => {
-  it("should have auto-sync script file present in scripts/", () => {
+  it("should have auto-sync script file present in scripts and use github remote", () => {
     const scriptPath = path.join(process.cwd(), "scripts", "auto-sync.mjs");
     expect(fs.existsSync(scriptPath)).toBe(true);
+    const content = fs.readFileSync(scriptPath, "utf8");
+    expect(content).toContain("git push github main");
+    expect(content).not.toContain("git push origin main");
   });
 
   it("should be defined in package.json scripts", () => {
