@@ -1,14 +1,13 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
-import { Volume2, VolumeX, Sparkles, RefreshCw } from "lucide-react";
+import { Volume2, VolumeX, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react";
 
 export default function Home() {
   const [currentPage, setCurrentPage] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  const { data: dailyData, isLoading, refetch } = trpc.jarida.getDailyEdition.useQuery();
+  const { data: dailyData, refetch } = trpc.jarida.getDailyEdition.useQuery();
   const refreshMutation = trpc.jarida.refreshFeed.useMutation({
     onSuccess: () => refetch(),
   });
@@ -36,7 +35,7 @@ export default function Home() {
     {
       id: 1,
       title: "تعزيز الحضور الدبلوماسي للمملكة على الساحة الدولية",
-      summary: "تشهد الدبلوماسية المغربية زخماً ملحوظاً بفضل الانتصارات المتتالية في ملف الصحراء المغربية، اعتراف كولومبيا الأخير يضاف إلى سلسلة من المواقف الدولية الداعمة للوحدة الترابية للمملكة، مما يكرس وجاهة الطروحات المغربية ويعزز الاستقرار الإقليمي.",
+      summary: "تشهد الدبلوماسية المغربية زخماً ملحوظاً بفضل الانتصارات المتتالية في ملف الصحراء المغربية، حيث يضاف اعتراف كولومبيا الأخير إلى سلسلة من المواقف الدولية الداعمة للوحدة الترابية للمملكة، مما يكرس وجاهة الطروحات المغربية ويعزز الاستقرار الإقليمي.",
       content: "في خطوة تعكس عمق ومتانة العلاقات الثنائية، أعلنت بوغوتا رسمياً دعمها الكامل لمبادرة الحكم الذاتي تحت السيادة المغربية. وأكد المحللون أن هذا الموقف يمثل تحولاً استراتيجياً في أمريكا اللاتينية...",
       source: "هسبريس",
       publishedAt: new Date(),
@@ -94,9 +93,9 @@ export default function Home() {
   );
 
   return (
-    <div className="min-h-screen bg-[#f4ecd8] text-[#2b2b2b] flex flex-col items-center justify-center p-2 md:p-6 select-none font-serif relative overflow-hidden">
+    <div className="min-h-screen bg-[#2c2416] text-[#2b2b2b] flex flex-col items-center justify-center p-2 md:p-6 select-none font-serif relative overflow-x-hidden">
       {/* Top minimal header controls */}
-      <div className="absolute top-4 right-4 z-20 flex items-center gap-3 bg-[#e6dcbe]/80 backdrop-blur px-3 py-1.5 rounded-full shadow-sm border border-[#d3c49b]">
+      <div className="absolute top-4 right-4 z-20 flex items-center gap-3 bg-[#f5e6cc]/90 backdrop-blur px-3 py-1.5 rounded-full shadow-md border border-[#d3c49b]">
         <button
           onClick={() => refreshMutation.mutate()}
           disabled={refreshMutation.isPending}
@@ -116,85 +115,100 @@ export default function Home() {
         </button>
       </div>
 
-      {/* Newspaper container */}
-      <div 
-        className="w-full max-w-5xl bg-[#fcf8ec] shadow-2xl border border-[#d8ccaa] rounded-sm p-4 md:p-10 relative flex flex-col justify-between min-h-[80vh] md:min-h-[85vh] cursor-pointer transition-all duration-300"
-        onClick={(e: React.MouseEvent<HTMLDivElement>) => {
-          const rect = e.currentTarget.getBoundingClientRect();
-          const x = e.clientX - rect.left;
-          if (x > rect.width / 2) {
-            nextPage();
-          } else {
-            prevPage();
-          }
-        }}
-      >
+      {/* Newspaper Spread Container (Vintage Book Layout) */}
+      <div className="relative w-full max-w-6xl bg-[#f7eedc] text-[#1a1a1a] shadow-2xl rounded-sm border border-[#d6c39a] p-4 md:p-10 my-auto flex flex-col justify-between min-h-[85vh]">
+        
         {/* Masthead */}
         <div className="text-center border-b-2 border-black pb-4 mb-6">
-          <div className="flex justify-between items-center text-xs text-[#666] mb-1 px-2">
+          <div className="flex justify-between items-center text-xs text-[#555] mb-1 px-2 font-sans font-semibold">
             <span>الثلاثاء، 18 غشت 2026</span>
             <span>الإصدار اليومي الشامل</span>
-            <span>العدد 1</span>
+            <span>العدد {currentPage + 1}</span>
           </div>
           <h1 className="text-4xl md:text-6xl font-black tracking-tight text-black font-serif">
             جريدة الأفق
           </h1>
-          <p className="text-xs tracking-widest text-[#555] uppercase mt-1">
+          <p className="text-xs tracking-widest text-[#555] uppercase mt-1 font-sans">
             صوت الحقيقة والخبر اليقين • يومية مستقلة
           </p>
         </div>
 
-        {/* Content Spread */}
-        <div className={`grid grid-cols-1 ${isMobile ? '' : 'md:grid-cols-2'} gap-8 md:gap-12 flex-grow items-start divide-y md:divide-y-0 md:divide-x md:divide-x-reverse divide-[#e2d5b3]`}>
+        {/* Content Spread (Double Page on Desktop/Laptop, Single Page on Mobile) */}
+        <div className="relative grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 flex-grow items-start md:divide-x md:divide-x-reverse md:divide-[#d3c49b]">
+          
+          {/* Center Book Spine Shadow (Desktop only) */}
+          <div className="hidden md:block absolute top-0 bottom-0 right-1/2 w-8 bg-gradient-to-l from-black/10 to-transparent pointer-events-none -mr-4 z-10" />
+
           {currentItems.map((article: any, idx: number) => (
-            <div key={article.id || idx} className="flex flex-col justify-between h-full pt-4 md:pt-0 md:px-4">
+            <div key={article.id || idx} className="flex flex-col justify-between h-full px-2 md:px-6">
               <div>
-                <div className="flex justify-between items-center text-[11px] text-[#887755] mb-2 font-sans font-semibold">
-                  <span className="bg-[#e6dcbe] px-2 py-0.5 rounded text-black">{article.source || "وكالة الأنباء"}</span>
+                <div className="flex justify-between items-center text-[11px] text-[#775f3a] mb-2 font-sans font-bold">
+                  <span className="bg-[#ebd9bc] px-2.5 py-0.5 rounded text-black border border-[#d3c49b]">
+                    {article.source || "وكالة الأنباء"}
+                  </span>
                   <span>{new Date(article.publishedAt).toLocaleDateString("ar-MA")}</span>
                 </div>
                 <h2 className="text-xl md:text-2xl font-bold text-black mb-3 leading-snug">
                   {article.title}
                 </h2>
                 {article.imageUrl && (
-                  <div className="my-3 overflow-hidden rounded border border-[#d8ccaa] bg-[#f0e6cb]">
+                  <div className="my-3 overflow-hidden rounded border border-[#d3c49b] bg-[#f0e3cc] shadow-sm">
                     <img 
                       src={article.imageUrl} 
                       alt={article.title} 
-                      className="w-full h-48 md:h-56 object-cover filter grayscale contrast-125 hover:grayscale-0 transition duration-500"
+                      className="w-full h-44 md:h-52 object-cover filter grayscale contrast-125 hover:grayscale-0 transition duration-500"
                     />
                   </div>
                 )}
-                <p className="text-sm md:text-base text-[#333] leading-relaxed text-justify mb-4 font-serif">
+                <p className="text-sm md:text-base text-[#2c2c2c] leading-relaxed text-justify mb-4 font-serif">
                   {article.summary}
                 </p>
                 {article.content && (
-                  <p className="text-xs md:text-sm text-[#555] leading-relaxed text-justify font-serif border-t border-[#eee2c0] pt-2">
+                  <p className="text-xs md:text-sm text-[#4a4a4a] leading-relaxed text-justify font-serif border-t border-[#e2d5b3] pt-2">
                     {article.content}
                   </p>
                 )}
               </div>
-              <div className="mt-4 pt-2 border-t border-[#e2d5b3] flex justify-between items-center text-xs text-[#776644]">
+              <div className="mt-4 pt-2 border-t border-[#e2d5b3] flex justify-between items-center text-xs text-[#776644] font-sans">
                 <span>جريدة الأفق الإلكترونية</span>
-                <span>صفحة {currentPage * itemsPerPage + idx + 1}</span>
+                <span>صفحة {currentPage * itemsPerPage + idx + 1} من {processedArticles.length}</span>
               </div>
             </div>
           ))}
 
-          {/* Fallback if odd items on desktop */}
+          {/* Fallback if single item on last spread */}
           {!isMobile && currentItems.length === 1 && (
-            <div className="flex flex-col justify-center items-center h-full text-center p-8 text-[#998866] italic border-r border-[#e2d5b3]">
-              <p className="text-lg">تابعوا المزيد من التفاصيل في العدد القادم...</p>
+            <div className="flex flex-col justify-center items-center h-full text-center p-8 text-[#998866] italic">
+              <p className="text-base">تابعوا المزيد من المستجدات والتقارير في الإصدارات القادمة.</p>
             </div>
           )}
         </div>
 
-        {/* Footer */}
-        <div className="mt-8 pt-4 border-t-2 border-black flex justify-between items-center text-xs text-[#444]">
-          <span>© 2026 جريدة الأفق - جميع الحقوق محفوظة</span>
-          <span className="text-center hidden md:block italic">انقر يميناً أو يساراً لقلب الصفحات</span>
-          <span>الطبعة الأولى</span>
+        {/* Navigation Arrows & Footer */}
+        <div className="mt-8 pt-4 border-t-2 border-black flex justify-between items-center text-xs text-[#444] font-sans">
+          <button 
+            onClick={prevPage} 
+            disabled={currentPage === 0}
+            className={`flex items-center gap-1 px-3 py-1.5 rounded border border-[#c5b48b] bg-[#ebd9bc] hover:bg-[#ded0b1] transition ${currentPage === 0 ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
+          >
+            <ChevronRight className="w-4 h-4" />
+            <span>السابق</span>
+          </button>
+
+          <span className="text-center italic font-serif">
+            {isMobile ? 'اسحب أو انقر لقلب الصفحات' : 'انقر على يمين أو يسار الصفحة للقلب'}
+          </span>
+
+          <button 
+            onClick={nextPage} 
+            disabled={currentPage >= totalPages - 1}
+            className={`flex items-center gap-1 px-3 py-1.5 rounded border border-[#c5b48b] bg-[#ebd9bc] hover:bg-[#ded0b1] transition ${currentPage >= totalPages - 1 ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
+          >
+            <span>التالي</span>
+            <ChevronLeft className="w-4 h-4" />
+          </button>
         </div>
+
       </div>
     </div>
   );
