@@ -1,7 +1,8 @@
-# Project TODO - Vercel Troubleshooting
+# Project TODO - Vercel Production Release
 
-- [x] التحقق من دفع التعديلات الأخيرة إلى GitHub (`ab99-c/jarida` فرع `main`)
-- [ ] فحص حساب Vercel والـ team والمشاريع المتاحة للوصول إلى المشروع الصحيح لـ Jarida
-- [ ] التأكد من أن الرابط الذي يفتحه المستخدم هو رابط Vercel الإنتاجي الصحيح وليس نشرة قديمة أو كاش (Cache)
-- [ ] ربط المستودع الصحيح في Vercel أو تفعيل الـ redeploy لضمان ظهور التعديلات فوراً
-- [ ] تسليم التقرير النهائي والتحقق من عمل الموقع بشكل سليم
+- [x] التحقق من آخر commit محلياً ومقارنته بفرع `main` في GitHub
+- [ ] دفع نسخة المشروع الحالية إلى `ab99-c/jarida` على فرع `main`
+- [ ] فحص إعدادات مشروع Vercel `jarida-live` والـ Team والفرع الإنتاجي
+- [ ] معالجة صلاحية Production Deployment وإنشاء deployment بحالة Ready
+- [ ] تشغيل اختبارات Vitest وBuild محلياً والتحقق من الرابط الإنتاجي النهائي
+- [ ] حفظ checkpoint وتسليم رابط Production وcommit المنشور للمستخدم
