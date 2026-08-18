@@ -15,7 +15,8 @@ export default function Home() {
 
   useEffect(() => {
     const handleResize = () => {
-      setIsMobile(window.innerWidth < 768);
+      // Treat screens under 1024px (mobile and tablets) as single page for optimal reading
+      setIsMobile(window.innerWidth < 1024);
     };
     handleResize();
     window.addEventListener("resize", handleResize);
@@ -133,11 +134,11 @@ export default function Home() {
           </p>
         </div>
 
-        {/* Content Spread (Double Page on Desktop/Laptop, Single Page on Mobile) */}
-        <div className="relative grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 flex-grow items-start md:divide-x md:divide-x-reverse md:divide-[#d3c49b]">
+        {/* Content Spread (Double Page on Desktop/Laptop, Single Page on Mobile & Tablet) */}
+        <div className="relative grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 flex-grow items-start lg:divide-x lg:divide-x-reverse lg:divide-[#d3c49b]">
           
           {/* Center Book Spine Shadow (Desktop only) */}
-          <div className="hidden md:block absolute top-0 bottom-0 right-1/2 w-8 bg-gradient-to-l from-black/10 to-transparent pointer-events-none -mr-4 z-10" />
+          <div className="hidden lg:block absolute top-0 bottom-0 right-1/2 w-8 bg-gradient-to-l from-black/10 to-transparent pointer-events-none -mr-4 z-10" />
 
           {currentItems.map((article: any, idx: number) => (
             <div key={article.id || idx} className="flex flex-col justify-between h-full px-2 md:px-6">
