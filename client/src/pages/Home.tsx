@@ -2,24 +2,32 @@ import { useState, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { Volume2, VolumeX, RefreshCw, ChevronLeft, ChevronRight, Share2, MessageSquare, Send, Check } from "lucide-react";
 
-function ArticleComments({ articleId }: { articleId: number }) {
+function ArticleComments({ article }: { article: any }) {
   const [authorName, setAuthorName] = useState("");
   const [content, setContent] = useState("");
   const [copied, setCopied] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
 
+  const articleId = article.id || 1;
   const utils = trpc.useUtils();
-  const { data: comments = [], refetch } = trpc.jarida.getComments.useQuery({ articleId });
+  const { data: comments = [], isLoading: isLoadingComments, isError: isErrorComments, refetch } = trpc.jarida.getComments.useQuery({ articleId });
+  
   const addCommentMutation = trpc.jarida.addComment.useMutation({
     onSuccess: () => {
       setAuthorName("");
       setContent("");
+      setErrorMsg("");
       refetch();
     },
+    onError: (err) => {
+      setErrorMsg(err.message || "فشل إرسال التعليق، يرجى المحاولة لاحقاً.");
+    }
   });
 
   const handleCommentSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!authorName.trim() || !content.trim()) return;
+    setErrorMsg("");
     addCommentMutation.mutate({
       articleId,
       authorName: authorName.trim(),
@@ -27,10 +35,11 @@ function ArticleComments({ articleId }: { articleId: number }) {
     });
   };
 
-  const shareUrl = typeof window !== "undefined" ? window.location.href : "";
+  const shareUrl = typeof window !== "undefined" ? `${window.location.origin}/#article-${articleId}` : "";
+  const shareTitle = article.title || "جريدة الأفق";
 
   const handleShare = (platform: string) => {
-    const text = "اقرأ هذا المقال المميز في جريدة الأفق";
+    const text = `اقرأ هذا المقال: "${shareTitle}" في جريدة الأفق`;
     if (platform === "whatsapp") {
       window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text + " " + shareUrl)}`, "_blank");
     } else if (platform === "facebook") {
@@ -38,40 +47,43 @@ function ArticleComments({ articleId }: { articleId: number }) {
     } else if (platform === "twitter") {
       window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(shareUrl)}`, "_blank");
     } else if (platform === "copy") {
-      navigator.clipboard.writeText(shareUrl);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      navigator.clipboard.writeText(shareUrl).then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      }).catch(() => {
+        setErrorMsg("تعذر نسخ الرابط تلقائياً.");
+      });
     }
   };
 
   return (
     <div className="mt-4 pt-4 border-t border-[#d3c49b]/60 text-right font-sans">
       {/* Social Share Buttons */}
-      <div className="flex items-center gap-2 mb-4 text-xs">
+      <div className="flex items-center gap-2 mb-4 text-xs flex-wrap">
         <span className="text-[#665533] font-bold flex items-center gap-1">
           <Share2 className="w-3.5 h-3.5" /> مشاركة:
         </span>
         <button
           onClick={() => handleShare("whatsapp")}
-          className="px-2 py-1 bg-[#25D366] text-white rounded hover:opacity-90 transition font-medium"
+          className="px-2 py-1 bg-[#25D366] text-white rounded hover:opacity-90 transition font-medium cursor-pointer"
         >
           واتساب
         </button>
         <button
           onClick={() => handleShare("facebook")}
-          className="px-2 py-1 bg-[#1877F2] text-white rounded hover:opacity-90 transition font-medium"
+          className="px-2 py-1 bg-[#1877F2] text-white rounded hover:opacity-90 transition font-medium cursor-pointer"
         >
           فيسبوك
         </button>
         <button
           onClick={() => handleShare("twitter")}
-          className="px-2 py-1 bg-black text-white rounded hover:opacity-90 transition font-medium"
+          className="px-2 py-1 bg-black text-white rounded hover:opacity-90 transition font-medium cursor-pointer"
         >
           X (تويتر)
         </button>
         <button
           onClick={() => handleShare("copy")}
-          className="px-2 py-1 bg-[#e0ceb1] text-black rounded hover:bg-[#d3c49b] transition font-medium flex items-center gap-1"
+          className="px-2 py-1 bg-[#e0ceb1] text-black rounded hover:bg-[#d3c49b] transition font-medium flex items-center gap-1 cursor-pointer"
         >
           {copied ? <Check className="w-3 h-3 text-green-700" /> : null}
           <span>{copied ? "تم النسخ" : "نسخ الرابط"}</span>
@@ -102,10 +114,13 @@ function ArticleComments({ articleId }: { articleId: number }) {
             className="w-full text-xs px-2.5 py-1.5 rounded border border-[#c9b78e] bg-white text-black focus:outline-none focus:ring-1 focus:ring-[#8c7348] resize-none"
             required
           />
+          {errorMsg && (
+            <p className="text-[11px] text-red-600 bg-red-50 p-1 rounded border border-red-200">{errorMsg}</p>
+          )}
           <button
             type="submit"
             disabled={addCommentMutation.isPending}
-            className="w-full bg-[#59482b] hover:bg-[#42341d] text-white text-xs py-1.5 rounded transition font-bold flex items-center justify-center gap-1"
+            className="w-full bg-[#59482b] hover:bg-[#42341d] text-white text-xs py-1.5 rounded transition font-bold flex items-center justify-center gap-1 cursor-pointer"
           >
             <Send className="w-3 h-3" />
             <span>{addCommentMutation.isPending ? "جاري الإرسال..." : "نشر التعليق"}</span>
@@ -114,7 +129,11 @@ function ArticleComments({ articleId }: { articleId: number }) {
 
         {/* Comments List */}
         <div className="space-y-2 max-h-36 overflow-y-auto pr-1">
-          {comments.length === 0 ? (
+          {isLoadingComments ? (
+            <p className="text-[11px] text-[#776644] text-center italic py-1">جاري تحميل التعليقات...</p>
+          ) : isErrorComments ? (
+            <p className="text-[11px] text-red-600 text-center py-1">تعذر تحميل التعليقات.</p>
+          ) : comments.length === 0 ? (
             <p className="text-[11px] text-[#776644] text-center italic py-1">لا توجد تعليقات بعد. كن أول المعلقين!</p>
           ) : (
             comments.map((comment: any) => (
@@ -246,7 +265,7 @@ export default function Home() {
         <button
           onClick={() => refreshMutation.mutate()}
           disabled={refreshMutation.isPending}
-          className="flex items-center gap-1.5 text-xs text-[#554a32] hover:text-black transition"
+          className="flex items-center gap-1.5 text-xs text-[#554a32] hover:text-black transition cursor-pointer"
           title="تحديث الأخبار الآن"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${refreshMutation.isPending ? "animate-spin" : ""}`} />
@@ -255,7 +274,7 @@ export default function Home() {
         <span className="text-xs text-[#a39371]">|</span>
         <button
           onClick={() => setIsAutoPlaying(!isAutoPlaying)}
-          className={`flex items-center gap-1 text-xs px-2 py-0.5 rounded transition ${isAutoPlaying ? "bg-[#d3c49b]/60 text-black font-bold" : "text-[#554a32] hover:text-black"}`}
+          className={`flex items-center gap-1 text-xs px-2 py-0.5 rounded transition cursor-pointer ${isAutoPlaying ? "bg-[#d3c49b]/60 text-black font-bold" : "text-[#554a32] hover:text-black"}`}
           title={isAutoPlaying ? "إيقاف التقليب التلقائي" : "تشغيل التقليب التلقائي"}
         >
           <span>{isAutoPlaying ? "تقليب تلقائي: مفعل" : "تقليب تلقائي: متوقف"}</span>
@@ -263,7 +282,7 @@ export default function Home() {
         <span className="text-xs text-[#a39371]">|</span>
         <button
           onClick={() => setIsMuted(!isMuted)}
-          className="flex items-center gap-1 text-xs text-[#554a32] hover:text-black transition"
+          className="flex items-center gap-1 text-xs text-[#554a32] hover:text-black transition cursor-pointer"
           title={isMuted ? "تفعيل الصوت" : "كتم الصوت"}
         >
           {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
@@ -295,7 +314,7 @@ export default function Home() {
           <div className="hidden lg:block absolute top-0 bottom-0 right-1/2 w-8 bg-gradient-to-l from-black/10 to-transparent pointer-events-none -mr-4 z-10" />
 
           {currentItems.map((article: any, idx: number) => (
-            <div key={article.id || idx} className="flex flex-col justify-between h-full px-2 md:px-6">
+            <div key={article.id || idx} id={`article-${article.id || idx}`} className="flex flex-col justify-between h-full px-2 md:px-6">
               <div>
                 <div className="flex justify-between items-center text-[11px] text-[#775f3a] mb-2 font-sans font-bold">
                   <span className="bg-[#ebd9bc] px-2.5 py-0.5 rounded text-black border border-[#d3c49b]">
@@ -325,7 +344,7 @@ export default function Home() {
                 )}
 
                 {/* Social Share & Comments component */}
-                <ArticleComments articleId={article.id || 1} />
+                <ArticleComments article={article} />
               </div>
               <div className="mt-6 pt-2 border-t border-[#e2d5b3] flex justify-between items-center text-xs text-[#776644] font-sans">
                 <span>جريدة الأفق الإلكترونية</span>
