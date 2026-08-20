@@ -1,7 +1,8 @@
-# Project TODO - Background Automation Verification
+# Project TODO - Social Sharing & Comments
 
-- [x] فحص العمليات الجارية وقوائم الـ cron/heartbeat لمعرفة ما إذا كان `auto-sync` مجدولاً أوتوماتيكياً
-- [x] فحص سجل GitHub لمعرفة تكرار الـ commits اليومية
-- [x] إعداد ملف GitHub Actions Workflow (`.github/workflows/daily-sync.yml`) لضمان تنفيذ التحديث اليومي والـ push على GitHub تلقائياً 100%
-- [x] فحص البناء والاختبارات وتأكيد تفعيل الـ Workflow الجديد
-- [x] تسليم التقرير النهائي بالدارجة
+- [ ] إضافة جدول `comments` في `drizzle/schema.ts` لدعم تعليقات القراء الحقيقية
+- [ ] إنشاء ترحيل (Migration) SQL للجدول الجديد وتطبيقه عبر `webdev_execute_sql`
+- [ ] إضافة إجراءات tRPC للتعليقات (`getComments` و `addComment`) في `server/routers.ts`
+- [ ] تحديث `client/src/pages/Home.tsx` لتضمين أزرار مشاركة المقالات (WhatsApp, Facebook, X, Copy Link) وقسم التعليقات التفاعلي
+- [ ] تشغيل اختبارات Vitest والـ Build للتأكد من سلامة الكود والخلو من الأخطاء
+- [ ] حفظ checkpoint نهائي وتسليم النتيجة

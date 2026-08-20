@@ -1,6 +1,139 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
-import { Volume2, VolumeX, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react";
+import { Volume2, VolumeX, RefreshCw, ChevronLeft, ChevronRight, Share2, MessageSquare, Send, Check } from "lucide-react";
+
+function ArticleComments({ articleId }: { articleId: number }) {
+  const [authorName, setAuthorName] = useState("");
+  const [content, setContent] = useState("");
+  const [copied, setCopied] = useState(false);
+
+  const utils = trpc.useUtils();
+  const { data: comments = [], refetch } = trpc.jarida.getComments.useQuery({ articleId });
+  const addCommentMutation = trpc.jarida.addComment.useMutation({
+    onSuccess: () => {
+      setAuthorName("");
+      setContent("");
+      refetch();
+    },
+  });
+
+  const handleCommentSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!authorName.trim() || !content.trim()) return;
+    addCommentMutation.mutate({
+      articleId,
+      authorName: authorName.trim(),
+      content: content.trim(),
+    });
+  };
+
+  const shareUrl = typeof window !== "undefined" ? window.location.href : "";
+
+  const handleShare = (platform: string) => {
+    const text = "اقرأ هذا المقال المميز في جريدة الأفق";
+    if (platform === "whatsapp") {
+      window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text + " " + shareUrl)}`, "_blank");
+    } else if (platform === "facebook") {
+      window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`, "_blank");
+    } else if (platform === "twitter") {
+      window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(shareUrl)}`, "_blank");
+    } else if (platform === "copy") {
+      navigator.clipboard.writeText(shareUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  return (
+    <div className="mt-4 pt-4 border-t border-[#d3c49b]/60 text-right font-sans">
+      {/* Social Share Buttons */}
+      <div className="flex items-center gap-2 mb-4 text-xs">
+        <span className="text-[#665533] font-bold flex items-center gap-1">
+          <Share2 className="w-3.5 h-3.5" /> مشاركة:
+        </span>
+        <button
+          onClick={() => handleShare("whatsapp")}
+          className="px-2 py-1 bg-[#25D366] text-white rounded hover:opacity-90 transition font-medium"
+        >
+          واتساب
+        </button>
+        <button
+          onClick={() => handleShare("facebook")}
+          className="px-2 py-1 bg-[#1877F2] text-white rounded hover:opacity-90 transition font-medium"
+        >
+          فيسبوك
+        </button>
+        <button
+          onClick={() => handleShare("twitter")}
+          className="px-2 py-1 bg-black text-white rounded hover:opacity-90 transition font-medium"
+        >
+          X (تويتر)
+        </button>
+        <button
+          onClick={() => handleShare("copy")}
+          className="px-2 py-1 bg-[#e0ceb1] text-black rounded hover:bg-[#d3c49b] transition font-medium flex items-center gap-1"
+        >
+          {copied ? <Check className="w-3 h-3 text-green-700" /> : null}
+          <span>{copied ? "تم النسخ" : "نسخ الرابط"}</span>
+        </button>
+      </div>
+
+      {/* Comments Section */}
+      <div className="bg-[#f0e3cc]/50 p-3 rounded-lg border border-[#d3c49b]">
+        <h4 className="text-xs font-bold text-[#554a32] mb-2 flex items-center gap-1">
+          <MessageSquare className="w-3.5 h-3.5" /> تعليقات القراء ({comments.length})
+        </h4>
+
+        {/* Comment Form */}
+        <form onSubmit={handleCommentSubmit} className="space-y-2 mb-3">
+          <input
+            type="text"
+            placeholder="اسمك الكريم..."
+            value={authorName}
+            onChange={(e) => setAuthorName(e.target.value)}
+            className="w-full text-xs px-2.5 py-1.5 rounded border border-[#c9b78e] bg-white text-black focus:outline-none focus:ring-1 focus:ring-[#8c7348]"
+            required
+          />
+          <textarea
+            placeholder="اكتب تعليقك هنا..."
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            rows={2}
+            className="w-full text-xs px-2.5 py-1.5 rounded border border-[#c9b78e] bg-white text-black focus:outline-none focus:ring-1 focus:ring-[#8c7348] resize-none"
+            required
+          />
+          <button
+            type="submit"
+            disabled={addCommentMutation.isPending}
+            className="w-full bg-[#59482b] hover:bg-[#42341d] text-white text-xs py-1.5 rounded transition font-bold flex items-center justify-center gap-1"
+          >
+            <Send className="w-3 h-3" />
+            <span>{addCommentMutation.isPending ? "جاري الإرسال..." : "نشر التعليق"}</span>
+          </button>
+        </form>
+
+        {/* Comments List */}
+        <div className="space-y-2 max-h-36 overflow-y-auto pr-1">
+          {comments.length === 0 ? (
+            <p className="text-[11px] text-[#776644] text-center italic py-1">لا توجد تعليقات بعد. كن أول المعلقين!</p>
+          ) : (
+            comments.map((comment: any) => (
+              <div key={comment.id} className="bg-white/80 p-2 rounded border border-[#e2d5b3] text-xs">
+                <div className="flex justify-between items-center mb-1">
+                  <span className="font-bold text-black">{comment.authorName}</span>
+                  <span className="text-[10px] text-[#887755]">
+                    {new Date(comment.createdAt).toLocaleDateString("ar-MA")}
+                  </span>
+                </div>
+                <p className="text-[#333] leading-normal">{comment.content}</p>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function Home() {
   const [currentPage, setCurrentPage] = useState(0);
@@ -16,7 +149,6 @@ export default function Home() {
 
   useEffect(() => {
     const handleResize = () => {
-      // Treat screens under 1024px (mobile and tablets) as single page for optimal reading
       setIsMobile(window.innerWidth < 1024);
     };
     handleResize();
@@ -47,7 +179,7 @@ export default function Home() {
       id: 2,
       title: "انطلاقة قوية لموسم الفلاحة والري الحديث بالمغرب",
       summary: "تطلق وزارة الفلاحة برامج جديدة لدعم السقي الموضعي واستعمال الطاقات المتجددة في الآبار الفلاحية لضمان الأمن المائي والغذائي لمواجهة تحديات الجفاف.",
-      content: "تعرف المناطق الفلاحية في سوس وسايس تعبئة شاملة لتنزيل الجيل الجديد من المشاريع المرتبطة بالاقتصاد في الماء والتحول الرقمي الفلاحي...",
+      content: "تعرف المناطق الفلاحية في سوس وسايس تعبئة شاملة لتنزيل الجيل الجديد من المشاريع المرتبطة الاقتصاد في الماء والتحول الرقمي الفلاحي...",
       source: "الجزيرة نت",
       publishedAt: new Date(),
       imageUrl: "https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=800&q=80"
@@ -75,7 +207,6 @@ export default function Home() {
   const itemsPerPage = isMobile ? 1 : 2;
   const totalPages = Math.ceil(processedArticles.length / itemsPerPage);
 
-  // Auto-flip effect with prefers-reduced-motion check
   useEffect(() => {
     if (!isAutoPlaying) return;
     const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -84,7 +215,7 @@ export default function Home() {
     const interval = setInterval(() => {
       setCurrentPage(prev => (prev < totalPages - 1 ? prev + 1 : 0));
       playFlipSound();
-    }, 8000); // Flip page every 8 seconds automatically
+    }, 10000);
 
     return () => clearInterval(interval);
   }, [isAutoPlaying, totalPages, isMuted]);
@@ -184,16 +315,19 @@ export default function Home() {
                     />
                   </div>
                 )}
-                <p className="text-sm md:text-base text-[#2c2c2c] leading-relaxed text-justify mb-4 font-serif">
+                <p className="text-sm md:text-base text-[#2c2c2c] leading-relaxed text-justify mb-3 font-serif">
                   {article.summary}
                 </p>
                 {article.content && (
-                  <p className="text-xs md:text-sm text-[#4a4a4a] leading-relaxed text-justify font-serif border-t border-[#e2d5b3] pt-2">
+                  <p className="text-xs md:text-sm text-[#4a4a4a] leading-relaxed text-justify font-serif border-t border-[#e2d5b3] pt-2 mb-4">
                     {article.content}
                   </p>
                 )}
+
+                {/* Social Share & Comments component */}
+                <ArticleComments articleId={article.id || 1} />
               </div>
-              <div className="mt-4 pt-2 border-t border-[#e2d5b3] flex justify-between items-center text-xs text-[#776644] font-sans">
+              <div className="mt-6 pt-2 border-t border-[#e2d5b3] flex justify-between items-center text-xs text-[#776644] font-sans">
                 <span>جريدة الأفق الإلكترونية</span>
                 <span>صفحة {currentPage * itemsPerPage + idx + 1} من {processedArticles.length}</span>
               </div>

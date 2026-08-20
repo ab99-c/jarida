@@ -33,3 +33,14 @@ export const articles = mysqlTable("articles", {
 
 export type Article = typeof articles.$inferSelect;
 export type InsertArticle = typeof articles.$inferInsert;
+
+export const comments = mysqlTable("comments", {
+  id: serial("id").primaryKey(),
+  articleId: int("article_id").notNull(),
+  authorName: varchar("author_name", { length: 100 }).notNull(),
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type Comment = typeof comments.$inferSelect;
+export type InsertComment = typeof comments.$inferInsert;
