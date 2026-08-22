@@ -27,6 +27,10 @@ try {
   execSync("git add -A", { stdio: "inherit" });
 
   const commitMsg = `chore(edition): daily automated newspaper sync & update - ${nowStr.split("T")[0]}`;
+  console.log(`[AutoSync] Configuring Git identity for automated commit...`);
+  execSync('git config user.name "Jarida Automation"', { stdio: "inherit" });
+  execSync('git config user.email "automation@jarida.local"', { stdio: "inherit" });
+
   console.log(`[AutoSync] Committing with message: "${commitMsg}"`);
   execSync(`git commit -m "${commitMsg}"`, { stdio: "inherit" });
 
