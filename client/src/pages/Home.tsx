@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
+import { formatArabicEditionDate } from "@shared/date";
 import { Volume2, VolumeX, RefreshCw, ChevronLeft, ChevronRight, Share2, MessageSquare, Send, Check } from "lucide-react";
 
 function ArticleComments({ article }: { article: any }) {
@@ -167,6 +168,7 @@ export default function Home() {
     onSuccess: () => refetch(),
   });
   const articles = dailyData?.articles;
+  const editionDate = dailyData?.date ?? new Date();
 
   useEffect(() => {
     const handleResize = () => {
@@ -299,7 +301,7 @@ export default function Home() {
         {/* Masthead */}
         <div className="text-center border-b-2 border-black pb-4 mb-6">
           <div className="flex justify-between items-center text-xs text-[#555] mb-1 px-2 font-sans font-semibold">
-            <span>الثلاثاء، 18 غشت 2026</span>
+            <span>{formatArabicEditionDate(editionDate)}</span>
             <span>الإصدار اليومي الشامل</span>
             <span>العدد {currentPage + 1}</span>
           </div>
