@@ -25,9 +25,12 @@ app.use(
   })
 );
 
-// Serve static assets from dist/public (or client/public fallback)
-const staticDistPath = path.resolve(import.meta.dirname, "..", "dist", "public");
-const fallbackStaticPath = path.resolve(import.meta.dirname, "..", "client", "public");
+// Serve static assets from dist/public (or client/public fallback).
+// process.cwd() is stable in Vercel's Node runtime; import.meta.dirname is
+// not available in every supported serverless Node version.
+const projectRoot = process.cwd();
+const staticDistPath = path.resolve(projectRoot, "dist", "public");
+const fallbackStaticPath = path.resolve(projectRoot, "client", "public");
 const resolvedStaticPath = fs.existsSync(staticDistPath) ? staticDistPath : fallbackStaticPath;
 
 app.use(express.static(resolvedStaticPath));
