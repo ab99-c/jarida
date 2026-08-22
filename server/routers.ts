@@ -26,7 +26,18 @@ export const appRouter = router({
       const db = await getDb();
       if (!db) return { date: new Date(), sections: {}, articles: [] };
       
-      const list = await db.select().from(articles).orderBy(desc(articles.publishedAt)).limit(40);
+      let list: typeof articles.$inferSelect[] = [];
+      try {
+        list = await db.select().from(articles).orderBy(desc(articles.publishedAt)).limit(40);
+      } catch (error) {
+        console.error("[Jarida] Failed to load daily edition:", error);
+        return {
+          date: new Date(),
+          editionTitle: "جريدة الأفق - الإصدار اليومي المتجدد",
+          sections: {},
+          articles: [],
+        };
+      }
       
       // Group articles by category (sections)
       const sections: Record<string, typeof list> = {};
@@ -52,8 +63,12 @@ export const appRouter = router({
       return list;
     }),
     refreshFeed: publicProcedure.mutation(async () => {
-      const result = await fetchAndStoreRSS();
-      return result;
+      try {
+        return await fetchAndStoreRSS();
+      } catch (error) {
+        console.error("[Jarida] RSS refresh failed:", error);
+        return { success: false, count: 0 };
+      }
     }),
     getComments: publicProcedure
       .input(z.object({ articleId: z.number() }))
