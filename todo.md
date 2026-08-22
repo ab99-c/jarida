@@ -10,8 +10,8 @@
 - [x] حفظ checkpoint جديد بعد ترقية حركة الورق وإرسال تقرير نهائي
 
 - [x] رفع آخر تعديلات page-turn وpage-curl إلى GitHub على `main`
-- [ ] التأكد من أن Vercel أنشأ Production Deployment من نفس commit
-- [ ] حفظ checkpoint وتسليم SHA والرابط النهائي
+- [x] التأكد من أن Vercel أنشأ Production Deployment من نفس commit — screenshot Vercel يثبت Ready/Production للـcommit `1e89c89` على `main`
+- [x] حفظ checkpoint وتسليم SHA والرابط النهائي — checkpoint `163f9491`
 
 - [x] فحص وجود daily-sync workflow على GitHub main وحالة التفعيل — غير موجود حالياً
 - [x] فحص آخر GitHub Actions runs ونتيجة كل run — لا توجد runs
