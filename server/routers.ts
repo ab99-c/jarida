@@ -3,8 +3,9 @@ import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
 import { getDb } from "./db";
-import { articles } from "../drizzle/schema";
-import { desc } from "drizzle-orm";
+import { articles, comments } from "../drizzle/schema";
+import { desc, eq } from "drizzle-orm";
+import { z } from "zod";
 import { fetchAndStoreRSS } from "./services/rss";
 
 export const appRouter = router({
@@ -54,6 +55,35 @@ export const appRouter = router({
       const result = await fetchAndStoreRSS();
       return result;
     }),
+    getComments: publicProcedure
+      .input(z.object({ articleId: z.number() }))
+      .query(async ({ input }) => {
+        const db = await getDb();
+        if (!db) return [];
+        return await db
+          .select()
+          .from(comments)
+          .where(eq(comments.articleId, input.articleId))
+          .orderBy(desc(comments.createdAt));
+      }),
+    addComment: publicProcedure
+      .input(
+        z.object({
+          articleId: z.number(),
+          authorName: z.string().min(1, "اسم القارئ مطلوب").max(100),
+          content: z.string().min(1, "محتوى التعليق مطلوب").max(1000),
+        })
+      )
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new Error("Database not available");
+        await db.insert(comments).values({
+          articleId: input.articleId,
+          authorName: input.authorName,
+          content: input.content,
+        });
+        return { success: true };
+      }),
   }),
 });
 

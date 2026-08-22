@@ -1,7 +1,14 @@
-# Project TODO - Remote Fix & Automation
+# Project TODO - Video-Inspired Page Flip
 
-- [ ] فحص remotes الحالية والتأكد أن auto-sync يدفع إلى `github main` وليس `origin`
-- [ ] تعديل `scripts/auto-sync.mjs` لكي يستعمل `git push github main`
-- [ ] تحديث اختبارات الوحدة للتأكد من استخدام `github main`
-- [ ] تشغيل الاختبارات والبناء وتأكيد رفع الإصلاح إلى GitHub
-- [ ] التحقق من استجابة Vercel الإنتاجية وحفظ الـ checkpoint
+- [x] استخلاص متطلبات الحركة من المرجع المرئي وتحديد دوران الورقة من محور الوسط
+- [x] تنفيذ page-turn بوجه أمامي وخلفي مع `perspective` و`transform-style` و`backface-visibility`
+- [x] ربط الحركة بالنقر واللمس والتقليب التلقائي بدون كسر أزرار المشاركة والتعليقات
+- [x] احترام `prefers-reduced-motion` وإضافة fallback سريع عند تقليل الحركة
+- [x] إضافة حافة page-curl متحركة وتدرجات ظل وإضاءة أثناء عبور الورقة
+- [x] تشغيل Vitest وBuild والتقاط screenshots للتحقق على desktop وmobile
+- [x] توثيق أن محلل الفيديو الآلي لم يكتمل، مع الاعتماد على المرجع المرئي المتاح بدل ادعاء تحليل غير حاصل
+- [x] حفظ checkpoint جديد بعد ترقية حركة الورق وإرسال تقرير نهائي
+
+- [ ] رفع آخر تعديلات page-turn وpage-curl إلى GitHub على `main`
+- [ ] التأكد من أن Vercel أنشأ Production Deployment من نفس commit
+- [ ] حفظ checkpoint وتسليم SHA والرابط النهائي
