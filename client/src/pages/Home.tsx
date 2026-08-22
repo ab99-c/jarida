@@ -251,7 +251,7 @@ export default function Home() {
     window.setTimeout(() => {
       setCurrentPage(nextPageIndex);
       setIsTurning(false);
-    }, 760);
+    }, 380);
   };
 
   const nextPage = () => requestPageChange(1);
@@ -326,7 +326,10 @@ export default function Home() {
             requestPageChange(touch.clientX - bounds.left > bounds.width / 2 ? 1 : -1);
           }}
         >
-          <div className={`jarida-turning-page ${isTurning ? `is-turning turn-${turnDirection}` : ""}`}>
+          <div
+            className={`jarida-turning-page ${isTurning ? `is-turning turn-${turnDirection}` : ""}`}
+            aria-busy={isTurning}
+          >
             <div className="jarida-turning-face jarida-turning-front relative grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-start lg:divide-x lg:divide-x-reverse lg:divide-[#d3c49b]">
           
           {/* Center Book Spine Shadow (Desktop only) */}

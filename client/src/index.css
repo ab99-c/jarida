@@ -388,3 +388,82 @@ body {
     animation: none;
   }
 }
+
+/* Realistic curled edge overlay for the reference-style turn */
+.jarida-turning-page {
+  isolation: isolate;
+}
+
+.jarida-turning-page::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 11%;
+  z-index: 30;
+  pointer-events: none;
+  opacity: 0;
+  transform-origin: left center;
+  background: linear-gradient(90deg, rgba(255, 252, 235, 0.86), rgba(190, 161, 111, 0.34) 42%, rgba(49, 32, 13, 0.16));
+  box-shadow: 12px 0 22px rgba(48, 30, 10, 0.2);
+}
+
+.jarida-turning-page::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 29;
+  pointer-events: none;
+  opacity: 0;
+  background: linear-gradient(90deg, rgba(42, 26, 8, 0.22), transparent 18%, transparent 82%, rgba(42, 26, 8, 0.16));
+  mix-blend-mode: multiply;
+}
+
+.jarida-turning-page.is-turning::before {
+  animation: jarida-curl-edge 760ms cubic-bezier(0.22, 0.72, 0.2, 1) both;
+}
+
+.jarida-turning-page.is-turning::after {
+  animation: jarida-curl-shadow 760ms cubic-bezier(0.22, 0.72, 0.2, 1) both;
+}
+
+@keyframes jarida-curl-edge {
+  0% { opacity: 0; transform: translateX(0) rotateY(0deg) scaleX(0.6); }
+  18% { opacity: 0.8; transform: translateX(0) rotateY(-28deg) scaleX(0.8); }
+  52% { opacity: 1; transform: translateX(44%) rotateY(-68deg) scaleX(1.05); }
+  82% { opacity: 0.65; transform: translateX(92%) rotateY(-28deg) scaleX(0.82); }
+  100% { opacity: 0; transform: translateX(100%) rotateY(0deg) scaleX(0.6); }
+}
+
+@keyframes jarida-curl-shadow {
+  0% { opacity: 0; transform: translateX(0); }
+  30% { opacity: 0.32; transform: translateX(8%); }
+  55% { opacity: 0.52; transform: translateX(20%); }
+  100% { opacity: 0; transform: translateX(36%); }
+}
+
+.jarida-turning-page.is-turning.turn-prev::before {
+  left: auto;
+  right: 0;
+  transform-origin: right center;
+  background: linear-gradient(-90deg, rgba(255, 252, 235, 0.86), rgba(190, 161, 111, 0.34) 42%, rgba(49, 32, 13, 0.16));
+}
+
+.jarida-turning-page.is-turning.turn-prev::after {
+  background: linear-gradient(-90deg, rgba(42, 26, 8, 0.22), transparent 18%, transparent 82%, rgba(42, 26, 8, 0.16));
+}
+
+@media (max-width: 1023px) {
+  .jarida-turning-page::before {
+    width: 18%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .jarida-turning-page.is-turning::before,
+  .jarida-turning-page.is-turning::after {
+    animation: none;
+    opacity: 0;
+  }
+}
