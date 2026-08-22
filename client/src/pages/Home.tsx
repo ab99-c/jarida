@@ -159,6 +159,8 @@ export default function Home() {
   const [isMuted, setIsMuted] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
+  const [isTurning, setIsTurning] = useState(false);
+  const [turnDirection, setTurnDirection] = useState<"next" | "prev">("next");
 
   const { data: dailyData, refetch } = trpc.jarida.getDailyEdition.useQuery();
   const refreshMutation = trpc.jarida.refreshFeed.useMutation({
@@ -232,26 +234,28 @@ export default function Home() {
     if (mediaQuery.matches) return;
 
     const interval = setInterval(() => {
-      setCurrentPage(prev => (prev < totalPages - 1 ? prev + 1 : 0));
-      playFlipSound();
+      requestPageChange(currentPage < totalPages - 1 ? 1 : -currentPage);
     }, 10000);
 
     return () => clearInterval(interval);
-  }, [isAutoPlaying, totalPages, isMuted]);
+  }, [isAutoPlaying, totalPages, isMuted, currentPage, isTurning]);
 
-  const nextPage = () => {
-    if (currentPage < totalPages - 1) {
-      playFlipSound();
-      setCurrentPage(prev => prev + 1);
-    }
+  const requestPageChange = (step: number) => {
+    if (isTurning || totalPages <= 1) return;
+    const nextPageIndex = Math.max(0, Math.min(totalPages - 1, currentPage + step));
+    if (nextPageIndex === currentPage) return;
+
+    setTurnDirection(step > 0 ? "next" : "prev");
+    setIsTurning(true);
+    playFlipSound();
+    window.setTimeout(() => {
+      setCurrentPage(nextPageIndex);
+      setIsTurning(false);
+    }, 760);
   };
 
-  const prevPage = () => {
-    if (currentPage > 0) {
-      playFlipSound();
-      setCurrentPage(prev => prev - 1);
-    }
-  };
+  const nextPage = () => requestPageChange(1);
+  const prevPage = () => requestPageChange(-1);
 
   const currentItems = processedArticles.slice(
     currentPage * itemsPerPage,
@@ -308,7 +312,22 @@ export default function Home() {
         </div>
 
         {/* Content Spread (Double Page on Desktop/Laptop, Single Page on Mobile & Tablet) */}
-        <div className="relative grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 flex-grow items-start lg:divide-x lg:divide-x-reverse lg:divide-[#d3c49b]">
+        <div
+          className="jarida-spread relative grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 flex-grow items-start lg:divide-x lg:divide-x-reverse lg:divide-[#d3c49b]"
+          onClick={(event) => {
+            const target = event.target as HTMLElement;
+            if (target.closest("button, a, input, textarea")) return;
+            const bounds = event.currentTarget.getBoundingClientRect();
+            requestPageChange(event.clientX - bounds.left > bounds.width / 2 ? 1 : -1);
+          }}
+          onTouchEnd={(event) => {
+            const touch = event.changedTouches[0];
+            const bounds = event.currentTarget.getBoundingClientRect();
+            requestPageChange(touch.clientX - bounds.left > bounds.width / 2 ? 1 : -1);
+          }}
+        >
+          <div className={`jarida-turning-page ${isTurning ? `is-turning turn-${turnDirection}` : ""}`}>
+            <div className="jarida-turning-face jarida-turning-front relative grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-start lg:divide-x lg:divide-x-reverse lg:divide-[#d3c49b]">
           
           {/* Center Book Spine Shadow (Desktop only) */}
           <div className="hidden lg:block absolute top-0 bottom-0 right-1/2 w-8 bg-gradient-to-l from-black/10 to-transparent pointer-events-none -mr-4 z-10" />
@@ -359,6 +378,12 @@ export default function Home() {
               <p className="text-base">تابعوا المزيد من المستجدات والتقارير في الإصدارات القادمة.</p>
             </div>
           )}
+            </div>
+            <div className="jarida-turning-face jarida-turning-back" aria-hidden="true">
+              <span className="text-sm md:text-base tracking-[0.25em]">جريدة الأفق</span>
+              <span className="text-xs mt-2 opacity-70">إصدار يومي مستقل</span>
+            </div>
+          </div>
         </div>
 
         {/* Navigation Arrows & Footer */}
