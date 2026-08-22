@@ -8,3 +8,7 @@
 - [x] تشغيل Vitest وBuild والتقاط screenshots للتحقق على desktop وmobile
 - [x] توثيق أن محلل الفيديو الآلي لم يكتمل، مع الاعتماد على المرجع المرئي المتاح بدل ادعاء تحليل غير حاصل
 - [x] حفظ checkpoint جديد بعد ترقية حركة الورق وإرسال تقرير نهائي
+
+- [ ] رفع آخر تعديلات page-turn وpage-curl إلى GitHub على `main`
+- [ ] التأكد من أن Vercel أنشأ Production Deployment من نفس commit
+- [ ] حفظ checkpoint وتسليم SHA والرابط النهائي
