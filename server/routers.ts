@@ -1,12 +1,12 @@
-import { COOKIE_NAME } from "@shared/const";
-import { getSessionCookieOptions } from "./_core/cookies";
-import { systemRouter } from "./_core/systemRouter";
-import { publicProcedure, router } from "./_core/trpc";
-import { getDb } from "./db";
-import { articles, comments } from "../drizzle/schema";
+import { COOKIE_NAME } from "../shared/const.js";
+import { getSessionCookieOptions } from "./_core/cookies.js";
+import { systemRouter } from "./_core/systemRouter.js";
+import { publicProcedure, router } from "./_core/trpc.js";
+import { getDb } from "./db.js";
+import { articles, comments } from "../drizzle/schema.js";
 import { desc, eq } from "drizzle-orm";
 import { z } from "zod";
-import { fetchAndStoreRSS } from "./services/rss";
+import { fetchAndStoreRSS } from "./services/rss.js";
 
 export const appRouter = router({
   system: systemRouter,
