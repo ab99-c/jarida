@@ -75,9 +75,14 @@
 - [x] التحقق من mobile dual-page على 360px و430px مع لقطات قابلة للمراجعة — لقطات 360px و430px، ودليل Chromium لكل المقاسات 360/390/430
 - [x] توسيع تحقق Chromium على mobile لظهور المشاركة والتعليقات والحالة الآمنة — واتساب وفيسبوك وقسم التعليقات وtextarea المعطلة ونسخ الرابط نجحت على المقاسات الثلاثة
 - [x] إعادة تشغيل Vitest بعد تحديث اختبار mobile dual-page — 7 ملفات و13 اختباراً نجحوا
-- [ ] التحقق من أن GitHub `ab99-c/jarida` مربوط بمشروع Vercel الصحيح وأن آخر commit `c1cc5b7` وصل إلى Production
-- [ ] تشخيص سبب عدم ظهور آخر نسخة في Vercel وإصلاح إعدادات الربط أو deployment عند الحاجة
-- [ ] إعادة فحص رابط Vercel وProduction bundle بعد الإصلاح وتوثيق النتيجة
+- [x] التحقق من أن GitHub `ab99-c/jarida` مربوط بمشروع Vercel الصحيح وأن آخر commit `e965359` وصل إلى Production — GitHub سجّل Vercel checks ناجحة لمشروعي `jarida` و`jarida-live`
+- [x] تشخيص سبب عدم ظهور آخر نسخة في Vercel وإصلاح إعدادات الربط أو deployment عند الحاجة — Vercel كان يبني نسخة فيها أخطاء TypeScript؛ تم إصلاحها ثم شغّل push إلى GitHub deployments ناجحة، بينما لوحة المشروع نفسها لم تُفتح من جلسة المتصفح
+- [x] إعادة فحص رابط Vercel وProduction bundle بعد الإصلاح وتوثيق النتيجة — HTTP 200، HTML صحيح، asset جديد `index-DSbjz5Nw.js`، وCSS يحتوي `1400ms` و`jarida-immersive-page-turn`
 - [x] إصلاح فشل Vercel Build في `server/routers.ts` و`server/_core/cookies.ts`: clearCookie وprotocol وheaders وأنواع cookie options — تم توحيد SessionCookieOptions وعزل clearCookie بعقد Express runtime متوافق
 - [x] تشغيل TypeScript check وVitest وproduction build بعد إصلاح أخطاء Vercel — `pnpm check` و13 اختبار Vitest و`pnpm build` نجحوا
-- [ ] رفع إصلاح Build إلى GitHub والتحقق من deployment وProduction في Vercel
+- [x] رفع إصلاح Build إلى GitHub والتحقق من deployment وProduction في Vercel — commit `e965359`، وVercel checks `Deployment has completed` بحالة success
+- [ ] تسجيل الدخول إلى حساب/فريق Vercel الصحيح الذي يحتوي `jarida-tan` أو تزويد رابط المشروع المباشر ثم التحقق من Git integration وProduction branch — GitHub status أثبت deployments ناجحة، لكن دخول لوحة Vercel لم يكتمل
+- [x] إعادة فحص `jarida-tan.vercel.app` بعد commit `e965359` حتى يظهر bundle جديد أو Source commit مطابق وتوثيق SHA وasset الجديد — bundle تبدل من `index-Bwmt1Shh.js` إلى `index-DSbjz5Nw.js` بعد push
+- [x] توثيق ما إذا كان المطلوب redeploy يدوي أو إصلاح Git integration داخل مشروع Vercel الحالي بعد الوصول للحساب الصحيح — لا حاجة لـredeploy يدوي؛ push إلى GitHub شغّل Vercel تلقائياً ونجح
+- [ ] تسجيل الدخول فعلياً إلى لوحة Vercel أو فتح رابط المشروع `jarida-tan` مباشرة، ثم توثيق repository المرتبط وProduction branch من إعدادات المشروع
+- [ ] توثيق اسم مشروع Vercel والدومين الذي استقبل commit `e965359` من داخل Vercel dashboard أو deployment URL المباشر
