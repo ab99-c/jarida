@@ -9,6 +9,15 @@ const parser = new Parser({
   },
 });
 
+async function fetchFeed(url: string) {
+  const response = await fetch(url, {
+    headers: { "user-agent": "Mozilla/5.0 JaridaLive/1.0" },
+    signal: AbortSignal.timeout(5000),
+  });
+  if (!response.ok) throw new Error(`RSS HTTP ${response.status}`);
+  return parser.parseString(await response.text());
+}
+
 const RSS_FEEDS = [
   { name: "الجزيرة نت", url: "https://www.aljazeera.net/rss", category: "سياسة ودولي" },
   { name: "هسبريس", url: "https://www.hespress.com/feed", category: "وطني" },
@@ -28,7 +37,7 @@ export async function fetchAndStoreRSS() {
     try {
       console.log(`[RSS] Fetching feed: ${feedInfo.name} (${feedInfo.url})`);
       const feed = await Promise.race([
-        parser.parseURL(feedInfo.url),
+        fetchFeed(feedInfo.url),
         new Promise<never>((_, reject) => setTimeout(() => reject(new Error("RSS request timeout")), 2500)),
       ]);
 
@@ -106,7 +115,7 @@ export async function fetchLatestRSS() {
   for (const feedInfo of RSS_FEEDS) {
     try {
       const feed = await Promise.race([
-        parser.parseURL(feedInfo.url),
+        fetchFeed(feedInfo.url),
         new Promise<never>((_, reject) => setTimeout(() => reject(new Error("RSS request timeout")), 2500)),
       ]);
       for (const item of feed.items || []) {
