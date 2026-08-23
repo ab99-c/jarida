@@ -240,77 +240,6 @@ body {
   z-index: 20;
 }
 
-.jarida-spread.is-turning {
-  animation: jarida-page-turn 760ms cubic-bezier(0.22, 0.72, 0.2, 1) both;
-  transform-origin: 50% 50%;
-}
-
-.jarida-spread.is-turning.turn-prev {
-  animation-name: jarida-page-turn-prev;
-}
-
-@keyframes jarida-page-turn {
-  0% {
-    transform: rotateY(0deg) translateZ(0);
-    filter: drop-shadow(0 12px 16px rgba(44, 27, 9, 0.04));
-  }
-  42% {
-    transform: rotateY(-7deg) translateZ(18px) scaleX(0.985);
-    filter: drop-shadow(18px 18px 22px rgba(44, 27, 9, 0.24));
-  }
-  100% {
-    transform: rotateY(0deg) translateZ(0);
-    filter: drop-shadow(0 12px 16px rgba(44, 27, 9, 0.04));
-  }
-}
-
-@keyframes jarida-page-turn-prev {
-  0% {
-    transform: rotateY(0deg) translateZ(0);
-    filter: drop-shadow(0 12px 16px rgba(44, 27, 9, 0.04));
-  }
-  42% {
-    transform: rotateY(7deg) translateZ(18px) scaleX(0.985);
-    filter: drop-shadow(-18px 18px 22px rgba(44, 27, 9, 0.24));
-  }
-  100% {
-    transform: rotateY(0deg) translateZ(0);
-    filter: drop-shadow(0 12px 16px rgba(44, 27, 9, 0.04));
-  }
-}
-
-@media (max-width: 1023px) {
-  .jarida-spread::after {
-    display: none;
-  }
-
-  .jarida-spread.is-turning {
-    animation-name: jarida-mobile-page-turn;
-  }
-
-  .jarida-spread.is-turning.turn-prev {
-    animation-name: jarida-mobile-page-turn-prev;
-  }
-}
-
-@keyframes jarida-mobile-page-turn {
-  0% { transform: translateX(0) rotateZ(0deg); opacity: 1; }
-  45% { transform: translateX(-18px) rotateZ(-1.2deg); opacity: 0.72; filter: drop-shadow(14px 16px 18px rgba(44, 27, 9, 0.24)); }
-  100% { transform: translateX(0) rotateZ(0deg); opacity: 1; }
-}
-
-@keyframes jarida-mobile-page-turn-prev {
-  0% { transform: translateX(0) rotateZ(0deg); opacity: 1; }
-  45% { transform: translateX(18px) rotateZ(1.2deg); opacity: 0.72; filter: drop-shadow(-14px 16px 18px rgba(44, 27, 9, 0.24)); }
-  100% { transform: translateX(0) rotateZ(0deg); opacity: 1; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .jarida-spread.is-turning {
-    animation: none;
-  }
-}
-
 /* Real two-sided page-turn layer */
 .jarida-spread {
   display: block;
@@ -357,7 +286,8 @@ body {
 }
 
 .jarida-turning-page.is-turning {
-  animation: jarida-real-page-turn 760ms cubic-bezier(0.22, 0.72, 0.2, 1) both;
+  animation: jarida-real-page-turn 980ms cubic-bezier(0.2, 0.72, 0.18, 1) both;
+  will-change: transform, filter;
 }
 
 .jarida-turning-page.is-turning.turn-prev {
@@ -366,13 +296,13 @@ body {
 
 @keyframes jarida-real-page-turn {
   0% { transform: rotateY(0deg); filter: drop-shadow(0 10px 10px rgba(45, 29, 10, 0.04)); }
-  48% { transform: rotateY(-180deg); filter: drop-shadow(20px 18px 24px rgba(45, 29, 10, 0.28)); }
+  50% { transform: rotateY(-180deg); filter: drop-shadow(26px 22px 30px rgba(45, 29, 10, 0.34)); }
   100% { transform: rotateY(0deg); filter: drop-shadow(0 10px 10px rgba(45, 29, 10, 0.04)); }
 }
 
 @keyframes jarida-real-page-turn-prev {
   0% { transform: rotateY(0deg); filter: drop-shadow(0 10px 10px rgba(45, 29, 10, 0.04)); }
-  48% { transform: rotateY(180deg); filter: drop-shadow(-20px 18px 24px rgba(45, 29, 10, 0.28)); }
+  50% { transform: rotateY(180deg); filter: drop-shadow(-26px 22px 30px rgba(45, 29, 10, 0.34)); }
   100% { transform: rotateY(0deg); filter: drop-shadow(0 10px 10px rgba(45, 29, 10, 0.04)); }
 }
 
@@ -421,11 +351,12 @@ body {
 }
 
 .jarida-turning-page.is-turning::before {
-  animation: jarida-curl-edge 760ms cubic-bezier(0.22, 0.72, 0.2, 1) both;
+  animation: jarida-curl-edge 980ms cubic-bezier(0.2, 0.72, 0.18, 1) both;
+  animation-delay: 0ms;
 }
 
 .jarida-turning-page.is-turning::after {
-  animation: jarida-curl-shadow 760ms cubic-bezier(0.22, 0.72, 0.2, 1) both;
+  animation: jarida-curl-shadow 980ms cubic-bezier(0.2, 0.72, 0.18, 1) both;
 }
 
 @keyframes jarida-curl-edge {

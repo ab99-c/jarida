@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { formatArabicEditionDate } from "@shared/date";
 import { Volume2, VolumeX, RefreshCw, ChevronLeft, ChevronRight, Share2, MessageSquare, Send, Check } from "lucide-react";
+import { PAGE_TURN_DURATION_MS, PAGE_TURN_MIDPOINT_MS } from "./pageTurnTiming";
 
 function ArticleComments({ article }: { article: any }) {
   const [authorName, setAuthorName] = useState("");
@@ -228,10 +229,13 @@ export default function Home() {
     setTurnDirection(step > 0 ? "next" : "prev");
     setIsTurning(true);
     playFlipSound();
+    // تبديل المقالات عند محور الوسط، ثم نترك الورقة تكمل رجوعها الطبيعي قبل إزالة class.
     window.setTimeout(() => {
       setCurrentPage(nextPageIndex);
+    }, PAGE_TURN_MIDPOINT_MS);
+    window.setTimeout(() => {
       setIsTurning(false);
-    }, 380);
+    }, PAGE_TURN_DURATION_MS);
   };
 
   const nextPage = () => requestPageChange(1);
