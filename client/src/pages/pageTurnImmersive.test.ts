@@ -8,11 +8,17 @@ describe("immersive page sheet implementation", () => {
 
   it("defines a sheet layer with front/back faces and a center-axis turn", () => {
     expect(home).toContain("data-jarida-release=\"jarida-immersive-83ae373f\"");
+    expect(home).toContain("data-jarida-spread-mode=\"paired-articles\"");
     expect(home).toContain("TurningPagePreview");
-    expect(home).toContain("const itemsPerPage = 2;");
+    expect(home).toContain("const ARTICLES_PER_SPREAD = 2;");
+    expect(home).toContain("data-page-slot={idx === 0 ? \"right\" : \"left\"}");
+    expect(home).toContain("className=\"jarida-empty-page");
+    expect(home).toContain("aria-label=\"صفحة فارغة\"");
     expect(home).toContain("grid grid-cols-2 gap-0 lg:gap-12");
     expect(home).toContain("const turningSheetFromItems = [");
     expect(home).toContain("const turningSheetToItems = [");
+    expect(home).toContain("كل spread فيه جوج صفحات حقيقيين");
+    expect(home).toContain("dir=\"rtl\"");
     expect(home).toContain("jarida-turning-face jarida-turning-front");
     expect(home).toContain("jarida-turning-face jarida-turning-back");
     expect(css).toContain(".jarida-static-spread");

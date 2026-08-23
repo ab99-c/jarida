@@ -12,6 +12,7 @@ EDITION = {
         {"id": "mock-1", "title": "عنوان الصفحة الأولى", "summary": "محتوى الصفحة الأولى للتحقق.", "content": "تفاصيل الصفحة الأولى.", "source": "اختبار", "publishedAt": "2026-08-23T08:00:00.000Z", "imageUrl": None},
         {"id": "mock-2", "title": "عنوان الصفحة الثانية", "summary": "محتوى الصفحة الثانية للتحقق.", "content": "تفاصيل الصفحة الثانية.", "source": "اختبار", "publishedAt": "2026-08-23T09:00:00.000Z", "imageUrl": None},
         {"id": "mock-3", "title": "عنوان الصفحة الثالثة", "summary": "محتوى الصفحة الثالثة للتحقق.", "content": "تفاصيل الصفحة الثالثة.", "source": "اختبار", "publishedAt": "2026-08-23T10:00:00.000Z", "imageUrl": None},
+        {"id": "mock-4", "title": "عنوان الصفحة الرابعة", "summary": "محتوى الصفحة الرابعة للتحقق.", "content": "تفاصيل الصفحة الرابعة.", "source": "اختبار", "publishedAt": "2026-08-23T11:00:00.000Z", "imageUrl": None},
     ],
 }
 
@@ -37,7 +38,7 @@ def image_difference(first_path, second_path):
     return sum(ImageStat.Stat(diff).mean) / 3
 
 
-def turn_and_capture(page, button_name, prefix):
+def turn_and_capture(page, button_name, prefix, expected_left_article_id):
     direction = "next" if button_name == "التالي" else "prev"
     before_path = OUT_DIR / f"{prefix}-before.png"
     during_path = OUT_DIR / f"{prefix}-during.png"
@@ -64,7 +65,9 @@ def turn_and_capture(page, button_name, prefix):
     assert overlay.locator(".jarida-turning-back").evaluate("element => getComputedStyle(element).backfaceVisibility") == "hidden"
     page.screenshot(path=str(during_path))
     assert during_path.exists() and during_path.stat().st_size > 1024, f"{prefix}: during evidence missing"
-    page.wait_for_timeout(1260)
+    page.wait_for_timeout(480)
+    assert page.locator(f'[data-page-slot="left"][data-article-id="{expected_left_article_id}"]').count() == 1, f"{prefix}: left page did not swap after midpoint"
+    page.wait_for_timeout(660)
     assert page.locator(".jarida-turning-page").count() == 0, f"{prefix}: overlay remained after 1400ms"
     page.screenshot(path=str(after_path))
     assert after_path.exists() and after_path.stat().st_size > 1024, f"{prefix}: after evidence missing"
@@ -82,6 +85,8 @@ with sync_playwright() as playwright:
     install_mock(desktop)
     wait_for_ready(desktop)
     assert desktop.get_by_text("عنوان الصفحة الأولى").count() >= 1
+    assert desktop.locator('[data-page-slot="right"][data-article-id="mock-1"]').count() == 1
+    assert desktop.locator('[data-page-slot="left"][data-article-id="mock-2"]').count() == 1
     assert desktop.locator("button").filter(has_text="واتساب").count() >= 1
     assert desktop.locator("button").filter(has_text="فيسبوك").count() >= 1
     assert desktop.get_by_text("تعليقات القراء", exact=False).count() >= 1
@@ -90,14 +95,20 @@ with sync_playwright() as playwright:
     copy_buttons.first.click()
     assert desktop.locator("input").first.is_disabled()
     assert desktop.locator("textarea").first.is_disabled()
-    next_animation, next_transform, next_evidence = turn_and_capture(desktop, "التالي", "desktop-next")
+    next_animation, next_transform, next_evidence = turn_and_capture(desktop, "التالي", "desktop-next", "mock-4")
     assert next_animation == "jarida-immersive-page-turn"
     assert "matrix3d" in next_transform
     assert desktop.get_by_text("عنوان الصفحة الثالثة").count() >= 1
-    prev_animation, prev_transform, prev_evidence = turn_and_capture(desktop, "السابق", "desktop-prev")
+    assert desktop.get_by_text("عنوان الصفحة الرابعة").count() >= 1
+    assert desktop.locator('[data-page-slot="right"][data-article-id="mock-3"]').count() == 1
+    assert desktop.locator('[data-page-slot="left"][data-article-id="mock-4"]').count() == 1
+    prev_animation, prev_transform, prev_evidence = turn_and_capture(desktop, "السابق", "desktop-prev", "mock-2")
     assert prev_animation == "jarida-immersive-page-turn-prev"
     assert "matrix3d" in prev_transform or "matrix" in prev_transform
     assert desktop.get_by_text("عنوان الصفحة الأولى").count() >= 1
+    assert desktop.get_by_text("عنوان الصفحة الثانية").count() >= 1
+    assert desktop.locator('[data-page-slot="right"][data-article-id="mock-1"]').count() == 1
+    assert desktop.locator('[data-page-slot="left"][data-article-id="mock-2"]').count() == 1
 
     mobile_results = []
     for mobile_width, mobile_height in [(360, 800), (390, 844), (430, 932)]:
@@ -106,19 +117,27 @@ with sync_playwright() as playwright:
         wait_for_ready(mobile)
         assert mobile.get_by_text("عنوان الصفحة الأولى").count() >= 1
         assert mobile.get_by_text("عنوان الصفحة الثانية").count() >= 1
+        assert mobile.locator('[data-page-slot="right"][data-article-id="mock-1"]').count() == 1
+        assert mobile.locator('[data-page-slot="left"][data-article-id="mock-2"]').count() == 1
         assert mobile.locator("button").filter(has_text="واتساب").count() >= 1
         assert mobile.locator("button").filter(has_text="فيسبوك").count() >= 1
         assert mobile.get_by_text("تعليقات القراء", exact=False).count() >= 1
         assert mobile.locator("textarea").first.is_disabled()
         mobile.get_by_role("button", name="نسخ الرابط").first.click()
-        mobile_next_animation, mobile_next_transform, mobile_next_evidence = turn_and_capture(mobile, "التالي", f"mobile-{mobile_width}-next")
+        mobile_next_animation, mobile_next_transform, mobile_next_evidence = turn_and_capture(mobile, "التالي", f"mobile-{mobile_width}-next", "mock-4")
         assert mobile_next_animation == "jarida-immersive-page-turn"
         assert "matrix3d" in mobile_next_transform
         assert mobile.get_by_text("عنوان الصفحة الثالثة").count() >= 1
-        mobile_prev_animation, mobile_prev_transform, mobile_prev_evidence = turn_and_capture(mobile, "السابق", f"mobile-{mobile_width}-prev")
+        assert mobile.get_by_text("عنوان الصفحة الرابعة").count() >= 1
+        assert mobile.locator('[data-page-slot="right"][data-article-id="mock-3"]').count() == 1
+        assert mobile.locator('[data-page-slot="left"][data-article-id="mock-4"]').count() == 1
+        mobile_prev_animation, mobile_prev_transform, mobile_prev_evidence = turn_and_capture(mobile, "السابق", f"mobile-{mobile_width}-prev", "mock-2")
         assert mobile_prev_animation == "jarida-immersive-page-turn-prev"
         assert "matrix3d" in mobile_prev_transform
         assert mobile.get_by_text("عنوان الصفحة الأولى").count() >= 1
+        assert mobile.get_by_text("عنوان الصفحة الثانية").count() >= 1
+        assert mobile.locator('[data-page-slot="right"][data-article-id="mock-1"]').count() == 1
+        assert mobile.locator('[data-page-slot="left"][data-article-id="mock-2"]').count() == 1
         mobile_results.append({"width": mobile_width, "height": mobile_height, "next": mobile_next_evidence, "prev": mobile_prev_evidence})
         mobile.close()
 

@@ -81,8 +81,14 @@
 - [x] إصلاح فشل Vercel Build في `server/routers.ts` و`server/_core/cookies.ts`: clearCookie وprotocol وheaders وأنواع cookie options — تم توحيد SessionCookieOptions وعزل clearCookie بعقد Express runtime متوافق
 - [x] تشغيل TypeScript check وVitest وproduction build بعد إصلاح أخطاء Vercel — `pnpm check` و13 اختبار Vitest و`pnpm build` نجحوا
 - [x] رفع إصلاح Build إلى GitHub والتحقق من deployment وProduction في Vercel — commit `e965359`، وVercel checks `Deployment has completed` بحالة success
-- [ ] تسجيل الدخول إلى حساب/فريق Vercel الصحيح الذي يحتوي `jarida-tan` أو تزويد رابط المشروع المباشر ثم التحقق من Git integration وProduction branch — GitHub status أثبت deployments ناجحة، لكن دخول لوحة Vercel لم يكتمل
+- [ ] تسجيل الدخول إلى حساب/فريق Vercel الصحيح الذي يحتوي `jarida-tan` أو تزويد رابط المشروع المباشر ثم التحقق من Git integration وProduction branch — لقطة Vercel أظهرت Overview بحالة Ready ومصدر `main` وcommit `e965359`، لكن إعدادات Git لم تُفتح
 - [x] إعادة فحص `jarida-tan.vercel.app` بعد commit `e965359` حتى يظهر bundle جديد أو Source commit مطابق وتوثيق SHA وasset الجديد — bundle تبدل من `index-Bwmt1Shh.js` إلى `index-DSbjz5Nw.js` بعد push
 - [x] توثيق ما إذا كان المطلوب redeploy يدوي أو إصلاح Git integration داخل مشروع Vercel الحالي بعد الوصول للحساب الصحيح — لا حاجة لـredeploy يدوي؛ push إلى GitHub شغّل Vercel تلقائياً ونجح
-- [ ] تسجيل الدخول فعلياً إلى لوحة Vercel أو فتح رابط المشروع `jarida-tan` مباشرة، ثم توثيق repository المرتبط وProduction branch من إعدادات المشروع
-- [ ] توثيق اسم مشروع Vercel والدومين الذي استقبل commit `e965359` من داخل Vercel dashboard أو deployment URL المباشر
+- [ ] تسجيل الدخول فعلياً إلى لوحة Vercel أو فتح رابط المشروع `jarida-tan` مباشرة، ثم توثيق repository المرتبط وProduction branch من إعدادات المشروع — Overview ظاهر، لكن Settings → Git مازالت تحتاج screenshot أو وصول مباشر
+- [x] توثيق اسم مشروع Vercel والدومين الذي استقبل commit `e965359` من داخل Vercel dashboard أو deployment URL المباشر — صفحة deployment أظهرت `Ready Latest` و`Production Current` وcommit `e965359` ومجال `jarida-live.vercel.app`
+- [ ] فتح Vercel Dashboard أو Settings → Git فعلياً واستخراج دليل واضح يثبت اسم المشروع والـrepository المرتبط والـProduction branch — نحتاج شاشة Settings → Git، لأن Overview وحدها لا تعرض repository
+- [x] توثيق deployment الذي استقبل commit `e965359` عبر صفحة Vercel قابلة للوصول أو دليل نصّي يربط commit بالمشروع والدومين مباشرة — لقطة صفحة deployment أثبتت `Ready Latest` و`Production Current` وsource `main` وcommit `e965359`
+- [x] إذا كان `jarida-tan.vercel.app` مختلفاً عن `jarida-live.vercel.app`، توثيق العلاقة بينهما داخل Vercel أو إبراز أن كليهما aliases/مشروعين مختلفين — صفحة deployment أظهرت assigned domains لـ`jarida-live`، بينما `jarida-tan` verified عملياً بنفس assets والmarkers؛ alias الدقيق غير ظاهر في اللقطة
+- [x] جعل كل تقليبة RTL تبدل الصفحة المقابلة بمقال جديد داخل spread ثابت بحال جريدة حقيقية — spread ثابت بجوج slots: اليمين واليسار، وكل next/prev يبدل المقالات بعد midpoint
+- [x] ترتيب المقالات في spreads متتابعة مع إبقاء front/back وpage-curl والتقليب التلقائي والتفاعل شغالين — `ARTICLES_PER_SPREAD = 2`، front/back، auto-flip، click/swipe محفوظين
+- [x] اختبار أن الصفحة اللي على اليسار كتتغير بعد midpoint بدون snap وأن الأخبار والتعليقات والمشاركة باقين خدامين — Chromium أثبت left swap بعد 700ms، matrix3d، 1400ms، social/comments على 360/390/430

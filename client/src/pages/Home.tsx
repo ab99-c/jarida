@@ -235,8 +235,8 @@ export default function Home() {
   // لا نعرضش أخباراً تجريبية أو قديمة عندما تكون الـAPI فارغة؛ الجريدة خاصها تبين حالة التحديث بوضوح.
   const processedArticles = Array.isArray(articles) ? articles : [];
 
-  const itemsPerPage = 2;
-  const totalPages = Math.ceil(processedArticles.length / itemsPerPage);
+  const ARTICLES_PER_SPREAD = 2;
+  const totalPages = Math.ceil(processedArticles.length / ARTICLES_PER_SPREAD);
 
   useEffect(() => {
     if (!isAutoPlaying) return;
@@ -256,8 +256,8 @@ export default function Home() {
     if (!turn) return;
     const nextPageIndex = turn.toPage;
 
-    const fromItems = processedArticles.slice(currentPage * itemsPerPage, (currentPage + 1) * itemsPerPage);
-    const toItems = processedArticles.slice(nextPageIndex * itemsPerPage, (nextPageIndex + 1) * itemsPerPage);
+    const fromItems = processedArticles.slice(currentPage * ARTICLES_PER_SPREAD, (currentPage + 1) * ARTICLES_PER_SPREAD);
+    const toItems = processedArticles.slice(nextPageIndex * ARTICLES_PER_SPREAD, (nextPageIndex + 1) * ARTICLES_PER_SPREAD);
     setTurningFromItems(fromItems);
     setTurningToItems(toItems);
     setTurningFromPage(currentPage);
@@ -296,18 +296,25 @@ export default function Home() {
   };
 
   const currentItems = processedArticles.slice(
-    currentPage * itemsPerPage,
-    (currentPage + 1) * itemsPerPage
+    currentPage * ARTICLES_PER_SPREAD,
+    (currentPage + 1) * ARTICLES_PER_SPREAD
   );
   const hasReachedContentSwap = isTurning && currentPage !== turningFromPage;
   const frontItems = isTurning && !hasReachedContentSwap ? turningFromItems : currentItems;
   const displayPageIndex = isTurning && !hasReachedContentSwap ? turningFromPage : currentPage;
-  // حتى فالهاتف كنقلبو غير نصف الصفحة اللي حدّ spine، باش يبقى spread جورنال مفتوح.
-  const turningSheetFromItems = [turningFromItems[turnDirection === "next" ? turningFromItems.length - 1 : 0]].filter(Boolean);
-  const turningSheetToItems = [turningToItems[turnDirection === "next" ? 0 : turningToItems.length - 1]].filter(Boolean);
+  // كل spread فيه جوج صفحات حقيقيين: الأولى على اليمين والثانية على اليسار.
+  // فالـnext كتدور صفحة اليمين للجهة اليسرى، وفالـprev كتدور صفحة اليسار بالعكس.
+  const turnedFromArticle = turnDirection === "next"
+    ? turningFromItems[0]
+    : turningFromItems[1] ?? turningFromItems[0];
+  const turnedToArticle = turnDirection === "next"
+    ? turningToItems[1] ?? turningToItems[0]
+    : turningToItems[0] ?? turningToItems[1];
+  const turningSheetFromItems = [turnedFromArticle].filter(Boolean);
+  const turningSheetToItems = [turnedToArticle].filter(Boolean);
 
   return (
-    <div data-jarida-release="jarida-immersive-83ae373f" className="min-h-screen bg-[#2c2416] text-[#2b2b2b] flex flex-col items-center justify-center p-2 md:p-6 select-none font-serif relative overflow-x-hidden">
+    <div data-jarida-release="jarida-immersive-83ae373f" data-jarida-spread-mode="paired-articles" className="min-h-screen bg-[#2c2416] text-[#2b2b2b] flex flex-col items-center justify-center p-2 md:p-6 select-none font-serif relative overflow-x-hidden">
       {/* Top minimal header controls */}
       <div className="absolute top-4 right-4 z-20 flex items-center gap-3 bg-[#f5e6cc]/90 backdrop-blur px-3 py-1.5 rounded-full shadow-md border border-[#d3c49b]">
         <button
@@ -358,6 +365,7 @@ export default function Home() {
         {/* Content Spread: double-page newspaper on desktop, tablet, and phone */}
         <div
           className="jarida-spread relative grid grid-cols-2 gap-0 lg:gap-12 flex-grow items-start divide-x divide-x-reverse divide-[#d3c49b]"
+          dir="rtl"
           onClick={(event) => {
             const target = event.target as HTMLElement;
             if (target.closest("button, a, input, textarea")) return;
@@ -395,7 +403,13 @@ export default function Home() {
           )}
 
           {frontItems.map((article: any, idx: number) => (
-            <div key={article.id || idx} id={`article-${article.id || idx}`} className="flex flex-col justify-between h-full px-2 md:px-6">
+            <div
+              key={article.id || idx}
+              id={`article-${article.id || idx}`}
+              data-page-slot={idx === 0 ? "right" : "left"}
+              data-article-id={article.id || idx}
+              className="flex flex-col justify-between h-full px-2 md:px-6"
+            >
               <div>
                 <div className="flex justify-between items-center text-[11px] text-[#775f3a] mb-2 font-sans font-bold">
                   <span className="bg-[#ebd9bc] px-2.5 py-0.5 rounded text-black border border-[#d3c49b]">
@@ -429,14 +443,14 @@ export default function Home() {
               </div>
               <div className="mt-6 pt-2 border-t border-[#e2d5b3] flex justify-between items-center text-xs text-[#776644] font-sans">
                 <span>جريدة الأفق الإلكترونية</span>
-                <span>صفحة {displayPageIndex * itemsPerPage + idx + 1} من {processedArticles.length}</span>
+                <span>صفحة {displayPageIndex * ARTICLES_PER_SPREAD + idx + 1} من {processedArticles.length}</span>
               </div>
             </div>
           ))}
 
-          {/* Fallback if single item on last spread */}
-          {!isMobile && frontItems.length === 1 && (
-            <div className="flex flex-col justify-center items-center h-full text-center p-8 text-[#998866] italic">
+          {/* الصفحة المقابلة تبقى ظاهرة حتى في آخر spread، بحال ورقة جريدة حقيقية. */}
+          {frontItems.length === 1 && (
+            <div data-page-slot="left" aria-label="صفحة فارغة" className="jarida-empty-page flex flex-col justify-center items-center h-full min-h-[18rem] text-center p-8 text-[#998866] italic">
               <p className="text-base">تابعوا المزيد من المستجدات والتقارير في الإصدارات القادمة.</p>
             </div>
           )}
