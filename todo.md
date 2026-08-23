@@ -68,3 +68,5 @@
 - [x] توثيق أسماء ملفات دليل Chromium وربطها صراحة بسلامة اتجاه RTL والحركة المستمرة — `desktop-next/prev` و`mobile-next/prev` لكل منها before/during/after، مع دليل auto-flip
 - [x] إضافة assertions تقارن فعلياً transform/state وملفات evidence بين before وduring وafter لكل مسار next وprev على desktop وmobile — فروق الصور before/during وduring/after تجاوزت 0.5 في جميع المسارات
 - [x] توثيق نتيجة المقارنة لكل ملف evidence وإثبات أن during متحركة وليست frame ثابتة وأن الوجه الخلفي غير مقلوب — Chromium سجّل ملفات next/prev desktop/mobile مع matrix3d واتجاهات RTL وbackface hidden
+- [ ] دفع إصلاح الحركة البطيئة RTL الأخير إلى GitHub `ab99-c/jarida` على `main`
+- [ ] التحقق من Vercel Production والرابط الحي بعد وصول آخر commit
