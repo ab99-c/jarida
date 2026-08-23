@@ -45,6 +45,8 @@
 - [x] فصل تبديل المحتوى عن حالة animation حتى تبقى الورقة متحركة إلى نهاية الدورة الكاملة
 - [x] ربط تحسينات spread بالحالة الفعلية أو تنظيف CSS غير المستخدم وإضافة تحقق لدورة كاملة
 - [x] إضافة تحقق قابل للمراجعة يثبت بقاء الحركة حتى نهاية 980ms بعد تبديل المحتوى عند 490ms — اختبار `pageTurnTiming.test.ts` نجح
-- [ ] دفع checkpoint `fa5ef149` إلى GitHub `ab99-c/jarida` على فرع `main` والتحقق من commit البعيد
-- [ ] التحقق من Production deployment في Vercel بعد مزامنة GitHub
-- [ ] تصحيح auto-sync ليدفع إلى remote `github` الصحيح في بيئة المشروع والتحقق من workflow
+- [x] دفع النسخة المحسّنة إلى GitHub `ab99-c/jarida` على `main` والتحقق من commit البعيد `718b6486808badbbf903a1b00c75384262ece7b0`
+- [x] التحقق من Vercel Production: الرابط يعرض HTML وواجهة Jarida Live، وbundle الإنتاج يحتوي page-turn الجديد (`980ms` و`jarida-real-page-turn`)؛ مشروع Vercel غير ظاهر في team المتاحة عبر الربط الحالي
+- [x] تصحيح auto-sync ليدفع إلى remote `github` الصحيح؛ workflow يستعمل `origin` المضمون داخل runner عبر patch مؤقت
+- [x] مراجعة workflow والتأكد من remote مضمون داخل GitHub Actions عبر استعمال `origin` في runner
+- [x] تشغيل GitHub Actions run جديد بنجاح — run `32649479559` على SHA `718b6486808badbbf903a1b00c75384262ece7b0`، وأنتج commit `603d2f47c27009020368917903d239b9e435bfef`
