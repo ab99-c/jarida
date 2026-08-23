@@ -57,5 +57,5 @@
 - [x] إضافة تحقق تفاعلي أقوى يثبت click أو swipe وتبديل المحتوى عند 490ms واستمرار طبقة الورقة حتى 980ms — helper tests وChromium click أثبتا وجود الورقة عند 140ms، ظهور الصفحة الجديدة بعد midpoint، وإزالة overlay في النهاية
 - [x] دفع checkpoint `83ae373f` وتعديلات الحركة immersive إلى GitHub `ab99-c/jarida` على `main` — commit البعيد `47c439af296ba991c7c24e4787c3faac98a0343f`
 - [x] التحقق من Production deployment في Vercel من نفس commit وفحص الرابط الحي — `jarida-tan.vercel.app` يرجع HTTP 200 وbundle الحي يحتوي selectors `jarida-static-spread` و`jarida-turning-page`؛ Vercel MCP لم يُظهر مشروع Jarida ضمن team الحالية
-- [ ] إثبات أن Vercel Production مرتبط صراحةً بالـcommit `47c439af296ba991c7c24e4787c3faac98a0343f` أو توثيق تعذر الوصول للربط
-- [ ] إضافة marker فريد قابل للفحص في النسخة المنشورة إذا تعذر استخراج deployment ID من Vercel
+- [x] إثبات ربط نسخة Production بالـrelease marker المرتبط بالـcommit الأخير `f43fdfacef50925cc78e9e40aba8c30413504031`؛ Vercel MCP لم يعط deployment ID، لكن marker ظهر في bundle الحي بعد التحديث
+- [x] إضافة marker فريد `jarida-immersive-83ae373f` وفحصه في bundle Vercel؛ ظهر في bundle `index-CVHG62Dq.js` بعد 4 محاولات، مع HTTP 200 من الرابط الحي

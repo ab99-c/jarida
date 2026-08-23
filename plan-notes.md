@@ -23,3 +23,7 @@
 ## دليل تفاعلي before/during
 
 اختبار Chromium فعلي على edition mock محلي (لا يغير RSS أو الإنتاج) ضغط زر `التالي` ونجح في إثبات: قبل الحركة لا توجد `.jarida-turning-page`، وبعد 140ms توجد طبقة واحدة `is-turning` باسم animation `jarida-immersive-page-turn` وبـ3D transform فعلي `matrix3d(...)`. لقطة `before.png` أظهرت spread ثنائي الصفحات، ولقطة `during.png` أظهرت الورقة واقفة قرب الـspine مع ظل وحافة مضاءة.
+
+## تحقق Vercel بعد رفع GitHub
+
+أداة ربط Vercel الحالية أظهرت team واحدة `team_1C1SXO5DZU7S5X3IUCeTyFvU` مرتبطة بمشروع GitHub مختلف هو `ab99-c/Azilal-Tourism`، ولم تُظهر مشروع Jarida. لذلك سيعتمد التحقق على فحص رابط الإنتاج `https://jarida-tan.vercel.app/` وعلى مطابقة محتوى الـbundle والرؤوس، مع توضيح أن معلومات مشروع Vercel المرتبط غير متاحة عبر هذا الربط.
