@@ -34,13 +34,5 @@ jobs:
       - name: Run automated sync script (using origin remote for CI)
         env:
           CI: "true"
-        run: |
-          # In GitHub Actions, origin is the default remote
-          node -e '
-            import fs from "fs";
-            import { execSync } from "child_process";
-            const script = fs.readFileSync("scripts/auto-sync.mjs", "utf8");
-            const patched = script.replace("git push github main", "git push origin main");
-            fs.writeFileSync("scripts/auto-sync.mjs", patched);
-          '
-          pnpm auto:sync
+          GIT_PUSH_REMOTE: origin
+        run: pnpm auto:sync

@@ -50,3 +50,4 @@
 - [x] تصحيح auto-sync ليدفع إلى remote `github` الصحيح؛ workflow يستعمل `origin` المضمون داخل runner عبر patch مؤقت
 - [x] مراجعة workflow والتأكد من remote مضمون داخل GitHub Actions عبر استعمال `origin` في runner
 - [x] تشغيل GitHub Actions run جديد بنجاح — run `32649479559` على SHA `718b6486808badbbf903a1b00c75384262ece7b0`، وأنتج commit `603d2f47c27009020368917903d239b9e435bfef`
+- [ ] جعل auto-sync يختار remote بشكل آمن: `github` محلياً و`origin` داخل GitHub Actions، مع تحديث الاختبار والـworkflow
