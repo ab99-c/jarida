@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
+import { formatArabicEditionDate } from "@shared/date";
 import { Volume2, VolumeX, RefreshCw, ChevronLeft, ChevronRight, Share2, MessageSquare, Send, Check } from "lucide-react";
 
 function ArticleComments({ article }: { article: any }) {
@@ -9,8 +10,11 @@ function ArticleComments({ article }: { article: any }) {
   const [errorMsg, setErrorMsg] = useState("");
 
   const articleId = article.id || 1;
-  const utils = trpc.useUtils();
-  const { data: comments = [], isLoading: isLoadingComments, isError: isErrorComments, refetch } = trpc.jarida.getComments.useQuery({ articleId });
+  const isPersistedArticle = typeof articleId === "number";
+  const { data: comments = [], isLoading: isLoadingComments, isError: isErrorComments, refetch } = trpc.jarida.getComments.useQuery(
+    { articleId: isPersistedArticle ? articleId : 0 },
+    { enabled: isPersistedArticle },
+  );
   
   const addCommentMutation = trpc.jarida.addComment.useMutation({
     onSuccess: () => {
@@ -28,6 +32,10 @@ function ArticleComments({ article }: { article: any }) {
     e.preventDefault();
     if (!authorName.trim() || !content.trim()) return;
     setErrorMsg("");
+    if (!isPersistedArticle) {
+      setErrorMsg("التعليقات غادي تتفعل منين يتسجل المقال في قاعدة البيانات.");
+      return;
+    }
     addCommentMutation.mutate({
       articleId,
       authorName: authorName.trim(),
@@ -105,12 +113,14 @@ function ArticleComments({ article }: { article: any }) {
             onChange={(e) => setAuthorName(e.target.value)}
             className="w-full text-xs px-2.5 py-1.5 rounded border border-[#c9b78e] bg-white text-black focus:outline-none focus:ring-1 focus:ring-[#8c7348]"
             required
+            disabled={!isPersistedArticle}
           />
           <textarea
             placeholder="اكتب تعليقك هنا..."
             value={content}
             onChange={(e) => setContent(e.target.value)}
             rows={2}
+            disabled={!isPersistedArticle}
             className="w-full text-xs px-2.5 py-1.5 rounded border border-[#c9b78e] bg-white text-black focus:outline-none focus:ring-1 focus:ring-[#8c7348] resize-none"
             required
           />
@@ -162,11 +172,17 @@ export default function Home() {
   const [isTurning, setIsTurning] = useState(false);
   const [turnDirection, setTurnDirection] = useState<"next" | "prev">("next");
 
-  const { data: dailyData, refetch } = trpc.jarida.getDailyEdition.useQuery();
+  const {
+    data: dailyData,
+    refetch,
+    isLoading: isDailyLoading,
+    isError: isDailyError,
+  } = trpc.jarida.getDailyEdition.useQuery();
   const refreshMutation = trpc.jarida.refreshFeed.useMutation({
     onSuccess: () => refetch(),
   });
   const articles = dailyData?.articles;
+  const editionDate = dailyData?.date ?? new Date();
 
   useEffect(() => {
     const handleResize = () => {
@@ -186,44 +202,8 @@ export default function Home() {
     } catch (e) {}
   };
 
-  const processedArticles = articles && articles.length > 0 ? articles : [
-    {
-      id: 1,
-      title: "تعزيز الحضور الدبلوماسي للمملكة على الساحة الدولية",
-      summary: "تشهد الدبلوماسية المغربية زخماً ملحوظاً بفضل الانتصارات المتتالية في ملف الصحراء المغربية، حيث يضاف اعتراف كولومبيا الأخير إلى سلسلة من المواقف الدولية الداعمة للوحدة الترابية للمملكة، مما يكرس وجاهة الطروحات المغربية ويعزز الاستقرار الإقليمي.",
-      content: "في خطوة تعكس عمق ومتانة العلاقات الثنائية، أعلنت بوغوتا رسمياً دعمها الكامل لمبادرة الحكم الذاتي تحت السيادة المغربية. وأكد المحللون أن هذا الموقف يمثل تحولاً استراتيجياً في أمريكا اللاتينية...",
-      source: "هسبريس",
-      publishedAt: new Date(),
-      imageUrl: "https://images.unsplash.com/photo-1541872703-74c5e44368f9?auto=format&fit=crop&w=800&q=80"
-    },
-    {
-      id: 2,
-      title: "انطلاقة قوية لموسم الفلاحة والري الحديث بالمغرب",
-      summary: "تطلق وزارة الفلاحة برامج جديدة لدعم السقي الموضعي واستعمال الطاقات المتجددة في الآبار الفلاحية لضمان الأمن المائي والغذائي لمواجهة تحديات الجفاف.",
-      content: "تعرف المناطق الفلاحية في سوس وسايس تعبئة شاملة لتنزيل الجيل الجديد من المشاريع المرتبطة الاقتصاد في الماء والتحول الرقمي الفلاحي...",
-      source: "الجزيرة نت",
-      publishedAt: new Date(),
-      imageUrl: "https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=800&q=80"
-    },
-    {
-      id: 3,
-      title: "معرض الكتاب الدولي بالرباط يستقطب آلاف الزوار",
-      summary: "سجل المعرض الدولي للنشر والكتاب رقماً قياسياً جديداً في عدد الزوار خلال الأيام الأولى، مع مشاركة واسعة لدور نشر عربية وعالمية وندوات فكرية كبرى.",
-      content: "يشكل المعرض هذه السنة ملتقى فريداً للمثقفين والمفكرين لمناقشة قضايا الراهن الثقافي العربي والعالمي...",
-      source: "مغرب 24",
-      publishedAt: new Date(),
-      imageUrl: "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?auto=format&fit=crop&w=800&q=80"
-    },
-    {
-      id: 4,
-      title: "آفاق واعدة للاقتصاد الرقمي والذكاء الاصطناعي",
-      summary: "الحكومة تعلن عن حزمة حوافز جديدة للشركات الناشئة المتخصصة في التكنولوجيا والذكاء الاصطناعي لجذب الاستثمارات الأجنبية وخلق فرص شغل للشباب.",
-      content: "تسعى المدن الذكية في الدار البيضاء ومراكش لتكون منصات إقليمية كبرى للابتكار الرقمي...",
-      source: "هسبريس",
-      publishedAt: new Date(),
-      imageUrl: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80"
-    }
-  ];
+  // لا نعرضش أخباراً تجريبية أو قديمة عندما تكون الـAPI فارغة؛ الجريدة خاصها تبين حالة التحديث بوضوح.
+  const processedArticles = Array.isArray(articles) ? articles : [];
 
   const itemsPerPage = isMobile ? 1 : 2;
   const totalPages = Math.ceil(processedArticles.length / itemsPerPage);
@@ -299,7 +279,7 @@ export default function Home() {
         {/* Masthead */}
         <div className="text-center border-b-2 border-black pb-4 mb-6">
           <div className="flex justify-between items-center text-xs text-[#555] mb-1 px-2 font-sans font-semibold">
-            <span>الثلاثاء، 18 غشت 2026</span>
+            <span>{formatArabicEditionDate(editionDate)}</span>
             <span>الإصدار اليومي الشامل</span>
             <span>العدد {currentPage + 1}</span>
           </div>
@@ -334,6 +314,27 @@ export default function Home() {
           
           {/* Center Book Spine Shadow (Desktop only) */}
           <div className="hidden lg:block absolute top-0 bottom-0 right-1/2 w-8 bg-gradient-to-l from-black/10 to-transparent pointer-events-none -mr-4 z-10" />
+
+          {currentItems.length === 0 && (
+            <div className="col-span-full min-h-[46vh] flex flex-col items-center justify-center text-center px-8 py-12 text-[#665533]">
+              <div className="border-y-2 border-[#b9a77a] py-7 max-w-xl">
+                <p className="text-xs tracking-[0.28em] font-sans font-bold text-[#8b7650] mb-3">الطبعة اليومية</p>
+                <h2 className="text-3xl md:text-5xl font-black text-[#211b12] mb-4">{isDailyLoading ? "جاري إعداد العدد..." : "العدد في طور التحديث"}</h2>
+                <p className="text-sm md:text-base leading-relaxed font-serif">
+                  {isDailyError
+                    ? "تعذر الوصول إلى خدمة الأخبار حالياً. عاود المحاولة بعد لحظات؛ لن نعرض محتوى قديماً على أنه عدد جديد."
+                    : "سيظهر هنا محتوى الأخبار فور اكتمال المزامنة اليومية."}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => refetch()}
+                  className="mt-5 border border-[#77613b] px-5 py-2 text-xs font-sans font-bold hover:bg-[#e6d4ae] transition cursor-pointer"
+                >
+                  إعادة تحميل العدد
+                </button>
+              </div>
+            </div>
+          )}
 
           {currentItems.map((article: any, idx: number) => (
             <div key={article.id || idx} id={`article-${article.id || idx}`} className="flex flex-col justify-between h-full px-2 md:px-6">

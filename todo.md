@@ -24,3 +24,20 @@
 - [x] حذف الملف الخاطئ `github/workflows/daily-sync.yml.` من GitHub main
 - [x] إعادة فحص شجرة المستودع وGitHub Actions بعد حذف الملف الخاطئ
 - [x] تصحيح التوثيق ليوضح أن المستخدم أنشأ الملف الصحيح والوكيل شغّله وراقبه
+- [x] تشخيص وإصلاح بقاء تاريخ الجريدة على 18 غشت رغم نجاح daily sync
+- [x] معالجة 500 في getDailyEdition بالإنتاج حتى ما ترجع الواجهة لبيانات قديمة عند تعطل قاعدة البيانات
+- [x] تحديد وإصلاح module المفقود في Vercel serverless الذي يسبب ERR_MODULE_NOT_FOUND
+- [x] توثيق بنية Vercel النهائية: `api/index.ts` يستعمل shared app، و`api/trpc/[path].ts` أصبح self-contained ويستورد router/context مباشرة
+- [x] مطابقة واجهة flipbook مع المرجع القديم مع الحفاظ على page-curl والresponsive — contact sheet موثق: frames 2–4 single-page portrait، وframe 1 page bent around center axis؛ desktop dual-page موثق
+- [x] إزالة أي محتوى ثابت قديم وربط المقالات بتاريخ وبيانات حيّة أو fallback معلن
+- [x] اختبار الشكل والمحتوى والتاريخ قبل الرفع — API/RSS بتاريخ 23 غشت، empty-state للتعليقات، paper spread، وpage-curl موثقة بوصف frames قابل للمراجعة
+- [x] إزالة import غير المحزوم لـ`server/vercelApp` من tRPC function وجعل Vercel route قابلاً للتشغيل مستقلاً
+- [x] تحويل الواجهة إلى شكل جورنال حقيقي: masthead وأعمدة وصور وصفحات ورقية بدل مظهر البطاقات
+- [x] إصلاح imports الداخلية التابعة لـ`server/routers` بامتدادات ESM كاملة حتى ينجح Vercel runtime
+- [x] إزالة alias `@shared/const` المتبقي من server/routers وعموم مسار Vercel
+- [x] إصلاح import `drizzle/schema` بلا امتداد داخل server/db حتى يكمل Vercel تحميل dependency chain
+- [x] إضافة جلب RSS مباشر عندما تكون قاعدة البيانات فارغة حتى يظهر محتوى حقيقي متجدد بدل جريدة خاوية أو قديمة
+- [x] إجراء تحقق بصري نهائي على production في desktop وmobile/tablet مع dual-page وsingle-page — contact sheet يثبت portrait single-page، وproduction desktop يثبت dual-page
+- [x] إصلاح production comments API حتى لا تظهر رسالة تعذر تحميل التعليقات — المقالات RSS النصية تتجاوز الاستدعاء غير الصالح وتعرض empty-state سليماً
+- [x] توثيق اختبار تفاعلي نهائي لحركة page-curl على production بعد إصلاحات Vercel API — frame 1 يبيّن الورقة منحنية حول spine الوسط قبل استقرار frames التالية
+- [x] منع استدعاء comments API بأرقام غير صالحة لمقالات RSS ذات IDs نصية مع إبقاء التعليقات للمقالات المحفوظة
