@@ -9,6 +9,10 @@ describe("immersive page sheet implementation", () => {
   it("defines a sheet layer with front/back faces and a center-axis turn", () => {
     expect(home).toContain("data-jarida-release=\"jarida-immersive-83ae373f\"");
     expect(home).toContain("TurningPagePreview");
+    expect(home).toContain("const itemsPerPage = 2;");
+    expect(home).toContain("grid grid-cols-2 gap-0 lg:gap-12");
+    expect(home).toContain("const turningSheetFromItems = [");
+    expect(home).toContain("const turningSheetToItems = [");
     expect(home).toContain("jarida-turning-face jarida-turning-front");
     expect(home).toContain("jarida-turning-face jarida-turning-back");
     expect(css).toContain(".jarida-static-spread");
@@ -18,6 +22,8 @@ describe("immersive page sheet implementation", () => {
     expect(css).toContain(".jarida-turning-page.turn-prev");
     expect(css).toContain("transform-origin: right center");
     expect(css).toContain("backface-visibility: hidden");
+    expect(css).toContain("grid-template-columns: repeat(2, minmax(0, 1fr));");
+    expect(css).toContain("width: 50%;\n    transform-origin: left center;");
   });
 
   it("holds the turned face at 180 degrees until the overlay is removed", () => {

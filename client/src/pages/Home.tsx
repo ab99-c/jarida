@@ -235,7 +235,7 @@ export default function Home() {
   // لا نعرضش أخباراً تجريبية أو قديمة عندما تكون الـAPI فارغة؛ الجريدة خاصها تبين حالة التحديث بوضوح.
   const processedArticles = Array.isArray(articles) ? articles : [];
 
-  const itemsPerPage = isMobile ? 1 : 2;
+  const itemsPerPage = 2;
   const totalPages = Math.ceil(processedArticles.length / itemsPerPage);
 
   useEffect(() => {
@@ -302,12 +302,9 @@ export default function Home() {
   const hasReachedContentSwap = isTurning && currentPage !== turningFromPage;
   const frontItems = isTurning && !hasReachedContentSwap ? turningFromItems : currentItems;
   const displayPageIndex = isTurning && !hasReachedContentSwap ? turningFromPage : currentPage;
-  const turningSheetFromItems = isMobile
-    ? turningFromItems
-    : [turningFromItems[turnDirection === "next" ? turningFromItems.length - 1 : 0]].filter(Boolean);
-  const turningSheetToItems = isMobile
-    ? turningToItems
-    : [turningToItems[turnDirection === "next" ? 0 : turningToItems.length - 1]].filter(Boolean);
+  // حتى فالهاتف كنقلبو غير نصف الصفحة اللي حدّ spine، باش يبقى spread جورنال مفتوح.
+  const turningSheetFromItems = [turningFromItems[turnDirection === "next" ? turningFromItems.length - 1 : 0]].filter(Boolean);
+  const turningSheetToItems = [turningToItems[turnDirection === "next" ? 0 : turningToItems.length - 1]].filter(Boolean);
 
   return (
     <div data-jarida-release="jarida-immersive-83ae373f" className="min-h-screen bg-[#2c2416] text-[#2b2b2b] flex flex-col items-center justify-center p-2 md:p-6 select-none font-serif relative overflow-x-hidden">
@@ -358,9 +355,9 @@ export default function Home() {
           </p>
         </div>
 
-        {/* Content Spread (Double Page on Desktop/Laptop, Single Page on Mobile & Tablet) */}
+        {/* Content Spread: double-page newspaper on desktop, tablet, and phone */}
         <div
-          className="jarida-spread relative grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 flex-grow items-start lg:divide-x lg:divide-x-reverse lg:divide-[#d3c49b]"
+          className="jarida-spread relative grid grid-cols-2 gap-0 lg:gap-12 flex-grow items-start divide-x divide-x-reverse divide-[#d3c49b]"
           onClick={(event) => {
             const target = event.target as HTMLElement;
             if (target.closest("button, a, input, textarea")) return;
@@ -371,7 +368,7 @@ export default function Home() {
           onTouchEnd={handleTouchEnd}
         >
           <div className="jarida-static-spread">
-            <div className="jarida-static-spread-content relative grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-start lg:divide-x lg:divide-x-reverse lg:divide-[#d3c49b]">
+            <div className="jarida-static-spread-content relative grid grid-cols-2 gap-0 lg:gap-12 items-start divide-x divide-x-reverse divide-[#d3c49b]">
           
           {/* Center Book Spine Shadow (Desktop only) */}
           <div className="hidden lg:block absolute top-0 bottom-0 right-1/2 w-8 bg-gradient-to-l from-black/10 to-transparent pointer-events-none -mr-4 z-10" />
@@ -473,9 +470,9 @@ export default function Home() {
             <span>السابق</span>
           </button>
 
-          <span className="text-center italic font-serif">
-            {isMobile ? 'اسحب أو انقر لقلب الصفحات' : 'انقر على يمين أو يسار الصفحة للقلب'}
-          </span>
+            <span className="text-center italic font-serif">
+            {isMobile ? 'جوج صفحات • اسحب أو انقر لقلب الورقة' : 'انقر على يمين أو يسار الصفحة للقلب'}
+            </span>
 
           <button 
             onClick={nextPage} 
