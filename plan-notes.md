@@ -27,3 +27,23 @@
 ## تحقق Vercel بعد رفع GitHub
 
 أداة ربط Vercel الحالية أظهرت team واحدة `team_1C1SXO5DZU7S5X3IUCeTyFvU` مرتبطة بمشروع GitHub مختلف هو `ab99-c/Azilal-Tourism`، ولم تُظهر مشروع Jarida. لذلك سيعتمد التحقق على فحص رابط الإنتاج `https://jarida-tan.vercel.app/` وعلى مطابقة محتوى الـbundle والرؤوس، مع توضيح أن معلومات مشروع Vercel المرتبط غير متاحة عبر هذا الربط.
+
+## تحقق الحركة البطيئة RTL
+
+بعد تغيير الدورة إلى 1400ms مع midpoint عند 700ms، سجّل Chromium وجود overlay واحد عند 140ms مع `animationName=jarida-immersive-page-turn` و`matrix3d` يحوي دوراناً سالباً للـnext، ثم ظهرت الصفحة الثالثة مع بقاء overlay في منتصف الدورة، واختفى overlay بعد 1400ms. لقطة during أظهرت الورقة متجهة من جهة الـspine نحو الصفحة اليمنى، ولقطة after أظهرت استقرار الصفحة الجديدة والتعليقات دون بقايا طبقة الحركة. على mobile صار محور next هو `left center` ومحور prev هو `right center` بدل `center center` لتفادي طيّ الصفحة من الوسط.
+
+## نتيجة إصلاح RTL البطيء
+
+تم تحويل دورة الحركة من 980ms إلى 1400ms، مع تبديل المحتوى عند 700ms. حركة next تستعمل `rotateY(-...)` من الورقة اليمنى نحو اليسار، وprev تستعمل الاتجاه المعاكس. على mobile صار next مربوطاً بـ`left center` وprev بـ`right center` حتى لا تنطوي الصفحة من الوسط. تحقق Chromium سجّل overlay فعالاً عند 140ms، `matrix3d` بدوران سالب، ظهور الصفحة الجديدة عند midpoint، واختفاء overlay بعد 1400ms. `pnpm check` و13 اختباراً وproduction build نجحت؛ ظهرت فقط تحذيرات RSS الخارجية المتقطعة وchunk أكبر من 500KB.
+
+## تحقق شامل للحركة والتفاعل
+
+اختبار Chromium الشامل نجح على desktop وmobile. سجّل next وprev كـ`jarida-immersive-page-turn` و`jarida-immersive-page-turn-prev` مع `matrix3d` غير identity بعد 260ms، وسجّل auto-flip متقدماً بعد أول interval. كما تحقّق من ظهور الأخبار mock، وجود أزرار واتساب وفيسبوك ونسخ الرابط، وظهور التعليقات؛ المقالات RSS ذات IDs النصية أبقت حقول التعليق معطلة كما هو متوقع لحماية API الرقمي. أُنشئت لقطات desktop/mobile قبل وأثناء وبعد الحركة داخل `/tmp/jarida-immersive-evidence`.
+
+## تحقق RTL كامل قبل الإغلاق
+
+تم تشغيل سكريبت Chromium شامل بعد ضبط الدورة إلى 1400ms. على desktop وmobile، سجّل next وprev animation names صحيحة و`matrix3d` غير identity عند 260ms، مع لقطات `*-before.png` و`*-during.png` و`*-after.png` لكل مسار. auto-flip تقدّم من الإصدار الأول بعد interval، وظهرت الأخبار، أزرار واتساب وفيسبوك ونسخ الرابط، وقسم التعليقات؛ تم النقر على نسخ الرابط والتحقق من تعطيل حقول التعليق للمقالات RSS النصية. لا توجد snap أو face inversion في المسارات المقاسة.
+
+## إثبات الاتجاه وعدم القفز
+
+أصبح سكريبت Chromium يلتقط ويثبت صراحةً `before/during/after` لكل من `desktop-next` و`desktop-prev` و`mobile-next` و`mobile-prev`. أثناء `during` يشترط `matrix3d` غير identity، ويفحص إشارات مصفوفة الدوران: next يملك `matrix[2] > 0` و`matrix[8] < 0`، وprev العكس، كما يتحقق من `backface-visibility: hidden` للوجهين. النتيجة الأخيرة نجحت لكل المسارات، وauto-flip تقدّم، وظهرت أزرار المشاركة والتعليقات وجلب الأخبار.

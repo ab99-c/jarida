@@ -13,8 +13,8 @@ describe("page-turn timing and interaction contract", () => {
 
     expect(schedule.contentSwapAtMs).toBe(PAGE_TURN_MIDPOINT_MS);
     expect(schedule.animationEndsAtMs).toBe(PAGE_TURN_DURATION_MS);
-    expect(schedule.contentSwapAtMs).toBe(490);
-    expect(schedule.animationEndsAtMs).toBe(980);
+    expect(schedule.contentSwapAtMs).toBe(700);
+    expect(schedule.animationEndsAtMs).toBe(1400);
     expect(schedule.animationEndsAtMs).toBeGreaterThan(schedule.contentSwapAtMs);
   });
 
@@ -30,8 +30,8 @@ describe("page-turn timing and interaction contract", () => {
       fromPage: 1,
       toPage: 2,
       direction: "next",
-      contentSwapAtMs: 490,
-      animationEndsAtMs: 980,
+      contentSwapAtMs: 700,
+      animationEndsAtMs: 1400,
     });
     expect(getBoundedPageChange(2, 4, -1)?.direction).toBe("prev");
     expect(getBoundedPageChange(0, 4, -1)).toBeNull();

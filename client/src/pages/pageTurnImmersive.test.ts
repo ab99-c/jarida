@@ -14,6 +14,9 @@ describe("immersive page sheet implementation", () => {
     expect(css).toContain(".jarida-static-spread");
     expect(css).toContain("@keyframes jarida-immersive-page-turn");
     expect(css).toContain("transform-origin: left center");
+    expect(css).toContain("animation: jarida-immersive-page-turn 1400ms");
+    expect(css).toContain(".jarida-turning-page.turn-prev");
+    expect(css).toContain("transform-origin: right center");
     expect(css).toContain("backface-visibility: hidden");
   });
 
@@ -24,6 +27,8 @@ describe("immersive page sheet implementation", () => {
 
   it("keeps swipe handling and reduced-motion behavior present", () => {
     expect(home).toContain("handleTouchStart");
+    expect(home).toContain("PAGE_TURN_MIDPOINT_MS");
+    expect(home).toContain("PAGE_TURN_DURATION_MS");
     expect(home).toContain("handleTouchEnd");
     expect(css).toContain("@media (prefers-reduced-motion: reduce)");
   });

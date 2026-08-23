@@ -315,7 +315,7 @@ body {
 }
 
 .jarida-turning-page.is-turning {
-  animation: jarida-immersive-page-turn 980ms cubic-bezier(0.18, 0.72, 0.16, 1) both;
+  animation: jarida-immersive-page-turn 1400ms cubic-bezier(0.18, 0.72, 0.16, 1) both;
 }
 
 .jarida-turning-page.is-turning.turn-prev {
@@ -349,11 +349,11 @@ body {
 }
 
 .jarida-turning-page.is-turning::before {
-  animation: jarida-immersive-edge 980ms cubic-bezier(0.18, 0.72, 0.16, 1) both;
+  animation: jarida-immersive-edge 1400ms cubic-bezier(0.18, 0.72, 0.16, 1) both;
 }
 
 .jarida-turning-page.is-turning::after {
-  animation: jarida-immersive-shadow 980ms cubic-bezier(0.18, 0.72, 0.16, 1) both;
+  animation: jarida-immersive-shadow 1400ms cubic-bezier(0.18, 0.72, 0.16, 1) both;
 }
 
 .jarida-turning-page.is-turning.turn-prev::before {
@@ -374,24 +374,24 @@ body {
     filter: drop-shadow(0 8px 8px rgba(45, 29, 10, 0.05));
   }
   18% {
-    transform: rotateY(-24deg) translateZ(10px) scaleX(0.985);
-    filter: drop-shadow(8px 12px 15px rgba(45, 29, 10, 0.16));
+    transform: rotateY(-18deg) translateZ(8px) scaleX(0.99);
+    filter: drop-shadow(7px 10px 13px rgba(45, 29, 10, 0.14));
   }
-  45% {
-    transform: rotateY(-142deg) translateZ(28px) scaleX(0.94);
-    filter: drop-shadow(25px 22px 29px rgba(45, 29, 10, 0.34));
+  38% {
+    transform: rotateY(-82deg) translateZ(22px) scaleX(0.965);
+    filter: drop-shadow(16px 16px 22px rgba(45, 29, 10, 0.25));
   }
-  50% {
-    transform: rotateY(-180deg) translateZ(34px) scaleX(0.92);
-    filter: drop-shadow(30px 24px 34px rgba(45, 29, 10, 0.42));
+  58% {
+    transform: rotateY(-154deg) translateZ(30px) scaleX(0.94);
+    filter: drop-shadow(27px 22px 31px rgba(45, 29, 10, 0.38));
   }
-  66% {
-    transform: rotateY(-180deg) translateZ(30px) scaleX(0.94);
-    filter: drop-shadow(24px 22px 29px rgba(45, 29, 10, 0.3));
+  72% {
+    transform: rotateY(-175deg) translateZ(22px) scaleX(0.965);
+    filter: drop-shadow(22px 20px 27px rgba(45, 29, 10, 0.3));
   }
-  84% {
-    transform: rotateY(-180deg) translateZ(12px) scaleX(0.985);
-    filter: drop-shadow(10px 14px 17px rgba(45, 29, 10, 0.14));
+  88% {
+    transform: rotateY(-180deg) translateZ(8px) scaleX(0.99);
+    filter: drop-shadow(9px 13px 16px rgba(45, 29, 10, 0.12));
   }
   100% {
     transform: rotateY(-180deg) translateZ(0) scaleX(1);
@@ -405,24 +405,24 @@ body {
     filter: drop-shadow(0 8px 8px rgba(45, 29, 10, 0.05));
   }
   18% {
-    transform: rotateY(24deg) translateZ(10px) scaleX(0.985);
-    filter: drop-shadow(-8px 12px 15px rgba(45, 29, 10, 0.16));
+    transform: rotateY(18deg) translateZ(8px) scaleX(0.99);
+    filter: drop-shadow(-7px 10px 13px rgba(45, 29, 10, 0.14));
   }
-  45% {
-    transform: rotateY(142deg) translateZ(28px) scaleX(0.94);
-    filter: drop-shadow(-25px 22px 29px rgba(45, 29, 10, 0.34));
+  38% {
+    transform: rotateY(82deg) translateZ(22px) scaleX(0.965);
+    filter: drop-shadow(-16px 16px 22px rgba(45, 29, 10, 0.25));
   }
-  50% {
-    transform: rotateY(180deg) translateZ(34px) scaleX(0.92);
-    filter: drop-shadow(-30px 24px 34px rgba(45, 29, 10, 0.42));
+  58% {
+    transform: rotateY(154deg) translateZ(30px) scaleX(0.94);
+    filter: drop-shadow(-27px 22px 31px rgba(45, 29, 10, 0.38));
   }
-  66% {
-    transform: rotateY(180deg) translateZ(30px) scaleX(0.94);
-    filter: drop-shadow(-24px 22px 29px rgba(45, 29, 10, 0.3));
+  72% {
+    transform: rotateY(175deg) translateZ(22px) scaleX(0.965);
+    filter: drop-shadow(-22px 20px 27px rgba(45, 29, 10, 0.3));
   }
-  84% {
-    transform: rotateY(180deg) translateZ(12px) scaleX(0.985);
-    filter: drop-shadow(-10px 14px 17px rgba(45, 29, 10, 0.14));
+  88% {
+    transform: rotateY(180deg) translateZ(8px) scaleX(0.99);
+    filter: drop-shadow(-9px 13px 16px rgba(45, 29, 10, 0.12));
   }
   100% {
     transform: rotateY(180deg) translateZ(0) scaleX(1);
@@ -473,13 +473,13 @@ body {
     left: 0;
     right: 0;
     width: 100%;
-    transform-origin: center center;
+    transform-origin: left center;
   }
 
   .jarida-turning-page.turn-prev {
     left: 0;
     right: 0;
-    transform-origin: center center;
+    transform-origin: right center;
   }
 
   .jarida-turning-page,

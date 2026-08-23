@@ -59,3 +59,12 @@
 - [x] التحقق من Production deployment في Vercel من نفس commit وفحص الرابط الحي — `jarida-tan.vercel.app` يرجع HTTP 200 وbundle الحي يحتوي selectors `jarida-static-spread` و`jarida-turning-page`؛ Vercel MCP لم يُظهر مشروع Jarida ضمن team الحالية
 - [x] إثبات ربط نسخة Production بالـrelease marker المرتبط بالـcommit الأخير `f43fdfacef50925cc78e9e40aba8c30413504031`؛ Vercel MCP لم يعط deployment ID، لكن marker ظهر في bundle الحي بعد التحديث
 - [x] إضافة marker فريد `jarida-immersive-83ae373f` وفحصه في bundle Vercel؛ ظهر في bundle `index-CVHG62Dq.js` بعد 4 محاولات، مع HTTP 200 من الرابط الحي
+- [x] إعادة ضبط تقليب الورقة ليبدأ من اليمين ويمر إلى اليسار ببطء وبإحساس ورق جريدة حقيقي، مع إصلاح أي قفزة أو انعكاس بصري — دورة 1400ms، midpoint عند 700ms، ومحاور mobile صحيحة
+- [x] اختبار click وswipe وauto-flip على desktop وmobile والتأكد من عدم تأثر الأخبار والتعليقات والمشاركة — 13 اختباراً، Chromium before/during/after، ولقطات desktop/mobile ناجحة
+- [x] إضافة تحقق متصفح قابل للمراجعة لـauto-flip وprev/next على desktop وmobile مع إثبات RTL بلا snap أو انعكاس — Chromium سجّل matrix3d غير identity وanimation names صحيحة، وauto-flip تقدم بنجاح
+- [x] التحقق مباشرة من أزرار المشاركة والتعليقات وجلب الأخبار بعد تعديل الحركة — ظهرت الأخبار والأزرار، نُفذ copy، وبقيت حقول التعليق آمنة للمقالات RSS النصية
+- [x] توثيق before/during/after لمسار prev خصوصاً على mobile — أضيفت لقطات desktop/mobile قبل وأثناء وبعد prev إلى دليل Chromium
+- [x] إضافة assertions تقارن before/during/after لمسارات next وprev على desktop وmobile وتثبت عدم snap أو face inversion — تحقق Chromium يشترط matrix3d غير identity واتجاهات المصفوفة الصحيحة وbackface hidden
+- [x] توثيق أسماء ملفات دليل Chromium وربطها صراحة بسلامة اتجاه RTL والحركة المستمرة — `desktop-next/prev` و`mobile-next/prev` لكل منها before/during/after، مع دليل auto-flip
+- [x] إضافة assertions تقارن فعلياً transform/state وملفات evidence بين before وduring وafter لكل مسار next وprev على desktop وmobile — فروق الصور before/during وduring/after تجاوزت 0.5 في جميع المسارات
+- [x] توثيق نتيجة المقارنة لكل ملف evidence وإثبات أن during متحركة وليست frame ثابتة وأن الوجه الخلفي غير مقلوب — Chromium سجّل ملفات next/prev desktop/mobile مع matrix3d واتجاهات RTL وbackface hidden

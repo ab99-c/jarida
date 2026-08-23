@@ -1,4 +1,4 @@
-export const PAGE_TURN_DURATION_MS = 980;
+export const PAGE_TURN_DURATION_MS = 1400;
 export const PAGE_TURN_MIDPOINT_MS = PAGE_TURN_DURATION_MS / 2;
 export const SWIPE_THRESHOLD_PX = 34;
 
