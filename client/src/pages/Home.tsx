@@ -10,8 +10,11 @@ function ArticleComments({ article }: { article: any }) {
   const [errorMsg, setErrorMsg] = useState("");
 
   const articleId = article.id || 1;
-  const utils = trpc.useUtils();
-  const { data: comments = [], isLoading: isLoadingComments, isError: isErrorComments, refetch } = trpc.jarida.getComments.useQuery({ articleId });
+  const isPersistedArticle = typeof articleId === "number";
+  const { data: comments = [], isLoading: isLoadingComments, isError: isErrorComments, refetch } = trpc.jarida.getComments.useQuery(
+    { articleId: isPersistedArticle ? articleId : 0 },
+    { enabled: isPersistedArticle },
+  );
   
   const addCommentMutation = trpc.jarida.addComment.useMutation({
     onSuccess: () => {
@@ -29,6 +32,10 @@ function ArticleComments({ article }: { article: any }) {
     e.preventDefault();
     if (!authorName.trim() || !content.trim()) return;
     setErrorMsg("");
+    if (!isPersistedArticle) {
+      setErrorMsg("التعليقات غادي تتفعل منين يتسجل المقال في قاعدة البيانات.");
+      return;
+    }
     addCommentMutation.mutate({
       articleId,
       authorName: authorName.trim(),
@@ -106,12 +113,14 @@ function ArticleComments({ article }: { article: any }) {
             onChange={(e) => setAuthorName(e.target.value)}
             className="w-full text-xs px-2.5 py-1.5 rounded border border-[#c9b78e] bg-white text-black focus:outline-none focus:ring-1 focus:ring-[#8c7348]"
             required
+            disabled={!isPersistedArticle}
           />
           <textarea
             placeholder="اكتب تعليقك هنا..."
             value={content}
             onChange={(e) => setContent(e.target.value)}
             rows={2}
+            disabled={!isPersistedArticle}
             className="w-full text-xs px-2.5 py-1.5 rounded border border-[#c9b78e] bg-white text-black focus:outline-none focus:ring-1 focus:ring-[#8c7348] resize-none"
             required
           />
