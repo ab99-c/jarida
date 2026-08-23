@@ -55,3 +55,5 @@
 - [x] إضافة أو تحديث اختبارات timing والتفاعل والتحقق البصري قبل/أثناء/بعد تقليب الورقة — 7 ملفات Vitest و13 اختباراً ناجحة، build ناجح، وdesktop/mobile screenshots موثقة
 - [x] التقاط دليل قابل للمراجعة لحركة التقليب نفسها قبل/أثناء/بعد الانحناء والاستقرار — Chromium سجّل `before.png` و`during.png` و`after.png`؛ during أثبت `matrix3d` وanimation active
 - [x] إضافة تحقق تفاعلي أقوى يثبت click أو swipe وتبديل المحتوى عند 490ms واستمرار طبقة الورقة حتى 980ms — helper tests وChromium click أثبتا وجود الورقة عند 140ms، ظهور الصفحة الجديدة بعد midpoint، وإزالة overlay في النهاية
+- [ ] دفع checkpoint `83ae373f` وتعديلات الحركة immersive إلى GitHub `ab99-c/jarida` على `main`
+- [ ] التحقق من Production deployment في Vercel من نفس commit وفحص الرابط الحي
