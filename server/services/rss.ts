@@ -1,6 +1,6 @@
 import Parser from "rss-parser";
-import { getDb } from "../db";
-import { articles } from "../../drizzle/schema";
+import { getDb } from "../db.js";
+import { articles } from "../../drizzle/schema.js";
 import { eq } from "drizzle-orm";
 
 const parser = new Parser({
