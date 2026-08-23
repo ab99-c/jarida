@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { trpc } from "@/lib/trpc";
 import { formatArabicEditionDate } from "@shared/date";
 import { Volume2, VolumeX, RefreshCw, ChevronLeft, ChevronRight, Share2, MessageSquare, Send, Check } from "lucide-react";
-import { PAGE_TURN_DURATION_MS, PAGE_TURN_MIDPOINT_MS } from "./pageTurnTiming";
+import { getBoundedPageChange, getSwipeStep, PAGE_TURN_DURATION_MS, PAGE_TURN_MIDPOINT_MS } from "./pageTurnTiming";
 
 function ArticleComments({ article }: { article: any }) {
   const [authorName, setAuthorName] = useState("");
@@ -165,6 +165,31 @@ function ArticleComments({ article }: { article: any }) {
   );
 }
 
+function TurningPagePreview({ items }: { items: any[] }) {
+  return (
+    <div className="jarida-turning-preview w-full h-full p-5 md:p-8" dir="rtl">
+      <div className="grid grid-cols-1 gap-5 h-full content-start">
+        {items.length === 0 ? (
+          <div className="col-span-full flex items-center justify-center text-center text-[#6f5a38]">
+            <span className="text-sm opacity-70">العدد اليومي</span>
+          </div>
+        ) : items.map((article: any, index: number) => (
+          <article key={article.id || index} className="border-b border-[#b8a47b]/70 pb-4 text-right overflow-hidden">
+            <div className="text-[10px] uppercase tracking-[0.16em] text-[#806b44] mb-2 font-sans">
+              {article.source || "وكالة الأنباء"}
+            </div>
+            {article.imageUrl && (
+              <img src={article.imageUrl} alt="" aria-hidden="true" className="w-full h-20 object-cover grayscale opacity-75 mb-2 border border-[#c5b28a]" />
+            )}
+            <h3 className="text-base md:text-lg font-bold leading-snug text-[#251d12] mb-2">{article.title}</h3>
+            <p className="text-xs leading-relaxed text-[#5a4930] line-clamp-5">{article.summary}</p>
+          </article>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function Home() {
   const [currentPage, setCurrentPage] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
@@ -172,6 +197,10 @@ export default function Home() {
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
   const [isTurning, setIsTurning] = useState(false);
   const [turnDirection, setTurnDirection] = useState<"next" | "prev">("next");
+  const [turningFromItems, setTurningFromItems] = useState<any[]>([]);
+  const [turningToItems, setTurningToItems] = useState<any[]>([]);
+  const [turningFromPage, setTurningFromPage] = useState(0);
+  const touchStartX = useRef<number | null>(null);
 
   const {
     data: dailyData,
@@ -223,9 +252,15 @@ export default function Home() {
 
   const requestPageChange = (step: number) => {
     if (isTurning || totalPages <= 1) return;
-    const nextPageIndex = Math.max(0, Math.min(totalPages - 1, currentPage + step));
-    if (nextPageIndex === currentPage) return;
+    const turn = getBoundedPageChange(currentPage, totalPages, step);
+    if (!turn) return;
+    const nextPageIndex = turn.toPage;
 
+    const fromItems = processedArticles.slice(currentPage * itemsPerPage, (currentPage + 1) * itemsPerPage);
+    const toItems = processedArticles.slice(nextPageIndex * itemsPerPage, (nextPageIndex + 1) * itemsPerPage);
+    setTurningFromItems(fromItems);
+    setTurningToItems(toItems);
+    setTurningFromPage(currentPage);
     setTurnDirection(step > 0 ? "next" : "prev");
     setIsTurning(true);
     playFlipSound();
@@ -241,10 +276,38 @@ export default function Home() {
   const nextPage = () => requestPageChange(1);
   const prevPage = () => requestPageChange(-1);
 
+  const handleTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
+    touchStartX.current = event.touches[0]?.clientX ?? null;
+  };
+
+  const handleTouchEnd = (event: React.TouchEvent<HTMLDivElement>) => {
+    const startX = touchStartX.current;
+    const endX = event.changedTouches[0]?.clientX ?? startX ?? 0;
+    touchStartX.current = null;
+    if (startX === null) return;
+    const deltaX = endX - startX;
+    const swipeStep = getSwipeStep(deltaX);
+    if (swipeStep !== 0) {
+      requestPageChange(swipeStep);
+      return;
+    }
+    const bounds = event.currentTarget.getBoundingClientRect();
+    requestPageChange(endX - bounds.left > bounds.width / 2 ? 1 : -1);
+  };
+
   const currentItems = processedArticles.slice(
     currentPage * itemsPerPage,
     (currentPage + 1) * itemsPerPage
   );
+  const hasReachedContentSwap = isTurning && currentPage !== turningFromPage;
+  const frontItems = isTurning && !hasReachedContentSwap ? turningFromItems : currentItems;
+  const displayPageIndex = isTurning && !hasReachedContentSwap ? turningFromPage : currentPage;
+  const turningSheetFromItems = isMobile
+    ? turningFromItems
+    : [turningFromItems[turnDirection === "next" ? turningFromItems.length - 1 : 0]].filter(Boolean);
+  const turningSheetToItems = isMobile
+    ? turningToItems
+    : [turningToItems[turnDirection === "next" ? 0 : turningToItems.length - 1]].filter(Boolean);
 
   return (
     <div className="min-h-screen bg-[#2c2416] text-[#2b2b2b] flex flex-col items-center justify-center p-2 md:p-6 select-none font-serif relative overflow-x-hidden">
@@ -285,7 +348,7 @@ export default function Home() {
           <div className="flex justify-between items-center text-xs text-[#555] mb-1 px-2 font-sans font-semibold">
             <span>{formatArabicEditionDate(editionDate)}</span>
             <span>الإصدار اليومي الشامل</span>
-            <span>العدد {currentPage + 1}</span>
+            <span>العدد {displayPageIndex + 1}</span>
           </div>
           <h1 className="text-4xl md:text-6xl font-black tracking-tight text-black font-serif">
             جريدة الأفق
@@ -304,22 +367,16 @@ export default function Home() {
             const bounds = event.currentTarget.getBoundingClientRect();
             requestPageChange(event.clientX - bounds.left > bounds.width / 2 ? 1 : -1);
           }}
-          onTouchEnd={(event) => {
-            const touch = event.changedTouches[0];
-            const bounds = event.currentTarget.getBoundingClientRect();
-            requestPageChange(touch.clientX - bounds.left > bounds.width / 2 ? 1 : -1);
-          }}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
         >
-          <div
-            className={`jarida-turning-page ${isTurning ? `is-turning turn-${turnDirection}` : ""}`}
-            aria-busy={isTurning}
-          >
-            <div className="jarida-turning-face jarida-turning-front relative grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-start lg:divide-x lg:divide-x-reverse lg:divide-[#d3c49b]">
+          <div className="jarida-static-spread">
+            <div className="jarida-static-spread-content relative grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-start lg:divide-x lg:divide-x-reverse lg:divide-[#d3c49b]">
           
           {/* Center Book Spine Shadow (Desktop only) */}
           <div className="hidden lg:block absolute top-0 bottom-0 right-1/2 w-8 bg-gradient-to-l from-black/10 to-transparent pointer-events-none -mr-4 z-10" />
 
-          {currentItems.length === 0 && (
+          {frontItems.length === 0 && (
             <div className="col-span-full min-h-[46vh] flex flex-col items-center justify-center text-center px-8 py-12 text-[#665533]">
               <div className="border-y-2 border-[#b9a77a] py-7 max-w-xl">
                 <p className="text-xs tracking-[0.28em] font-sans font-bold text-[#8b7650] mb-3">الطبعة اليومية</p>
@@ -340,7 +397,7 @@ export default function Home() {
             </div>
           )}
 
-          {currentItems.map((article: any, idx: number) => (
+          {frontItems.map((article: any, idx: number) => (
             <div key={article.id || idx} id={`article-${article.id || idx}`} className="flex flex-col justify-between h-full px-2 md:px-6">
               <div>
                 <div className="flex justify-between items-center text-[11px] text-[#775f3a] mb-2 font-sans font-bold">
@@ -375,30 +432,41 @@ export default function Home() {
               </div>
               <div className="mt-6 pt-2 border-t border-[#e2d5b3] flex justify-between items-center text-xs text-[#776644] font-sans">
                 <span>جريدة الأفق الإلكترونية</span>
-                <span>صفحة {currentPage * itemsPerPage + idx + 1} من {processedArticles.length}</span>
+                <span>صفحة {displayPageIndex * itemsPerPage + idx + 1} من {processedArticles.length}</span>
               </div>
             </div>
           ))}
 
           {/* Fallback if single item on last spread */}
-          {!isMobile && currentItems.length === 1 && (
+          {!isMobile && frontItems.length === 1 && (
             <div className="flex flex-col justify-center items-center h-full text-center p-8 text-[#998866] italic">
               <p className="text-base">تابعوا المزيد من المستجدات والتقارير في الإصدارات القادمة.</p>
             </div>
           )}
             </div>
-            <div className="jarida-turning-face jarida-turning-back" aria-hidden="true">
-              <span className="text-sm md:text-base tracking-[0.25em]">جريدة الأفق</span>
-              <span className="text-xs mt-2 opacity-70">إصدار يومي مستقل</span>
-            </div>
           </div>
+
+          {isTurning && (
+            <div
+              className={`jarida-turning-page is-turning turn-${turnDirection}`}
+              aria-busy="true"
+              aria-label="تقليب الصفحة"
+            >
+              <div className="jarida-turning-face jarida-turning-front">
+                <TurningPagePreview items={turningSheetFromItems} />
+              </div>
+              <div className="jarida-turning-face jarida-turning-back" aria-hidden="true">
+                <TurningPagePreview items={turningSheetToItems} />
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Navigation Arrows & Footer */}
         <div className="mt-8 pt-4 border-t-2 border-black flex justify-between items-center text-xs text-[#444] font-sans">
           <button 
             onClick={prevPage} 
-            disabled={currentPage === 0}
+            disabled={isTurning || currentPage === 0}
             className={`flex items-center gap-1 px-3 py-1.5 rounded border border-[#c5b48b] bg-[#ebd9bc] hover:bg-[#ded0b1] transition ${currentPage === 0 ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
           >
             <ChevronRight className="w-4 h-4" />
@@ -411,7 +479,7 @@ export default function Home() {
 
           <button 
             onClick={nextPage} 
-            disabled={currentPage >= totalPages - 1}
+            disabled={isTurning || currentPage >= totalPages - 1}
             className={`flex items-center gap-1 px-3 py-1.5 rounded border border-[#c5b48b] bg-[#ebd9bc] hover:bg-[#ded0b1] transition ${currentPage >= totalPages - 1 ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
           >
             <span>التالي</span>

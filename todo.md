@@ -51,3 +51,7 @@
 - [x] مراجعة workflow والتأكد من remote مضمون داخل GitHub Actions عبر استعمال `origin` في runner
 - [x] تشغيل GitHub Actions run جديد بنجاح — run `32649479559` على SHA `718b6486808badbbf903a1b00c75384262ece7b0`، وأنتج commit `603d2f47c27009020368917903d239b9e435bfef`
 - [x] جعل auto-sync يختار remote بشكل آمن: `github` محلياً و`origin` داخل GitHub Actions؛ اختبار auto-sync وrun `32649660197` نجحا
+- [x] تحويل تقليب الوراق إلى حركة immersive sheet-by-sheet قريبة من المرجع، مع front/back face وspine وcrease وshadow وسلوك responsive
+- [x] إضافة أو تحديث اختبارات timing والتفاعل والتحقق البصري قبل/أثناء/بعد تقليب الورقة — 7 ملفات Vitest و13 اختباراً ناجحة، build ناجح، وdesktop/mobile screenshots موثقة
+- [x] التقاط دليل قابل للمراجعة لحركة التقليب نفسها قبل/أثناء/بعد الانحناء والاستقرار — Chromium سجّل `before.png` و`during.png` و`after.png`؛ during أثبت `matrix3d` وanimation active
+- [x] إضافة تحقق تفاعلي أقوى يثبت click أو swipe وتبديل المحتوى عند 490ms واستمرار طبقة الورقة حتى 980ms — helper tests وChromium click أثبتا وجود الورقة عند 140ms، ظهور الصفحة الجديدة بعد midpoint، وإزالة overlay في النهاية
