@@ -310,7 +310,7 @@ export default function Home() {
     : [turningToItems[turnDirection === "next" ? 0 : turningToItems.length - 1]].filter(Boolean);
 
   return (
-    <div className="min-h-screen bg-[#2c2416] text-[#2b2b2b] flex flex-col items-center justify-center p-2 md:p-6 select-none font-serif relative overflow-x-hidden">
+    <div data-jarida-release="jarida-immersive-83ae373f" className="min-h-screen bg-[#2c2416] text-[#2b2b2b] flex flex-col items-center justify-center p-2 md:p-6 select-none font-serif relative overflow-x-hidden">
       {/* Top minimal header controls */}
       <div className="absolute top-4 right-4 z-20 flex items-center gap-3 bg-[#f5e6cc]/90 backdrop-blur px-3 py-1.5 rounded-full shadow-md border border-[#d3c49b]">
         <button

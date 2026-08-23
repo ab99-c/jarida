@@ -7,6 +7,7 @@ describe("immersive page sheet implementation", () => {
   const home = fs.readFileSync(path.join(process.cwd(), "client/src/pages/Home.tsx"), "utf8");
 
   it("defines a sheet layer with front/back faces and a center-axis turn", () => {
+    expect(home).toContain("data-jarida-release=\"jarida-immersive-83ae373f\"");
     expect(home).toContain("TurningPagePreview");
     expect(home).toContain("jarida-turning-face jarida-turning-front");
     expect(home).toContain("jarida-turning-face jarida-turning-back");

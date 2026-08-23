@@ -55,5 +55,7 @@
 - [x] إضافة أو تحديث اختبارات timing والتفاعل والتحقق البصري قبل/أثناء/بعد تقليب الورقة — 7 ملفات Vitest و13 اختباراً ناجحة، build ناجح، وdesktop/mobile screenshots موثقة
 - [x] التقاط دليل قابل للمراجعة لحركة التقليب نفسها قبل/أثناء/بعد الانحناء والاستقرار — Chromium سجّل `before.png` و`during.png` و`after.png`؛ during أثبت `matrix3d` وanimation active
 - [x] إضافة تحقق تفاعلي أقوى يثبت click أو swipe وتبديل المحتوى عند 490ms واستمرار طبقة الورقة حتى 980ms — helper tests وChromium click أثبتا وجود الورقة عند 140ms، ظهور الصفحة الجديدة بعد midpoint، وإزالة overlay في النهاية
-- [ ] دفع checkpoint `83ae373f` وتعديلات الحركة immersive إلى GitHub `ab99-c/jarida` على `main`
-- [ ] التحقق من Production deployment في Vercel من نفس commit وفحص الرابط الحي
+- [x] دفع checkpoint `83ae373f` وتعديلات الحركة immersive إلى GitHub `ab99-c/jarida` على `main` — commit البعيد `47c439af296ba991c7c24e4787c3faac98a0343f`
+- [x] التحقق من Production deployment في Vercel من نفس commit وفحص الرابط الحي — `jarida-tan.vercel.app` يرجع HTTP 200 وbundle الحي يحتوي selectors `jarida-static-spread` و`jarida-turning-page`؛ Vercel MCP لم يُظهر مشروع Jarida ضمن team الحالية
+- [ ] إثبات أن Vercel Production مرتبط صراحةً بالـcommit `47c439af296ba991c7c24e4787c3faac98a0343f` أو توثيق تعذر الوصول للربط
+- [ ] إضافة marker فريد قابل للفحص في النسخة المنشورة إذا تعذر استخراج deployment ID من Vercel
