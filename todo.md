@@ -70,3 +70,8 @@
 - [x] توثيق نتيجة المقارنة لكل ملف evidence وإثبات أن during متحركة وليست frame ثابتة وأن الوجه الخلفي غير مقلوب — Chromium سجّل ملفات next/prev desktop/mobile مع matrix3d واتجاهات RTL وbackface hidden
 - [x] دفع إصلاح الحركة البطيئة RTL الأخير إلى GitHub `ab99-c/jarida` على `main` — commit `96beea1b20b51ce76b51ceb5ad3053a7a9f0fdd6`
 - [x] التحقق من Vercel Production والرابط الحي بعد وصول آخر commit — HTTP 200، HTML صحيح، وCSS الحي يحتوي `1400ms` و`jarida-immersive-page-turn` و`jarida-immersive-page-turn-prev`
+- [x] جعل الهاتف يعرض جوج صفحات متجاورات بحال جورنال مفتوح مع fit مقروء وتقليب RTL محافظ على الشكل — grid ثنائي، نصف ورقة overlay، ومحور RTL مضبوط
+- [x] اختبار mobile dual-page على مقاسات هاتف مختلفة والتأكد من بقاء click/swipe والمشاركة والتعليقات — screenshot 390px وChromium mobile next/prev/auto-flip ناجحة
+- [x] التحقق من mobile dual-page على 360px و430px مع لقطات قابلة للمراجعة — لقطات 360px و430px، ودليل Chromium لكل المقاسات 360/390/430
+- [x] توسيع تحقق Chromium على mobile لظهور المشاركة والتعليقات والحالة الآمنة — واتساب وفيسبوك وقسم التعليقات وtextarea المعطلة ونسخ الرابط نجحت على المقاسات الثلاثة
+- [x] إعادة تشغيل Vitest بعد تحديث اختبار mobile dual-page — 7 ملفات و13 اختباراً نجحوا

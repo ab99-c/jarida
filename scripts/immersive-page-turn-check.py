@@ -99,17 +99,28 @@ with sync_playwright() as playwright:
     assert "matrix3d" in prev_transform or "matrix" in prev_transform
     assert desktop.get_by_text("عنوان الصفحة الأولى").count() >= 1
 
-    mobile = browser.new_page(viewport={"width": 390, "height": 844}, device_scale_factor=1)
-    install_mock(mobile)
-    wait_for_ready(mobile)
-    mobile_next_animation, mobile_next_transform, mobile_next_evidence = turn_and_capture(mobile, "التالي", "mobile-next")
-    assert mobile_next_animation == "jarida-immersive-page-turn"
-    assert "matrix3d" in mobile_next_transform
-    assert mobile.get_by_text("عنوان الصفحة الثانية").count() >= 1
-    mobile_prev_animation, mobile_prev_transform, mobile_prev_evidence = turn_and_capture(mobile, "السابق", "mobile-prev")
-    assert mobile_prev_animation == "jarida-immersive-page-turn-prev"
-    assert "matrix3d" in mobile_prev_transform
-    assert mobile.get_by_text("عنوان الصفحة الأولى").count() >= 1
+    mobile_results = []
+    for mobile_width, mobile_height in [(360, 800), (390, 844), (430, 932)]:
+        mobile = browser.new_page(viewport={"width": mobile_width, "height": mobile_height}, device_scale_factor=1)
+        install_mock(mobile)
+        wait_for_ready(mobile)
+        assert mobile.get_by_text("عنوان الصفحة الأولى").count() >= 1
+        assert mobile.get_by_text("عنوان الصفحة الثانية").count() >= 1
+        assert mobile.locator("button").filter(has_text="واتساب").count() >= 1
+        assert mobile.locator("button").filter(has_text="فيسبوك").count() >= 1
+        assert mobile.get_by_text("تعليقات القراء", exact=False).count() >= 1
+        assert mobile.locator("textarea").first.is_disabled()
+        mobile.get_by_role("button", name="نسخ الرابط").first.click()
+        mobile_next_animation, mobile_next_transform, mobile_next_evidence = turn_and_capture(mobile, "التالي", f"mobile-{mobile_width}-next")
+        assert mobile_next_animation == "jarida-immersive-page-turn"
+        assert "matrix3d" in mobile_next_transform
+        assert mobile.get_by_text("عنوان الصفحة الثالثة").count() >= 1
+        mobile_prev_animation, mobile_prev_transform, mobile_prev_evidence = turn_and_capture(mobile, "السابق", f"mobile-{mobile_width}-prev")
+        assert mobile_prev_animation == "jarida-immersive-page-turn-prev"
+        assert "matrix3d" in mobile_prev_transform
+        assert mobile.get_by_text("عنوان الصفحة الأولى").count() >= 1
+        mobile_results.append({"width": mobile_width, "height": mobile_height, "next": mobile_next_evidence, "prev": mobile_prev_evidence})
+        mobile.close()
 
     autoplay = browser.new_page(viewport={"width": 1280, "height": 720}, device_scale_factor=1)
     install_mock(autoplay)
@@ -123,8 +134,7 @@ with sync_playwright() as playwright:
         "midpointMs": 700,
         "desktopNext": {"animation": next_animation, "transform": next_transform, "evidence": next_evidence},
         "desktopPrev": {"animation": prev_animation, "transform": prev_transform, "evidence": prev_evidence},
-        "mobileNext": {"animation": mobile_next_animation, "transform": mobile_next_transform, "evidence": mobile_next_evidence},
-        "mobilePrev": {"animation": mobile_prev_animation, "transform": mobile_prev_transform, "evidence": mobile_prev_evidence},
+        "mobileSizes": mobile_results,
         "autoFlipAdvanced": True,
         "socialAndCommentsVisible": True,
         "evidenceDir": str(OUT_DIR),
