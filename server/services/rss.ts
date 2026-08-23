@@ -27,7 +27,10 @@ export async function fetchAndStoreRSS() {
   for (const feedInfo of RSS_FEEDS) {
     try {
       console.log(`[RSS] Fetching feed: ${feedInfo.name} (${feedInfo.url})`);
-      const feed = await parser.parseURL(feedInfo.url);
+      const feed = await Promise.race([
+        parser.parseURL(feedInfo.url),
+        new Promise<never>((_, reject) => setTimeout(() => reject(new Error("RSS request timeout")), 2500)),
+      ]);
 
       for (const item of feed.items || []) {
         if (!item.link || !item.title) continue;
@@ -85,4 +88,55 @@ export async function fetchAndStoreRSS() {
 
   console.log(`[RSS] Successfully inserted ${totalInserted} new articles.`);
   return { success: true, count: totalInserted };
+}
+
+export async function fetchLatestRSS() {
+  const latest: Array<{
+    id: string;
+    title: string;
+    summary: string;
+    content: string;
+    source: string;
+    url: string;
+    imageUrl: string | null;
+    category: string;
+    publishedAt: Date;
+  }> = [];
+
+  for (const feedInfo of RSS_FEEDS) {
+    try {
+      const feed = await Promise.race([
+        parser.parseURL(feedInfo.url),
+        new Promise<never>((_, reject) => setTimeout(() => reject(new Error("RSS request timeout")), 2500)),
+      ]);
+      for (const item of feed.items || []) {
+        if (!item.link || !item.title) continue;
+        const publishedAt = item.pubDate ? new Date(item.pubDate) : new Date();
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        if (publishedAt < sevenDaysAgo) continue;
+
+        const url = item.link.trim().split("?")[0].replace(/\/$/, "");
+        const summary = (item.contentSnippet || item.summary || item.content || item.title).slice(0, 500).trim();
+        const imageUrl = item.enclosure?.url || item.media?.$?.url || null;
+        latest.push({
+          id: url,
+          title: item.title.trim(),
+          summary,
+          content: item.content || summary,
+          source: feedInfo.name,
+          url,
+          imageUrl,
+          category: feedInfo.category,
+          publishedAt,
+        });
+      }
+    } catch (error: any) {
+      console.error(`[RSS] Failed to read live feed ${feedInfo.name}:`, error.message);
+    }
+  }
+
+  return latest
+    .sort((a, b) => b.publishedAt.getTime() - a.publishedAt.getTime())
+    .slice(0, 40);
 }
