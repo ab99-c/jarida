@@ -101,4 +101,13 @@
 - [x] الحفاظ على تقليب RTL ثلاثي الأبعاد، السحب على الهاتف، الصوت، التحديث، المشاركة والتعليقات
 - [x] ضبط التجاوب على الحاسوب والتابلت والهاتف بدون كسر spread بجوج صفحات
 - [x] تشغيل TypeScript والاختبارات وproduction build ثم إصلاح أي أخطاء — check و6 اختبارات واجهة وbuild نجحوا؛ اختبار RSS الخارجي timed out فقط
-- [ ] رفع التعديلات إلى GitHub إذا كانت النسخة النهائية ناجحة والتحقق من Vercel
+- [x] رفع التعديلات إلى GitHub إذا كانت النسخة النهائية ناجحة والتحقق من Vercel — commit التصميم `c4eea079` وصل إلى `main` وVercel بدأ deployment تلقائياً؛ التحقق النهائي توقف بطلب المستخدم
+
+## طلب 2026-10-08: تحويل Jarida Live إلى PWA
+- [x] إضافة manifest عربي باسم ووصف وألوان وهوية Jarida Live
+- [x] إضافة أيقونات SVG وPNG بمقاسي 192 و512
+- [x] تسجيل Service Worker في production فقط مع cache للواجهة دون `/api/`
+- [x] إضافة إشعار تثبيت اختياري يدعم beforeinstallprompt وdismissal محلياً
+- [x] إضافة metadata وfavicon وApple touch icon للتثبيت من المتصفح
+- [x] تشغيل TypeScript واختبارات الحركة وproduction build والتحقق من ملفات PWA
+- [ ] حفظ checkpoint ورفع نسخة PWA إلى GitHub عند طلب المستخدم

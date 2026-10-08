@@ -736,3 +736,67 @@ body {
   .jarida-paper-page .text-xs { font-size: .62rem; }
   .fb-controls > span { max-width: 42%; font-size: 10px; line-height: 1.35; }
 }
+
+
+.jarida-install-prompt {
+  position: fixed;
+  z-index: 100;
+  inset-inline-start: 1rem;
+  bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  max-width: min(92vw, 390px);
+  padding: .75rem .85rem;
+  color: #efe7d4;
+  background: linear-gradient(145deg, #233c30, #12211a);
+  border: 1px solid rgba(220,180,91,.65);
+  border-radius: .7rem;
+  box-shadow: 0 14px 36px rgba(0,0,0,.42), inset 0 0 18px rgba(220,180,91,.08);
+  font-family: 'Tajawal', sans-serif;
+}
+
+.jarida-install-copy {
+  display: grid;
+  gap: .15rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.jarida-install-copy strong { color: #dcb45b; font-size: .8rem; }
+.jarida-install-copy span { color: rgba(239,231,212,.78); font-size: .68rem; }
+
+.jarida-install-button {
+  display: inline-flex;
+  align-items: center;
+  gap: .3rem;
+  flex: 0 0 auto;
+  padding: .45rem .7rem;
+  color: #12211a;
+  background: #dcb45b;
+  border: 0;
+  border-radius: .45rem;
+  font-size: .72rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.jarida-install-button:hover { background: #efd488; }
+
+.jarida-install-close {
+  position: absolute;
+  inset-inline-start: .3rem;
+  top: .25rem;
+  display: grid;
+  place-items: center;
+  padding: .15rem;
+  color: rgba(239,231,212,.7);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+
+@media (max-width: 520px) {
+  .jarida-install-prompt { inset-inline: .55rem; bottom: .55rem; max-width: none; }
+  .jarida-install-copy span { font-size: .64rem; }
+}
