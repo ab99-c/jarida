@@ -314,7 +314,7 @@ export default function Home() {
   const turningSheetToItems = [turnedToArticle].filter(Boolean);
 
   return (
-    <div data-jarida-release="jarida-immersive-83ae373f" data-jarida-spread-mode="paired-articles" className="min-h-screen bg-[#2c2416] text-[#2b2b2b] flex flex-col items-center justify-center p-2 md:p-6 select-none font-serif relative overflow-x-hidden">
+    <div data-jarida-release="jarida-immersive-83ae373f" data-jarida-skin="reference-book-20261007" data-jarida-spread-mode="paired-articles" className="fb-wrapper min-h-screen text-[#2b2b2b] select-none relative overflow-x-hidden" dir="rtl">
       {/* Top minimal header controls */}
       <div className="absolute top-4 right-4 z-20 flex items-center gap-3 bg-[#f5e6cc]/90 backdrop-blur px-3 py-1.5 rounded-full shadow-md border border-[#d3c49b]">
         <button
@@ -345,19 +345,21 @@ export default function Home() {
       </div>
 
       {/* Newspaper Spread Container (Vintage Book Layout) */}
-      <div className="relative w-full max-w-6xl bg-[#f7eedc] text-[#1a1a1a] shadow-2xl rounded-sm border border-[#d6c39a] p-4 md:p-10 my-auto flex flex-col justify-between min-h-[85vh]">
+      <div className="fb-book relative text-[#1a1a1a] my-auto flex flex-col justify-between">
+        <div className="fb-spine" aria-hidden="true" />
+        <div className="fb-ribbon" aria-hidden="true" />
         
         {/* Masthead */}
-        <div className="text-center border-b-2 border-black pb-4 mb-6">
+        <div className="np-mast text-center border-b-2 border-black pb-4 mb-6">
           <div className="flex justify-between items-center text-xs text-[#555] mb-1 px-2 font-sans font-semibold">
             <span>{formatArabicEditionDate(editionDate)}</span>
             <span>الإصدار اليومي الشامل</span>
             <span>العدد {displayPageIndex + 1}</span>
           </div>
-          <h1 className="text-4xl md:text-6xl font-black tracking-tight text-black font-serif">
+          <h1 className="np-title text-4xl md:text-6xl font-black tracking-tight text-black font-serif">
             جريدة الأفق
           </h1>
-          <p className="text-xs tracking-widest text-[#555] uppercase mt-1 font-sans">
+          <p className="np-subtitle text-xs tracking-widest text-[#555] uppercase mt-1 font-sans">
             صوت الحقيقة والخبر اليقين • يومية مستقلة
           </p>
         </div>
@@ -408,7 +410,7 @@ export default function Home() {
               id={`article-${article.id || idx}`}
               data-page-slot={idx === 0 ? "right" : "left"}
               data-article-id={article.id || idx}
-              className="flex flex-col justify-between h-full px-2 md:px-6"
+              className="jarida-paper-page flex flex-col justify-between h-full px-2 md:px-6"
             >
               <div>
                 <div className="flex justify-between items-center text-[11px] text-[#775f3a] mb-2 font-sans font-bold">
@@ -474,7 +476,7 @@ export default function Home() {
         </div>
 
         {/* Navigation Arrows & Footer */}
-        <div className="mt-8 pt-4 border-t-2 border-black flex justify-between items-center text-xs text-[#444] font-sans">
+        <div className="fb-controls mt-8 pt-4 border-t-2 border-black flex justify-between items-center text-xs text-[#444] font-sans">
           <button 
             onClick={prevPage} 
             disabled={isTurning || currentPage === 0}
