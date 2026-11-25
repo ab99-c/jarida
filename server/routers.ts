@@ -35,7 +35,7 @@ export const appRouter = router({
       let list: typeof articles.$inferSelect[] = [];
       try {
         list = await Promise.race([
-          db.select().from(articles).orderBy(desc(articles.publishedAt)).limit(40),
+          db.select().from(articles).orderBy(desc(articles.publishedAt)).limit(200),
           new Promise<never>((_, reject) => setTimeout(() => reject(new Error("Database query timeout")), 2500)),
         ]);
       } catch (error) {
@@ -49,22 +49,26 @@ export const appRouter = router({
       }
       
       const newestTimestamp = list[0]?.publishedAt ? new Date(list[0].publishedAt).getTime() : 0;
-      const isStale = !newestTimestamp || Date.now() - newestTimestamp > 24 * 60 * 60 * 1000;
+      const isStale = !newestTimestamp || Date.now() - newestTimestamp > 12 * 60 * 60 * 1000 || list.length < 20;
+      let combinedArticles: Array<any> = [...list];
       if (isStale) {
         const liveArticles = await fetchLatestRSS();
         if (liveArticles.length > 0) {
-          return {
-            date: new Date(),
-            editionTitle: "جريدة الأفق - الإصدار اليومي المتجدد",
-            sections: {},
-            articles: liveArticles,
-          };
+          const seenUrls = new Set(list.map((a) => a.url));
+          const seenTitles = new Set(list.map((a) => a.title));
+          const merged = [
+            ...liveArticles.filter((a) => !seenUrls.has(a.url) && !seenTitles.has(a.title)),
+            ...list,
+          ];
+          combinedArticles = merged.sort(
+            (a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime(),
+          );
         }
       }
 
       // Group articles by category (sections)
-      const sections: Record<string, typeof list> = {};
-      for (const article of list) {
+      const sections: Record<string, typeof combinedArticles> = {};
+      for (const article of combinedArticles) {
         const cat = article.category || "عام";
         if (!sections[cat]) {
           sections[cat] = [];
@@ -76,7 +80,7 @@ export const appRouter = router({
         date: new Date(),
         editionTitle: "جريدة الأفق - الإصدار اليومي المتجدد",
         sections,
-        articles: list,
+        articles: combinedArticles,
       };
     }),
     getArticles: publicProcedure.query(async () => {

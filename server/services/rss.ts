@@ -122,13 +122,13 @@ export async function fetchLatestRSS() {
         for (const item of feed.items || []) {
           if (!item.link || !item.title) continue;
           const publishedAt = item.pubDate ? new Date(item.pubDate) : new Date();
-          const sevenDaysAgo = new Date();
-          sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-          if (publishedAt < sevenDaysAgo) continue;
 
           const url = item.link.trim().split("?")[0].replace(/\/$/, "");
           const summary = (item.contentSnippet || item.summary || item.content || item.title).slice(0, 500).trim();
-          const imageUrl = item.enclosure?.url || item.media?.$?.url || null;
+          const imageUrl =
+            item.enclosure?.url ||
+            item.media?.$?.url ||
+            "https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&w=600&q=80";
           latest.push({
             id: url,
             title: item.title.trim(),
@@ -149,5 +149,5 @@ export async function fetchLatestRSS() {
 
   return latest
     .sort((a, b) => b.publishedAt.getTime() - a.publishedAt.getTime())
-    .slice(0, 40);
+    .slice(0, 120);
 }

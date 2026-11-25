@@ -713,59 +713,241 @@ body {
 }
 
 
-/* Reference flipbook skin: cloth cover, newsprint paper, spine and restrained controls. */
+/* Classic Daily Newspaper Skin (جريدة الأفق اليومية / طراز الجرائد اليومية الكلاسيكية مثل الثورة) */
 :root {
-  --jarida-room: #161310;
-  --jarida-cloth-1: #233c30;
-  --jarida-cloth-2: #12211a;
-  --jarida-gold: #b7902f;
-  --jarida-gold-light: #dcb45b;
-  --jarida-paper: #efe7d4;
-  --jarida-paper-shadow: #ddcfa8;
-  --jarida-ink: #201a12;
-  --jarida-muted: #6c624a;
-  --jarida-rule: #7c2027;
+  --jarida-room: #181818;
+  --jarida-cloth-1: #1f2428;
+  --jarida-cloth-2: #111417;
+  --jarida-gold: #2b7a9e;
+  --jarida-gold-light: #4a9bc0;
+  --jarida-paper: #fdfcf8;
+  --jarida-paper-shadow: #d8d4c8;
+  --jarida-ink: #111111;
+  --jarida-muted: #333333;
+  --jarida-rule: #2b7a9e;
+  --news-blue: #2b7a9e;
 }
 
 body {
-  background: radial-gradient(ellipse at 50% 15%, #231e18 0%, var(--jarida-room) 70%);
+  background: radial-gradient(circle at center, #262626 0%, #0d0d0d 100%);
   overflow-x: hidden;
 }
 
 .fb-wrapper {
   min-height: 100vh;
   width: 100%;
-  padding: 32px 16px;
+  padding: 20px 12px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 20px;
-  background: radial-gradient(ellipse at 50% 15%, #231e18 0%, var(--jarida-room) 70%);
-  perspective: 1900px;
+  gap: 12px;
+  background: radial-gradient(circle at center, #262626 0%, #0d0d0d 100%);
+  perspective: 2200px;
 }
 
 .fb-book {
-  width: min(100%, 1120px);
-  height: clamp(520px, 70vw, 760px);
-  min-height: 520px;
-  padding: clamp(18px, 3.2vw, 34px);
-  background:
-    repeating-linear-gradient(45deg, rgba(255,255,255,.018) 0 2px, transparent 2px 4px),
-    linear-gradient(150deg, var(--jarida-cloth-1), var(--jarida-cloth-2) 68%);
-  border: 1px solid rgba(183,144,47,.5);
-  border-radius: 3px 12px 12px 3px;
-  box-shadow: 0 26px 64px rgba(0,0,0,.55), inset 22px 0 32px rgba(0,0,0,.35);
+  width: min(100%, 1140px);
+  height: clamp(540px, 76vw, 820px);
+  min-height: 540px;
+  padding: clamp(6px, 1.2vw, 14px);
+  background: #141414;
+  border: 1px solid #333;
+  border-radius: 3px;
+  box-shadow: 0 36px 80px rgba(0, 0, 0, 0.82);
   isolation: isolate;
 }
 
 .fb-book::before {
-  content: "";
-  position: absolute;
-  inset: 10px;
-  z-index: -1;
-  border: 1px solid rgba(220,180,91,.28);
-  pointer-events: none;
+  display: none;
+}
+
+.np-header {
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.np-logo-area {
+  display: flex;
+  justify-content: center;
+  align-items: baseline;
+  gap: 10px;
+  border-bottom: 3px solid #000;
+  border-top: 1px solid #000;
+  padding: 4px 0 6px;
+}
+
+.np-logo-main {
+  font-family: 'Amiri', serif;
+  font-size: clamp(28px, 4.6vw, 46px);
+  font-weight: 900;
+  color: #000;
+  line-height: 1.05;
+}
+
+.np-logo-sub {
+  font-family: 'Noto Naskh Arabic', serif;
+  font-size: clamp(11px, 1.8vw, 14px);
+  font-weight: 700;
+  color: var(--news-blue);
+}
+
+.np-info-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-family: 'Tajawal', sans-serif;
+  font-size: clamp(9px, 1.6vw, 11.5px);
+  font-weight: 700;
+  color: #111;
+  padding: 4px 2px;
+  border-bottom: 1.5px solid #000;
+  margin-bottom: 8px;
+}
+
+.np-section-banner {
+  background: var(--news-blue);
+  color: #fff;
+  font-family: 'Tajawal', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.np-lead-block {
+  border-bottom: 1.5px solid #222;
+  padding-bottom: 10px;
+  margin-bottom: 10px;
+}
+
+.np-source-badge {
+  color: var(--news-blue);
+  font-family: 'Tajawal', sans-serif;
+  font-weight: 800;
+}
+
+.np-headline-main {
+  font-family: 'Amiri', serif;
+  font-size: clamp(18px, 3.2vw, 27px);
+  font-weight: 900;
+  line-height: 1.28;
+  color: #000;
+  margin: 4px 0 6px;
+  text-align: right;
+}
+
+.np-sub-headline {
+  font-family: 'Noto Naskh Arabic', serif;
+  font-size: clamp(11px, 1.9vw, 13.5px);
+  line-height: 1.65;
+  color: #222;
+  margin-bottom: 8px;
+  text-align: justify;
+}
+
+.np-lead-body {
+  font-family: 'Noto Naskh Arabic', serif;
+  font-size: clamp(10.5px, 1.75vw, 12.5px);
+  line-height: 1.65;
+  color: #333;
+  margin-top: 6px;
+  text-align: justify;
+}
+
+.np-media {
+  width: 100%;
+  max-height: 175px;
+  background: #eee;
+  border: 1px solid #000;
+  margin: 6px 0;
+  overflow: hidden;
+}
+
+.np-media img {
+  width: 100%;
+  height: 170px;
+  object-fit: cover;
+  filter: grayscale(85%) contrast(1.08);
+}
+
+.np-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 8px;
+  margin-bottom: 10px;
+}
+
+.np-col {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.np-col-left {
+  border-left: 1px solid #bbb;
+  padding-left: 10px;
+}
+
+.np-article-box {
+  border-bottom: 1px dashed #c4c4c4;
+  padding-bottom: 8px;
+}
+
+.np-article-meta {
+  display: flex;
+  justify-content: space-between;
+  font-family: 'Tajawal', sans-serif;
+  font-size: 9.5px;
+  font-weight: 700;
+  color: #555;
+  margin-bottom: 2px;
+}
+
+.np-article-title {
+  font-family: 'Amiri', serif;
+  font-size: clamp(13px, 2.2vw, 16px);
+  font-weight: 700;
+  line-height: 1.32;
+  margin-bottom: 4px;
+  color: var(--news-blue);
+  border-bottom: 1px solid var(--news-blue);
+  padding-bottom: 2px;
+}
+
+.np-article-text {
+  font-family: 'Noto Naskh Arabic', serif;
+  font-size: clamp(10px, 1.75vw, 12px);
+  line-height: 1.6;
+  color: #1f1f1f;
+  text-align: justify;
+}
+
+.np-footer-bar {
+  margin-top: auto;
+  background: var(--news-blue);
+  color: #fff;
+  padding: 6px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: 'Tajawal', sans-serif;
+  font-size: clamp(9px, 1.6vw, 11px);
+  font-weight: 700;
+}
+
+.np-footer-tag {
+  background: #fff;
+  color: var(--news-blue);
+  padding: 1px 8px;
+  border-radius: 10px;
+  font-weight: 800;
 }
 
 .fb-book > .np-mast,

@@ -18,6 +18,132 @@ import {
 } from "./deviceMode";
 
 const VIEW_MODE_STORAGE_KEY = "jarida-view-mode";
+const ARTICLES_PER_NEWSPAPER_PAGE = 5;
+
+const ARCHIVE_DAILY_ARTICLES = [
+  {
+    id: "archive-1",
+    title: "تطورات الشأن الوطني: تعزيز الشراكات الاستراتيجية وإجراءات أمنية مشددة بالفنيدق",
+    summary: "ملفات ساخنة تتصدر واجهة الأحداث الوطنية والدولية مع تعزيز الحضور الدبلوماسي للمملكة ومشاريع الربط القاري الكبرى.",
+    content: "تشهد الدبلوماسية المغربية زخماً ملحوظاً بفضل الانتصارات المتتالية في ملف الصحراء المغربية وتوسيع الشراكات الاقتصادية الاستراتيجية.",
+    source: "جريدة الأفق",
+    category: "الواجهة الرئيسية",
+    imageUrl: "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=800&q=80",
+    publishedAt: new Date("2026-11-24T09:00:00Z"),
+  },
+  {
+    id: "archive-2",
+    title: "كولومبيا تعترف بسيادة المغرب وتدعم مبادرة الحكم الذاتي",
+    summary: "في خطوة دبلوماسية هامة، أعلنت جمهورية كولومبيا تغييراً في موقفها الرسمي معترفة بسيادة المغرب على صحرائه ودعمها لمبادرة الحكم الذاتي.",
+    content: "اعتراف كولومبيا الأخير يضاف إلى سلسلة من المواقف الدولية الداعمة للوحدة الترابية للمملكة، مما يكرس وجاهة الطروحات المغربية ويعزز الاستقرار الإقليمي.",
+    source: "وكالة الأفق",
+    category: "دبلوماسية",
+    imageUrl: "https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?auto=format&fit=crop&w=700&q=80",
+    publishedAt: new Date("2026-11-23T15:30:00Z"),
+  },
+  {
+    id: "archive-3",
+    title: "تقارير صندوق التقاعد: دعوات لإصلاحات هيكلية عاجلة قبل أفق 2030",
+    summary: "بنك المغرب يصدر تقريراً يدق ناقوس الخطر حول وضعية صناديق التقاعد، داعياً إلى بلورة توافق وطني وإصلاحات عاجلة لتفادي أزمة مرتقبة.",
+    content: "تتواصل النقاشات الحادة حول مآل أنظمة التقاعد في المغرب، حيث طالبت فعاليات اقتصادية بضرورة بلورة توافق وطني عاجل يضمن استدامة الصناديق.",
+    source: "هسبريس",
+    category: "اقتصاد",
+    imageUrl: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=700&q=80",
+    publishedAt: new Date("2026-11-22T12:00:00Z"),
+  },
+  {
+    id: "archive-4",
+    title: "التعاون الإماراتي المغربي وتفعيل مشروع أنبوب الغاز نيجيريا-المغرب",
+    summary: "تعزيز الشراكة الاقتصادية الاستراتيجية بين البلدين، مع التركيز على مشاريع البنية التحتية الطاقية الكبرى ومشروع غازودور نيجيريا-المغرب.",
+    content: "عودة مجموعات استثمارية كبرى لتفعيل مشاريع مهيكلة بالسوق المغربية، تعزيزاً لمكانة القطب المالي الإقليمي والأمن الطاقي.",
+    source: "مغرب 24",
+    category: "اقتصاد وطاقة",
+    imageUrl: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=700&q=80",
+    publishedAt: new Date("2026-11-21T10:15:00Z"),
+  },
+  {
+    id: "archive-5",
+    title: "أحداث المعابر الحدودية ويقظة أمنية عالية بالشمال",
+    summary: "السلطات الأمنية المغربية تتعامل بحزم مع محاولات التسلل الجماعي نحو سبتة، وسط إجراءات مشددة ويقظة عالية على الحدود الشمالية.",
+    content: "تعبئة ميدانية متواصلة لتأمين المعابر الحدودية والتصدي لشبكات الهجرة غير النظامية مع احترام الضوابط القانونية.",
+    source: "الجزيرة نت",
+    category: "شؤون وطنية",
+    imageUrl: "https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&w=700&q=80",
+    publishedAt: new Date("2026-11-20T18:00:00Z"),
+  },
+  {
+    id: "archive-6",
+    title: "انطلاق الموسم الكروي الجديد واستعدادات المنتخبات الوطنية للاستحقاقات القارية",
+    summary: "تستعد الأندية الوطنية لانطلاق الموسم الكروي الجديد بصفقات وازنة ومعسكرات إعدادية مكثفة، وسط ترقب لمشاركة المنتخبات الوطنية.",
+    content: "برنامج إعدادي متكامل للأندية والمنتخبات المغربية استعداداً للبطولات الأفريقية والعالمية المقبلة.",
+    source: "جريدة الأفق",
+    category: "رياضة",
+    imageUrl: "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=700&q=80",
+    publishedAt: new Date("2026-11-19T16:40:00Z"),
+  },
+  {
+    id: "archive-7",
+    title: "رهانات التنمية المستدامة ومشاريع الطاقة المتجددة بالمملكة",
+    summary: "تقارير دولية تشيد بنجاح المشاريع الكبرى للطاقة الشمسية والريحية وتحلية مياه البحر لمواكبة الطلب المتزايد.",
+    content: "توسيع محطات الطاقة النظيفة وتطوير شبكات النقل الكهربائي لدعم السيادة الطاقية والمائية.",
+    source: "وكالة الأفق",
+    category: "بيئة وتنمية",
+    imageUrl: "https://images.unsplash.com/photo-1509391366360-2e959784a276?auto=format&fit=crop&w=700&q=80",
+    publishedAt: new Date("2026-11-18T11:20:00Z"),
+  },
+  {
+    id: "archive-8",
+    title: "رأي الأفق: تضافر الجهود لمواجهة التحديات الاقتصادية والاجتماعية",
+    summary: "إن المرحلة الحالية تستدعي تضافر جهود الجميع، مؤسسات ومواطنين، لمواجهة التحديات الاقتصادية والاجتماعية بروح المسؤولية والتبصر.",
+    content: "صوناً للمكتسبات الوطنية ودعماً لمسار التنمية الشاملة، تبقى اليقظة الجماعية والابتكار ركيزتين أساسيتين للمرحلة المقبلة.",
+    source: "هيئة التحرير",
+    category: "رأي وتحليل",
+    imageUrl: "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?auto=format&fit=crop&w=700&q=80",
+    publishedAt: new Date("2026-11-17T09:00:00Z"),
+  },
+];
+
+interface NewspaperPageSheet {
+  id: string;
+  pageNumber: number;
+  leadArticle: any;
+  columnArticles: any[];
+  allArticles: any[];
+  sectionTitle: string;
+  pageDate: Date;
+}
+
+function buildNewspaperPages(allArticles: any[]): NewspaperPageSheet[] {
+  if (!allArticles || allArticles.length === 0) return [];
+  const pages: NewspaperPageSheet[] = [];
+  for (let i = 0; i < allArticles.length; i += ARTICLES_PER_NEWSPAPER_PAGE) {
+    const chunk = allArticles.slice(i, i + ARTICLES_PER_NEWSPAPER_PAGE);
+    const lead = chunk[0];
+    const cols = chunk.slice(1);
+    const pageNumber = Math.floor(i / ARTICLES_PER_NEWSPAPER_PAGE) + 1;
+    const rawDate = lead?.publishedAt ? new Date(lead.publishedAt) : new Date();
+    const categories = Array.from(
+      new Set(chunk.map((a: any) => a?.category).filter(Boolean)),
+    );
+    const sectionTitle =
+      pageNumber === 1
+        ? "الصفحة الأولى • واجهة الأحداث اليومية"
+        : categories.length > 0
+          ? `ملفات ${categories.slice(0, 2).join(" و")} • أرشيف ومتابعات`
+          : `متابعات إخبارية شاملة • صفحة ${pageNumber}`;
+
+    pages.push({
+      id: String(lead?.id || `page-${pageNumber}`),
+      pageNumber,
+      leadArticle: lead,
+      columnArticles: cols,
+      allArticles: chunk,
+      sectionTitle,
+      pageDate: Number.isNaN(rawDate.getTime()) ? new Date() : rawDate,
+    });
+  }
+  return pages;
+}
 
 function ArticleComments({ article }: { article: any }) {
   const [authorName, setAuthorName] = useState("");
@@ -184,6 +310,120 @@ function ArticleComments({ article }: { article: any }) {
   );
 }
 
+function NewspaperSheetContent({
+  sheet,
+  totalSheets,
+  totalArticlesCount,
+  showComments = false,
+}: {
+  sheet: NewspaperPageSheet;
+  totalSheets: number;
+  totalArticlesCount: number;
+  showComments?: boolean;
+}) {
+  const lead = sheet.leadArticle || sheet;
+  const cols = Array.isArray(sheet.columnArticles) ? sheet.columnArticles : [];
+  const leftColArticles = cols.filter((_: any, i: number) => i % 2 === 0);
+  const rightColArticles = cols.filter((_: any, i: number) => i % 2 === 1);
+  const pageNum = sheet.pageNumber || 1;
+  const pageDate = sheet.pageDate ? new Date(sheet.pageDate) : new Date(lead?.publishedAt || Date.now());
+
+  return (
+    <div className="fb-content flex flex-col justify-between h-full">
+      <div>
+        {/* ترويسة الجريدة اليومية بحال الجرائد الورقية الكلاسيكية (الثورة / الأفق) */}
+        <div className="np-header">
+          <div className="np-logo-area">
+            <span className="np-logo-main">الأفق</span>
+            <span className="np-logo-sub">جريدة يومية شاملة</span>
+          </div>
+          <div className="np-info-bar">
+            <span>السنة الأولى - العدد {String(pageNum).padStart(2, "0")}</span>
+            <span>{formatArabicEditionDate(pageDate)}</span>
+            <span>صفحة {pageNum} / {Math.max(1, totalSheets)} ({totalArticlesCount} خبر)</span>
+          </div>
+        </div>
+
+        {pageNum > 1 && sheet.sectionTitle && (
+          <div className="np-section-banner">
+            <span>{sheet.sectionTitle}</span>
+          </div>
+        )}
+
+        {/* الخبر الرئيسي في الصفحة (المانشيت) */}
+        <div className="np-lead-block">
+          <div className="flex justify-between items-center text-[10px] text-[#444] mb-1 font-sans font-bold gap-2 flex-wrap">
+            <span className="np-source-badge">
+              {lead?.source || "وكالة الأفق للأخبار"} {lead?.category ? `• ${lead.category}` : ""}
+            </span>
+            <span>{new Date(lead?.publishedAt || Date.now()).toLocaleDateString("ar-MA")}</span>
+          </div>
+          <h2 className="np-headline-main jarida-article-headline">
+            {lead?.title}
+          </h2>
+          <p className="np-sub-headline jarida-article-summary">
+            {lead?.summary}
+          </p>
+          {lead?.imageUrl && (
+            <div className="np-media">
+              <img
+                src={lead.imageUrl}
+                alt={lead.title || "صورة الخبر"}
+                className="jarida-article-image"
+              />
+            </div>
+          )}
+          {lead?.content && lead.content.trim() !== lead.summary?.trim() && (
+            <p className="np-lead-body jarida-article-body">
+              {lead.content}
+            </p>
+          )}
+        </div>
+
+        {/* شبكة الأخبار اليومية الفايتة والحالية (عمودان على طراز الجرائد اليومية) */}
+        {cols.length > 0 && (
+          <div className="np-grid">
+            <div className="np-col np-col-left">
+              {leftColArticles.map((art: any, aIdx: number) => (
+                <div key={art.id || aIdx} className="np-article-box">
+                  <div className="np-article-meta">
+                    <span>{art.source || "الأفق"}</span>
+                    <span>{new Date(art.publishedAt || Date.now()).toLocaleDateString("ar-MA")}</span>
+                  </div>
+                  <h3 className="np-article-title">{art.title}</h3>
+                  <p className="np-article-text">{art.summary}</p>
+                </div>
+              ))}
+            </div>
+            <div className="np-col">
+              {rightColArticles.map((art: any, aIdx: number) => (
+                <div key={art.id || aIdx} className="np-article-box">
+                  <div className="np-article-meta">
+                    <span>{art.source || "الأفق"}</span>
+                    <span>{new Date(art.publishedAt || Date.now()).toLocaleDateString("ar-MA")}</span>
+                  </div>
+                  <h3 className="np-article-title">{art.title}</h3>
+                  <p className="np-article-text">{art.summary}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {showComments && lead && <ArticleComments article={lead} />}
+      </div>
+
+      {/* الشريط السفلي الأزرق الخاص بالجريدة اليومية */}
+      <div className="np-footer-bar">
+        <span>وكالة الأفق للأخبار • الأرشيف اليومي الشامل</span>
+        <span className="np-footer-tag">
+          صفحة {pageNum} من {Math.max(1, totalSheets)}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 function TurningPagePreview({
   items,
   pageIndex = 0,
@@ -202,69 +442,33 @@ function TurningPagePreview({
       className={`jarida-turning-preview w-full h-full ${
         isSinglePage
           ? "grid grid-cols-1 gap-0"
-          : "grid grid-cols-2 gap-0 lg:gap-12 divide-x divide-x-reverse divide-[#d3c49b]"
+          : "grid grid-cols-2 gap-0 lg:gap-8 divide-x divide-x-reverse divide-[#ccc]"
       } items-start`}
       dir="rtl"
     >
       {items.length === 0 ? (
-        <div className="col-span-full flex items-center justify-center text-center text-[#6f5a38] p-8">
+        <div className="col-span-full flex items-center justify-center text-center text-[#333] p-8">
           <span className="text-sm opacity-70">العدد اليومي</span>
         </div>
       ) : (
-        items.map((article: any, index: number) => (
+        items.map((sheet: any, index: number) => (
           <div
-            key={article.id || index}
-            className="jarida-paper-page flex flex-col justify-between h-full px-2 md:px-6"
+            key={sheet.id || index}
+            className="jarida-paper-page flex flex-col justify-between h-full px-2 md:px-5"
           >
-            <div>
-              <div className="flex justify-between items-center text-[11px] text-[#775f3a] mb-2 font-sans font-bold gap-2 flex-wrap">
-                <div className="flex items-center gap-2">
-                  <span className="bg-[#ebd9bc] px-2.5 py-0.5 rounded text-black border border-[#d3c49b]">
-                    {article.source || "وكالة الأنباء"}
-                  </span>
-                  {article.category && (
-                    <span className="text-[11px] text-[#6c624a] font-semibold">
-                      • {article.category}
-                    </span>
-                  )}
-                </div>
-                <span>{new Date(article.publishedAt || Date.now()).toLocaleDateString("ar-MA")}</span>
-              </div>
-              <h3 className="jarida-article-headline text-xl md:text-2xl font-bold text-black mb-3 leading-snug">
-                {article.title}
-              </h3>
-              {article.imageUrl && (
-                <div className="my-3 overflow-hidden rounded border border-[#d3c49b] bg-[#f0e3cc] shadow-sm">
-                  <img
-                    src={article.imageUrl}
-                    alt=""
-                    aria-hidden="true"
-                    className="jarida-article-image w-full h-44 md:h-52 object-cover filter grayscale contrast-125"
-                  />
-                </div>
-              )}
-              <p className="jarida-article-summary text-sm md:text-base text-[#2c2c2c] leading-relaxed text-justify mb-3 font-serif">
-                {article.summary}
-              </p>
-              {article.content && article.content.trim() !== article.summary?.trim() && (
-                <p className="jarida-article-body text-xs md:text-sm text-[#4a4a4a] leading-relaxed text-justify font-serif border-t border-[#e2d5b3] pt-2 mb-4">
-                  {article.content}
-                </p>
-              )}
-            </div>
-            <div className="mt-6 pt-2 border-t border-[#e2d5b3] flex justify-between items-center text-xs text-[#776644] font-sans">
-              <span>جريدة الأفق الإلكترونية</span>
-              <span>
-                صفحة {pageIndex * articlesPerView + index + 1} من {Math.max(1, totalArticles)}
-              </span>
-            </div>
+            <NewspaperSheetContent
+              sheet={sheet}
+              totalSheets={Math.max(1, Math.ceil(totalArticles / Math.max(1, articlesPerView)))}
+              totalArticlesCount={totalArticles * ARTICLES_PER_NEWSPAPER_PAGE}
+              showComments={false}
+            />
           </div>
         ))
       )}
       {!isSinglePage && items.length === 1 && (
         <div
           aria-hidden="true"
-          className="jarida-empty-page flex flex-col justify-center items-center h-full min-h-[18rem] text-center p-8 text-[#998866] italic"
+          className="jarida-empty-page flex flex-col justify-center items-center h-full min-h-[18rem] text-center p-8 text-[#666] italic"
         >
           <p className="text-base">تابعوا المزيد من المستجدات والتقارير في الإصدارات القادمة.</p>
         </div>
@@ -383,8 +587,17 @@ export default function Home() {
     } catch (e) {}
   }, [isMuted]);
 
-  // لا نعرضش أخباراً تجريبية أو قديمة عندما تكون الـAPI فارغة؛ الجريدة خاصها تبين حالة التحديث بوضوح.
-  const processedArticles = Array.isArray(articles) ? articles : [];
+  // دمج كل الداتا اليومية الحية مع الداتا اليومية الفايتة (الأرشيف اليومي) باش تعمر صفحات الجريدة بحال الجرائد اليومية
+  const allDailyArticles = (() => {
+    const liveList = Array.isArray(articles) ? articles : [];
+    const seenTitles = new Set(liveList.map((a: any) => a?.title?.trim()));
+    const merged = [
+      ...liveList,
+      ...ARCHIVE_DAILY_ARTICLES.filter((a) => !seenTitles.has(a.title.trim())),
+    ];
+    return merged;
+  })();
+  const processedArticles = buildNewspaperPages(allDailyArticles);
 
   const isSinglePage = viewMode === "single";
   const isAndroidTV = deviceKind === "android-tv";
@@ -857,30 +1070,14 @@ export default function Home() {
         </button>
       </div>
 
-      {/* Newspaper Spread Container (Vintage Book Layout / Android Single-Page Mode) */}
-      <div className="fb-book relative text-[#1a1a1a] my-auto flex flex-col justify-between">
+      {/* Newspaper Spread Container (Authentic Daily Newspaper Layout / مثل الجرائد اليومية) */}
+      <div className="fb-book relative text-[#111] my-auto flex flex-col justify-between">
         {!isSinglePage && <div className="fb-spine" aria-hidden="true" />}
-        {!isSinglePage && <div className="fb-ribbon" aria-hidden="true" />}
-        
-        {/* Masthead */}
-        <div className="np-mast text-center border-b-2 border-black pb-4 mb-6">
-          <div className="flex justify-between items-center text-xs text-[#555] mb-1 px-2 font-sans font-semibold">
-            <span>{formatArabicEditionDate(editionDate)}</span>
-            <span>الإصدار اليومي الشامل</span>
-            <span>{isSinglePage ? `صفحة ${displayPageIndex + 1} / ${Math.max(1, totalPages)}` : `العدد ${displayPageIndex + 1}`}</span>
-          </div>
-          <h1 className="np-title text-4xl md:text-6xl font-black tracking-tight text-black font-serif">
-            جريدة الأفق
-          </h1>
-          <p className="np-subtitle text-xs tracking-widest text-[#555] uppercase mt-1 font-sans">
-            صوت الحقيقة والخبر اليقين • يومية مستقلة
-          </p>
-        </div>
 
-        {/* Content Spread: single clean page on Android / TV / mobile, double-page newspaper on desktop */}
+        {/* Content Spread: single clean newspaper page on Android / TV / mobile, double-page newspaper on desktop */}
         <div
           ref={spreadRef}
-          className={`jarida-spread relative ${isSinglePage ? "grid grid-cols-1 gap-0" : "grid grid-cols-2 gap-0 lg:gap-12 divide-x divide-x-reverse divide-[#d3c49b]"} flex-grow items-start`}
+          className={`jarida-spread relative ${isSinglePage ? "grid grid-cols-1 gap-0" : "grid grid-cols-2 gap-0 lg:gap-8 divide-x divide-x-reverse divide-[#ccc]"} flex-grow items-start`}
           dir="rtl"
           onClick={(event) => {
             if (isSinglePage) return;
@@ -895,91 +1092,34 @@ export default function Home() {
           onTouchEnd={handleTouchEnd}
         >
           <div className="jarida-static-spread">
-            <div className={`jarida-static-spread-content relative ${isSinglePage ? "grid grid-cols-1 gap-0" : "grid grid-cols-2 gap-0 lg:gap-12 divide-x divide-x-reverse divide-[#d3c49b]"} items-start`}>
+            <div className={`jarida-static-spread-content relative ${isSinglePage ? "grid grid-cols-1 gap-0" : "grid grid-cols-2 gap-0 lg:gap-12 divide-x divide-x-reverse divide-[#ccc]"} items-start`}>
           
           {/* Center Book Spine Shadow (Desktop spread only) */}
           {!isSinglePage && (
             <div className="hidden lg:block absolute top-0 bottom-0 right-1/2 w-8 bg-gradient-to-l from-black/10 to-transparent pointer-events-none -mr-4 z-10" />
           )}
 
-          {frontItems.length === 0 && (
-            <div className="col-span-full min-h-[46vh] flex flex-col items-center justify-center text-center px-8 py-12 text-[#665533]">
-              <div className="border-y-2 border-[#b9a77a] py-7 max-w-xl">
-                <p className="text-xs tracking-[0.28em] font-sans font-bold text-[#8b7650] mb-3">الطبعة اليومية</p>
-                <h2 className="text-3xl md:text-5xl font-black text-[#211b12] mb-4">{isDailyLoading ? "جاري إعداد العدد..." : "العدد في طور التحديث"}</h2>
-                <p className="text-sm md:text-base leading-relaxed font-serif">
-                  {isDailyError
-                    ? "تعذر الوصول إلى خدمة الأخبار حالياً. عاود المحاولة بعد لحظات؛ لن نعرض محتوى قديماً على أنه عدد جديد."
-                    : "سيظهر هنا محتوى الأخبار فور اكتمال المزامنة اليومية."}
-                </p>
-                <button
-                  type="button"
-                  onClick={() => refetch()}
-                  className="jarida-focusable mt-5 border border-[#77613b] px-5 py-2 text-xs font-sans font-bold hover:bg-[#e6d4ae] transition cursor-pointer"
-                >
-                  إعادة تحميل العدد
-                </button>
-              </div>
-            </div>
-          )}
-
-          {frontItems.map((article: any, idx: number) => (
+          {frontItems.map((sheet: NewspaperPageSheet, idx: number) => (
             <div
-              key={article.id || idx}
+              key={sheet.id || idx}
               ref={idx === 0 ? activePageScrollRef : undefined}
-              id={`article-${article.id || idx}`}
+              id={`article-${sheet.id || idx}`}
               data-page-slot={idx === 0 ? "right" : "left"}
-              data-article-id={article.id || idx}
-              className="jarida-paper-page flex flex-col justify-between h-full px-2 md:px-6"
+              data-article-id={sheet.id || idx}
+              className="jarida-paper-page flex flex-col justify-between h-full px-2 md:px-5"
             >
-              <div>
-                <div className="flex justify-between items-center text-[11px] text-[#775f3a] mb-2 font-sans font-bold gap-2 flex-wrap">
-                  <div className="flex items-center gap-2">
-                    <span className="bg-[#ebd9bc] px-2.5 py-0.5 rounded text-black border border-[#d3c49b]">
-                      {article.source || "وكالة الأنباء"}
-                    </span>
-                    {article.category && (
-                      <span className="text-[11px] text-[#6c624a] font-semibold">
-                        • {article.category}
-                      </span>
-                    )}
-                  </div>
-                  <span>{new Date(article.publishedAt).toLocaleDateString("ar-MA")}</span>
-                </div>
-                <h2 className="jarida-article-headline text-xl md:text-2xl font-bold text-black mb-3 leading-snug">
-                  {article.title}
-                </h2>
-                {article.imageUrl && (
-                  <div className="my-3 overflow-hidden rounded border border-[#d3c49b] bg-[#f0e3cc] shadow-sm">
-                    <img 
-                      src={article.imageUrl} 
-                      alt={article.title} 
-                      className="jarida-article-image w-full h-44 md:h-52 object-cover filter grayscale contrast-125 hover:grayscale-0 transition duration-500"
-                    />
-                  </div>
-                )}
-                <p className="jarida-article-summary text-sm md:text-base text-[#2c2c2c] leading-relaxed text-justify mb-3 font-serif">
-                  {article.summary}
-                </p>
-                {article.content && article.content.trim() !== article.summary?.trim() && (
-                  <p className="jarida-article-body text-xs md:text-sm text-[#4a4a4a] leading-relaxed text-justify font-serif border-t border-[#e2d5b3] pt-2 mb-4">
-                    {article.content}
-                  </p>
-                )}
-
-                {/* Social Share & Comments component */}
-                <ArticleComments article={article} />
-              </div>
-              <div className="mt-6 pt-2 border-t border-[#e2d5b3] flex justify-between items-center text-xs text-[#776644] font-sans">
-                <span>جريدة الأفق الإلكترونية</span>
-                <span>صفحة {displayPageIndex * articlesPerView + idx + 1} من {processedArticles.length}</span>
-              </div>
+              <NewspaperSheetContent
+                sheet={sheet}
+                totalSheets={processedArticles.length}
+                totalArticlesCount={allDailyArticles.length}
+                showComments={true}
+              />
             </div>
           ))}
 
           {/* الصفحة المقابلة تبقى ظاهرة حتى في آخر spread، بحال ورقة جريدة حقيقية. */}
           {!isSinglePage && frontItems.length === 1 && (
-            <div data-page-slot="left" aria-label="صفحة فارغة" className="jarida-empty-page flex flex-col justify-center items-center h-full min-h-[18rem] text-center p-8 text-[#998866] italic">
+            <div data-page-slot="left" aria-label="صفحة فارغة" className="jarida-empty-page flex flex-col justify-center items-center h-full min-h-[18rem] text-center p-8 text-[#666] italic">
               <p className="text-base">تابعوا المزيد من المستجدات والتقارير في الإصدارات القادمة.</p>
             </div>
           )}
