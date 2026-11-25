@@ -3,6 +3,7 @@ import { trpc } from "@/lib/trpc";
 import { formatArabicEditionDate } from "@shared/date";
 import { Volume2, VolumeX, RefreshCw, Share2, MessageSquare, Send, Check, FileText, BookOpen, Library, X, Headphones } from "lucide-react";
 import CategoryFilterBar from "../components/CategoryFilterBar";
+import VoiceReader from "../components/VoiceReader";
 import {
   getBottomLeftPeelProgress,
   getBoundedPageChange,
@@ -991,6 +992,14 @@ export default function Home() {
 
   const progressPercent = totalPages > 0 ? Math.round(((displayPageIndex + 1) / totalPages) * 100) : 0;
 
+  const currentActiveArticle =
+    frontItems[0]?.leadArticle ||
+    frontItems[0]?.allArticles?.[0] ||
+    allDailyArticles[0];
+  const currentArticleTitle = currentActiveArticle?.title || "";
+  const currentArticleContent =
+    currentActiveArticle?.content || currentActiveArticle?.summary || "";
+
   return (
     <div
       data-jarida-release="jarida-immersive-83ae373f"
@@ -1023,6 +1032,11 @@ export default function Home() {
           <Headphones className={`w-3.5 h-3.5 ${isSpeakingAudio ? "animate-pulse text-[#7a5b1e]" : ""}`} />
           <span>{isSpeakingAudio ? "إيقاف الموجز" : "الموجز الصوتي 🎙️"}</span>
         </button>
+        <span className="text-xs text-[#a39371]">|</span>
+        <VoiceReader
+          articleTitle={currentArticleTitle}
+          articleContent={currentArticleContent}
+        />
         <span className="text-xs text-[#a39371]">|</span>
         <button
           type="button"
