@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  getBottomLeftPeelProgress,
   getBoundedPageChange,
   getPageTurnSchedule,
   getSwipeStep,
@@ -8,6 +9,14 @@ import {
 } from "./pageTurnTiming";
 
 describe("page-turn timing and interaction contract", () => {
+  it("calculates peel progress from bottom-left to top-right and return from top-right to bottom-left", () => {
+    const nextProgress = getBottomLeftPeelProgress(40, 460, 320, 180, 600, 500, "next");
+    expect(nextProgress).toBeGreaterThan(0.5);
+
+    const prevProgress = getBottomLeftPeelProgress(540, 40, 220, 340, 600, 500, "prev");
+    expect(prevProgress).toBeGreaterThan(0.5);
+  });
+
   it("swaps content at the center and keeps the animation active through its full cycle", () => {
     const schedule = getPageTurnSchedule();
 

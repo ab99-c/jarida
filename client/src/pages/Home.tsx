@@ -1,8 +1,14 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { trpc } from "@/lib/trpc";
 import { formatArabicEditionDate } from "@shared/date";
-import { Volume2, VolumeX, RefreshCw, ChevronLeft, ChevronRight, Share2, MessageSquare, Send, Check, FileText, BookOpen } from "lucide-react";
-import { getBoundedPageChange, getSwipeStep, PAGE_TURN_DURATION_MS, PAGE_TURN_MIDPOINT_MS } from "./pageTurnTiming";
+import { Volume2, VolumeX, RefreshCw, ChevronLeft, ChevronRight, Share2, MessageSquare, Send, Check, FileText, BookOpen, CornerUpRight, CornerDownLeft } from "lucide-react";
+import {
+  getBottomLeftPeelProgress,
+  getBoundedPageChange,
+  getSwipeStep,
+  PAGE_TURN_DURATION_MS,
+  PAGE_TURN_MIDPOINT_MS,
+} from "./pageTurnTiming";
 import {
   convertPageIndexBetweenModes,
   detectDeviceKind,
@@ -178,27 +184,91 @@ function ArticleComments({ article }: { article: any }) {
   );
 }
 
-function TurningPagePreview({ items }: { items: any[] }) {
+function TurningPagePreview({
+  items,
+  pageIndex = 0,
+  articlesPerView = 1,
+  totalArticles = 1,
+  isSinglePage = false,
+}: {
+  items: any[];
+  pageIndex?: number;
+  articlesPerView?: number;
+  totalArticles?: number;
+  isSinglePage?: boolean;
+}) {
   return (
-    <div className="jarida-turning-preview w-full h-full p-5 md:p-8" dir="rtl">
-      <div className="grid grid-cols-1 gap-5 h-full content-start">
-        {items.length === 0 ? (
-          <div className="col-span-full flex items-center justify-center text-center text-[#6f5a38]">
-            <span className="text-sm opacity-70">العدد اليومي</span>
-          </div>
-        ) : items.map((article: any, index: number) => (
-          <article key={article.id || index} className="border-b border-[#b8a47b]/70 pb-4 text-right overflow-hidden">
-            <div className="text-[10px] uppercase tracking-[0.16em] text-[#806b44] mb-2 font-sans">
-              {article.source || "وكالة الأنباء"}
+    <div
+      className={`jarida-turning-preview w-full h-full ${
+        isSinglePage
+          ? "grid grid-cols-1 gap-0"
+          : "grid grid-cols-2 gap-0 lg:gap-12 divide-x divide-x-reverse divide-[#d3c49b]"
+      } items-start`}
+      dir="rtl"
+    >
+      {items.length === 0 ? (
+        <div className="col-span-full flex items-center justify-center text-center text-[#6f5a38] p-8">
+          <span className="text-sm opacity-70">العدد اليومي</span>
+        </div>
+      ) : (
+        items.map((article: any, index: number) => (
+          <div
+            key={article.id || index}
+            className="jarida-paper-page flex flex-col justify-between h-full px-2 md:px-6"
+          >
+            <div>
+              <div className="flex justify-between items-center text-[11px] text-[#775f3a] mb-2 font-sans font-bold gap-2 flex-wrap">
+                <div className="flex items-center gap-2">
+                  <span className="bg-[#ebd9bc] px-2.5 py-0.5 rounded text-black border border-[#d3c49b]">
+                    {article.source || "وكالة الأنباء"}
+                  </span>
+                  {article.category && (
+                    <span className="text-[11px] text-[#6c624a] font-semibold">
+                      • {article.category}
+                    </span>
+                  )}
+                </div>
+                <span>{new Date(article.publishedAt || Date.now()).toLocaleDateString("ar-MA")}</span>
+              </div>
+              <h3 className="jarida-article-headline text-xl md:text-2xl font-bold text-black mb-3 leading-snug">
+                {article.title}
+              </h3>
+              {article.imageUrl && (
+                <div className="my-3 overflow-hidden rounded border border-[#d3c49b] bg-[#f0e3cc] shadow-sm">
+                  <img
+                    src={article.imageUrl}
+                    alt=""
+                    aria-hidden="true"
+                    className="jarida-article-image w-full h-44 md:h-52 object-cover filter grayscale contrast-125"
+                  />
+                </div>
+              )}
+              <p className="jarida-article-summary text-sm md:text-base text-[#2c2c2c] leading-relaxed text-justify mb-3 font-serif">
+                {article.summary}
+              </p>
+              {article.content && article.content.trim() !== article.summary?.trim() && (
+                <p className="jarida-article-body text-xs md:text-sm text-[#4a4a4a] leading-relaxed text-justify font-serif border-t border-[#e2d5b3] pt-2 mb-4">
+                  {article.content}
+                </p>
+              )}
             </div>
-            {article.imageUrl && (
-              <img src={article.imageUrl} alt="" aria-hidden="true" className="w-full h-20 object-cover grayscale opacity-75 mb-2 border border-[#c5b28a]" />
-            )}
-            <h3 className="text-base md:text-lg font-bold leading-snug text-[#251d12] mb-2">{article.title}</h3>
-            <p className="text-xs leading-relaxed text-[#5a4930] line-clamp-5">{article.summary}</p>
-          </article>
-        ))}
-      </div>
+            <div className="mt-6 pt-2 border-t border-[#e2d5b3] flex justify-between items-center text-xs text-[#776644] font-sans">
+              <span>جريدة الأفق الإلكترونية</span>
+              <span>
+                صفحة {pageIndex * articlesPerView + index + 1} من {Math.max(1, totalArticles)}
+              </span>
+            </div>
+          </div>
+        ))
+      )}
+      {!isSinglePage && items.length === 1 && (
+        <div
+          aria-hidden="true"
+          className="jarida-empty-page flex flex-col justify-center items-center h-full min-h-[18rem] text-center p-8 text-[#998866] italic"
+        >
+          <p className="text-base">تابعوا المزيد من المستجدات والتقارير في الإصدارات القادمة.</p>
+        </div>
+      )}
     </div>
   );
 }
@@ -249,6 +319,15 @@ export default function Home() {
   const [turningFromItems, setTurningFromItems] = useState<any[]>([]);
   const [turningToItems, setTurningToItems] = useState<any[]>([]);
   const [turningFromPage, setTurningFromPage] = useState(0);
+  const [turningToPage, setTurningToPage] = useState(0);
+  const [peelDrag, setPeelDrag] = useState<{
+    direction: "next" | "prev";
+    progress: number;
+    startX: number;
+    startY: number;
+    moved: boolean;
+  } | null>(null);
+  const spreadRef = useRef<HTMLDivElement | null>(null);
   const touchStartX = useRef<number | null>(null);
   const touchStartY = useRef<number | null>(null);
   const touchStartedInteractive = useRef(false);
@@ -340,10 +419,12 @@ export default function Home() {
     setTurningFromItems(fromItems);
     setTurningToItems(toItems);
     setTurningFromPage(currentPage);
+    setTurningToPage(nextPageIndex);
     setTurnDirection(step > 0 ? "next" : "prev");
+    setPeelDrag(null);
     setIsTurning(true);
     playFlipSound();
-    // تبديل المقالات عند محور الوسط، ثم نترك الورقة تكمل رجوعها الطبيعي قبل إزالة class.
+    // تبديل المقالات عند محور الوسط، ثم نترك الورقة تكمل حركتها من تحت اليسار لليمين (أو إرجاعها) قبل إزالة الطبقة.
     window.setTimeout(() => {
       setCurrentPage(nextPageIndex);
     }, PAGE_TURN_MIDPOINT_MS);
@@ -452,6 +533,25 @@ export default function Home() {
     const endY = event.changedTouches[0]?.clientY ?? startY;
     const deltaX = endX - startX;
     const deltaY = endY - startY;
+    const bounds = event.currentTarget.getBoundingClientRect();
+    const startedInBottomLeftZone =
+      startX - bounds.left < bounds.width * 0.42 &&
+      startY - bounds.top > bounds.height * 0.55;
+    const startedInTopRightZone =
+      startX - bounds.left > bounds.width * 0.58 &&
+      startY - bounds.top < bounds.height * 0.45;
+
+    // إذا بدأ السحب من تحت جهة اليسار وطلع الفوق/اليمين، نرفع الورقة للتالي باش تبان الورقة الأخرى
+    if (startedInBottomLeftZone && (deltaX > 24 || deltaY < -28)) {
+      requestPageChange(1);
+      return;
+    }
+
+    // إذا بدأ السحب من الفوق جهة اليمين ونزل لتحت جهة اليسار، نرجع الورقة السابقة
+    if (startedInTopRightZone && (deltaX < -24 || deltaY > 28)) {
+      requestPageChange(-1);
+      return;
+    }
 
     // Respect vertical scrolling on Android phones & tablets without accidentally flipping pages
     if (Math.abs(deltaY) > 18 && Math.abs(deltaY) > Math.abs(deltaX)) {
@@ -467,31 +567,119 @@ export default function Home() {
     // In single-page mode, avoid accidental taps while reading/selecting text
     if (isSinglePage) return;
 
-    const bounds = event.currentTarget.getBoundingClientRect();
     requestPageChange(endX - bounds.left > bounds.width / 2 ? 1 : -1);
+  };
+
+  const startCornerPeelDrag = (
+    direction: "next" | "prev",
+    event: React.PointerEvent<HTMLButtonElement>,
+  ) => {
+    if (isTurning || totalPages <= 1) return;
+    const step = direction === "next" ? 1 : -1;
+    const turn = getBoundedPageChange(currentPage, totalPages, step);
+    if (!turn) return;
+
+    event.stopPropagation();
+    try {
+      event.currentTarget.setPointerCapture(event.pointerId);
+    } catch {
+      // ignore pointer capture issues
+    }
+
+    const fromItems = processedArticles.slice(
+      currentPage * articlesPerView,
+      (currentPage + 1) * articlesPerView,
+    );
+    const toItems = processedArticles.slice(
+      turn.toPage * articlesPerView,
+      (turn.toPage + 1) * articlesPerView,
+    );
+    setTurningFromItems(fromItems);
+    setTurningToItems(toItems);
+    setTurningFromPage(currentPage);
+    setTurningToPage(turn.toPage);
+    setTurnDirection(direction);
+    setPeelDrag({
+      direction,
+      progress: 0.08,
+      startX: event.clientX,
+      startY: event.clientY,
+      moved: false,
+    });
+  };
+
+  const moveCornerPeelDrag = (event: React.PointerEvent<HTMLButtonElement>) => {
+    if (!peelDrag) return;
+    event.stopPropagation();
+    const bounds = spreadRef.current?.getBoundingClientRect();
+    const width = bounds?.width ?? 640;
+    const height = bounds?.height ?? 520;
+    const dist = Math.hypot(event.clientX - peelDrag.startX, event.clientY - peelDrag.startY);
+    const nextProgress = getBottomLeftPeelProgress(
+      peelDrag.startX,
+      peelDrag.startY,
+      event.clientX,
+      event.clientY,
+      width,
+      height,
+      peelDrag.direction,
+    );
+    setPeelDrag((prev) =>
+      prev
+        ? {
+            ...prev,
+            progress: Math.max(0.08, nextProgress),
+            moved: prev.moved || dist > 10,
+          }
+        : null,
+    );
+  };
+
+  const endCornerPeelDrag = (event: React.PointerEvent<HTMLButtonElement>) => {
+    if (!peelDrag) return;
+    event.stopPropagation();
+    const { direction, progress, moved } = peelDrag;
+    setPeelDrag(null);
+    // إذا نقر المستخدم على الزاوية أو سحب الورقة بما يكفي، نكمل رفع الورقة أو إرجاعها
+    if (!moved || progress >= 0.14) {
+      requestPageChange(direction === "next" ? 1 : -1);
+    }
   };
 
   const currentItems = processedArticles.slice(
     currentPage * articlesPerView,
     (currentPage + 1) * articlesPerView
   );
+  const isInteractivePeeling = Boolean(peelDrag);
+  const isSheetActive = isTurning || isInteractivePeeling;
+  const activeDirection = peelDrag ? peelDrag.direction : turnDirection;
   const hasReachedContentSwap = isTurning && currentPage !== turningFromPage;
-  const frontItems = isTurning && !hasReachedContentSwap ? turningFromItems : currentItems;
-  const displayPageIndex = isTurning && !hasReachedContentSwap ? turningFromPage : currentPage;
-  // كل spread فيه جوج صفحات حقيقيين: الأولى على اليمين والثانية على اليسار.
-  // فالـnext كتدور صفحة اليمين للجهة اليسرى، وفالـprev كتدور صفحة اليسار بالعكس.
-  const turnedFromArticle = isSinglePage
-    ? turningFromItems[0]
-    : turnDirection === "next"
-      ? turningFromItems[0]
-      : turningFromItems[1] ?? turningFromItems[0];
-  const turnedToArticle = isSinglePage
-    ? turningToItems[0]
-    : turnDirection === "next"
-      ? turningToItems[1] ?? turningToItems[0]
-      : turningToItems[0] ?? turningToItems[1];
-  const turningSheetFromItems = [turnedFromArticle].filter(Boolean);
-  const turningSheetToItems = [turnedToArticle].filter(Boolean);
+
+  // عندما ترفع الورقة من تحت جهة اليسار إلى اليمين (next)، تظهر الورقة الأخرى (turningToItems) مباشرة تحتها!
+  // وعندما يرجع المستخدم الورقة السابقة (prev)، تبقى الورقة الحالية تحتها ريثما تنزل الورقة السابقة من اليمين لتحت اليسار وتغطيها.
+  const frontItems = isSheetActive
+    ? activeDirection === "next"
+      ? turningToItems
+      : hasReachedContentSwap
+        ? currentItems
+        : turningFromItems
+    : currentItems;
+
+  const displayPageIndex = isSheetActive
+    ? activeDirection === "next"
+      ? turningToPage
+      : hasReachedContentSwap
+        ? currentPage
+        : turningFromPage
+    : currentPage;
+
+  // كل spread فيه جوج صفحات حقيقيين: الورقة المرفوعة كتهز الصفحة كاملة من تحت اليسار لجهة اليمين، وفالـprev كترجع بالعكس.
+  const turningSheetFromItems =
+    activeDirection === "next" ? turningFromItems : turningToItems;
+  const turningSheetToItems =
+    activeDirection === "next" ? turningToItems : turningFromItems;
+  const turningSheetPageIndex =
+    activeDirection === "next" ? turningFromPage : turningToPage;
 
   const progressPercent = totalPages > 0 ? Math.round(((displayPageIndex + 1) / totalPages) * 100) : 0;
 
@@ -570,6 +758,7 @@ export default function Home() {
 
         {/* Content Spread: single clean page on Android / TV / mobile, double-page newspaper on desktop */}
         <div
+          ref={spreadRef}
           className={`jarida-spread relative ${isSinglePage ? "grid grid-cols-1 gap-0" : "grid grid-cols-2 gap-0 lg:gap-12 divide-x divide-x-reverse divide-[#d3c49b]"} flex-grow items-start`}
           dir="rtl"
           onClick={(event) => {
@@ -577,7 +766,8 @@ export default function Home() {
             const target = event.target as HTMLElement;
             if (target.closest("button, a, input, textarea")) return;
             const bounds = event.currentTarget.getBoundingClientRect();
-            requestPageChange(event.clientX - bounds.left > bounds.width / 2 ? 1 : -1);
+            // النقر على جهة اليسار يرفع الورقة من تحت اليسار نحو اليمين (التالي)، والنقر على جهة اليمين يرجع الورقة السابقة
+            requestPageChange(event.clientX - bounds.left < bounds.width / 2 ? 1 : -1);
           }}
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
@@ -674,17 +864,73 @@ export default function Home() {
             </div>
           </div>
 
-          {isTurning && (
+          {/* زاوية رفع الورقة من تحت جهة اليسار نحو اليمين لإظهار الورقة الأخرى */}
+          {!isSheetActive && currentPage < totalPages - 1 && (
+            <button
+              type="button"
+              data-peel-corner="bottom-left"
+              aria-label="ارفع الورقة من تحت جهة اليسار لإظهار الورقة التالية"
+              title="ارفع الورقة أو اسحبها من تحت جهة اليسار لجهة اليمين"
+              className="jarida-corner-peel-next jarida-focusable"
+              onPointerDown={(e) => startCornerPeelDrag("next", e)}
+              onPointerMove={moveCornerPeelDrag}
+              onPointerUp={endCornerPeelDrag}
+              onPointerCancel={() => setPeelDrag(null)}
+            >
+              <span className="jarida-corner-peel-label">
+                <CornerUpRight className="w-3 h-3" />
+                <span>ارفع الورقة</span>
+              </span>
+            </button>
+          )}
+
+          {/* زاوية إرجاع الورقة السابقة من جهة اليمين إلى تحت جهة اليسار */}
+          {!isSheetActive && currentPage > 0 && (
+            <button
+              type="button"
+              data-peel-corner="top-right"
+              aria-label="إرجاع الورقة السابقة من جهة اليمين"
+              title="اسحب أو انقر لإرجاع الورقة السابقة"
+              className="jarida-corner-peel-prev jarida-focusable"
+              onPointerDown={(e) => startCornerPeelDrag("prev", e)}
+              onPointerMove={moveCornerPeelDrag}
+              onPointerUp={endCornerPeelDrag}
+              onPointerCancel={() => setPeelDrag(null)}
+            >
+              <CornerDownLeft className="w-3.5 h-3.5" />
+              <span>إرجاع الورقة</span>
+            </button>
+          )}
+
+          {isSheetActive && (
             <div
-              className={`jarida-turning-page is-turning turn-${turnDirection}`}
+              className={`jarida-turning-page ${isTurning ? "is-turning" : ""} ${isInteractivePeeling ? "is-dragging" : ""} turn-${activeDirection}`}
+              style={
+                peelDrag
+                  ? ({ "--jarida-peel-progress": peelDrag.progress } as React.CSSProperties)
+                  : undefined
+              }
               aria-busy="true"
               aria-label="تقليب الصفحة"
             >
               <div className="jarida-turning-face jarida-turning-front">
-                <TurningPagePreview items={turningSheetFromItems} />
+                <TurningPagePreview
+                  items={turningSheetFromItems}
+                  pageIndex={turningSheetPageIndex}
+                  articlesPerView={articlesPerView}
+                  totalArticles={processedArticles.length}
+                  isSinglePage={isSinglePage}
+                />
+                <div className="jarida-peel-curl-flap" aria-hidden="true" />
               </div>
               <div className="jarida-turning-face jarida-turning-back" aria-hidden="true">
-                <TurningPagePreview items={turningSheetToItems} />
+                <TurningPagePreview
+                  items={turningSheetToItems}
+                  pageIndex={displayPageIndex}
+                  articlesPerView={articlesPerView}
+                  totalArticles={processedArticles.length}
+                  isSinglePage={isSinglePage}
+                />
               </div>
             </div>
           )}
@@ -706,17 +952,15 @@ export default function Home() {
             className={`jarida-focusable flex items-center gap-1 px-3 py-1.5 rounded border border-[#c5b48b] bg-[#ebd9bc] hover:bg-[#ded0b1] transition ${currentPage === 0 ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
           >
             <ChevronRight className="w-4 h-4" />
-            <span>السابق</span>
+            <span>إرجاع الورقة</span>
           </button>
 
             <span className="text-center italic font-serif">
             {isAndroidTV
-              ? `صفحة ${displayPageIndex + 1} من ${Math.max(1, totalPages)} • استعمل أزرار الريموت ◀ ▶ للتقليب`
+              ? `صفحة ${displayPageIndex + 1} من ${Math.max(1, totalPages)} • استعمل أزرار الريموت ◀ ▶ لرفع أو إرجاع الورقة`
               : isSinglePage
-                ? `صفحة ${displayPageIndex + 1} من ${Math.max(1, totalPages)} • اسحب للتقليب أو مرّر للقراءة`
-                : isMobile || isAndroid
-                  ? 'جوج صفحات • اسحب أو انقر لقلب الورقة'
-                  : 'انقر على يمين أو يسار الصفحة للقلب'}
+                ? `صفحة ${displayPageIndex + 1} من ${Math.max(1, totalPages)} • ارفع الورقة من تحت اليسار لليمين أو أرجعها`
+                : 'ارفع الورقة من تحت جهة اليسار لجهة اليمين باش تبان الورقة الأخرى'}
             </span>
 
           <button 
@@ -725,7 +969,7 @@ export default function Home() {
             disabled={isTurning || currentPage >= totalPages - 1}
             className={`jarida-focusable flex items-center gap-1 px-3 py-1.5 rounded border border-[#c5b48b] bg-[#ebd9bc] hover:bg-[#ded0b1] transition ${currentPage >= totalPages - 1 ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
           >
-            <span>التالي</span>
+            <span>ارفع الورقة (التالي)</span>
             <ChevronLeft className="w-4 h-4" />
           </button>
         </div>
