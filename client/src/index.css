@@ -369,6 +369,32 @@ body {
   animation: jarida-bottom-left-curl-flap-prev 1400ms cubic-bezier(0.22, 0.74, 0.18, 1) both;
 }
 
+.jarida-turning-page.is-dragging .jarida-peel-curl-flap {
+  animation: none !important;
+  transform:
+    translate3d(
+      calc(var(--jarida-peel-progress, 0) * 88%),
+      calc(var(--jarida-peel-progress, 0) * -84%),
+      calc(sin(var(--jarida-peel-progress, 0) * 3.14159rad) * 28px)
+    )
+    scale(calc(0.3 + var(--jarida-peel-progress, 0) * 0.7))
+    rotate(calc(var(--jarida-peel-progress, 0) * -22deg));
+  opacity: calc(1 - var(--jarida-peel-progress, 0) * 0.9);
+}
+
+.jarida-turning-page.is-dragging.turn-prev .jarida-peel-curl-flap {
+  animation: none !important;
+  transform:
+    translate3d(
+      calc((1 - var(--jarida-peel-progress, 0)) * 88%),
+      calc((1 - var(--jarida-peel-progress, 0)) * -84%),
+      calc(sin(var(--jarida-peel-progress, 0) * 3.14159rad) * 28px)
+    )
+    scale(calc(0.3 + (1 - var(--jarida-peel-progress, 0)) * 0.7))
+    rotate(calc((1 - var(--jarida-peel-progress, 0)) * -22deg));
+  opacity: calc(1 - (1 - var(--jarida-peel-progress, 0)) * 0.9);
+}
+
 .jarida-turning-back {
   z-index: 1;
   transform: rotate3d(1, 1, 0, 180deg);

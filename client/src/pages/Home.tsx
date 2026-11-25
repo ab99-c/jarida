@@ -560,7 +560,7 @@ export default function Home() {
       return false;
     }
   });
-  const [isAutoPlaying, setIsAutoPlaying] = useState(true);
+  const [isAutoPlaying, setIsAutoPlaying] = useState(false);
   const [isTurning, setIsTurning] = useState(false);
   const [turnDirection, setTurnDirection] = useState<"next" | "prev">("next");
   const [turningFromItems, setTurningFromItems] = useState<any[]>([]);
@@ -692,30 +692,100 @@ export default function Home() {
     }
   }, [currentPage, isSinglePage]);
 
-  const requestPageChange = useCallback((step: number) => {
-    if (isTurning || totalPages <= 1) return;
-    const turn = getBoundedPageChange(currentPage, totalPages, step);
-    if (!turn) return;
-    const nextPageIndex = turn.toPage;
+  // ===== محرك تقليب الورقة =====
+  // progress من 0 حتى 1 كيتحرك بـ requestAnimationFrame، باش الورقة تكمل من البلاصة اللي طلقتيها فيها بلا قفزة،
+  // وقفل (turnLockRef) كيمنع جوج تقليبات فنفس الوقت (لمس + ماوس، ولا نقر مزدوج).
+  const turnLockRef = useRef(false);
+  const rafRef = useRef<number | null>(null);
+  const dragRef = useRef<{
+    direction: "next" | "prev";
+    startX: number;
+    startY: number;
+    progress: number;
+    toPage: number;
+    source: "touch" | "pointer";
+    moved: boolean;
+  } | null>(null);
 
-    const fromItems = processedArticles.slice(currentPage * articlesPerView, (currentPage + 1) * articlesPerView);
-    const toItems = processedArticles.slice(nextPageIndex * articlesPerView, (nextPageIndex + 1) * articlesPerView);
-    setTurningFromItems(fromItems);
-    setTurningToItems(toItems);
+  useEffect(() => () => {
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+  }, []);
+
+  const prepareTurn = useCallback((step: number) => {
+    if (turnLockRef.current || totalPages <= 1) return null;
+    const turn = getBoundedPageChange(currentPage, totalPages, step);
+    if (!turn) return null;
+    turnLockRef.current = true;
+    setTurningFromItems(processedArticles.slice(currentPage * articlesPerView, (currentPage + 1) * articlesPerView));
+    setTurningToItems(processedArticles.slice(turn.toPage * articlesPerView, (turn.toPage + 1) * articlesPerView));
     setTurningFromPage(currentPage);
-    setTurningToPage(nextPageIndex);
-    setTurnDirection(step > 0 ? "next" : "prev");
-    setPeelDrag(null);
+    setTurningToPage(turn.toPage);
+    setTurnDirection(turn.direction);
+    return { direction: turn.direction, toPage: turn.toPage };
+  }, [totalPages, currentPage, processedArticles, articlesPerView]);
+
+  const animateSheet = useCallback((direction: "next" | "prev", toPage: number, from: number, to: number) => {
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const duration = reduceMotion ? 1 : Math.max(240, Math.abs(to - from) * PAGE_TURN_DURATION_MS * 0.7);
+    const startedAt = performance.now();
     setIsTurning(true);
-    playFlipSound();
-    // تبديل المقالات عند محور الوسط، ثم نترك الورقة تكمل حركتها من تحت اليسار لليمين (أو إرجاعها) قبل إزالة الطبقة.
-    window.setTimeout(() => {
-      setCurrentPage(nextPageIndex);
-    }, PAGE_TURN_MIDPOINT_MS);
-    window.setTimeout(() => {
+    const tick = (now: number) => {
+      const t = Math.min(1, (now - startedAt) / duration);
+      const eased = 1 - Math.pow(1 - t, 3);
+      const progress = from + (to - from) * eased;
+      setPeelDrag({ direction, progress, startX: 0, startY: 0, moved: true });
+      if (t < 1) {
+        rafRef.current = requestAnimationFrame(tick);
+        return;
+      }
+      rafRef.current = null;
+      if (to >= 1) setCurrentPage(toPage);
+      setPeelDrag(null);
       setIsTurning(false);
-    }, PAGE_TURN_DURATION_MS);
-  }, [isTurning, totalPages, currentPage, processedArticles, articlesPerView, playFlipSound]);
+      dragRef.current = null;
+      turnLockRef.current = false;
+    };
+    rafRef.current = requestAnimationFrame(tick);
+  }, []);
+
+  const requestPageChange = useCallback((step: number) => {
+    const turn = prepareTurn(step);
+    if (!turn) return;
+    playFlipSound();
+    setPeelDrag({ direction: turn.direction, progress: 0, startX: 0, startY: 0, moved: true });
+    animateSheet(turn.direction, turn.toPage, 0, 1);
+  }, [prepareTurn, animateSheet, playFlipSound]);
+
+  const beginDrag = (direction: "next" | "prev", x: number, y: number, source: "touch" | "pointer") => {
+    const turn = prepareTurn(direction === "next" ? 1 : -1);
+    if (!turn) return false;
+    dragRef.current = { direction, startX: x, startY: y, progress: 0.04, toPage: turn.toPage, source, moved: false };
+    setPeelDrag({ direction, progress: 0.04, startX: x, startY: y, moved: false });
+    return true;
+  };
+
+  const updateDrag = (x: number, y: number) => {
+    const drag = dragRef.current;
+    if (!drag) return;
+    const bounds = spreadRef.current?.getBoundingClientRect();
+    const progress = Math.max(
+      0.04,
+      getBottomLeftPeelProgress(drag.startX, drag.startY, x, y, bounds?.width ?? 640, bounds?.height ?? 520, drag.direction),
+    );
+    drag.progress = progress;
+    if (Math.hypot(x - drag.startX, y - drag.startY) > 10) drag.moved = true;
+    setPeelDrag({ direction: drag.direction, progress, startX: drag.startX, startY: drag.startY, moved: drag.moved });
+  };
+
+  // ملي كتطلق: إلا سحبتي بزاف (ولا نقرتي على الزاوية) الورقة كتكمل، وإلا كترجع لبلاصتها بالشوية
+  const endDrag = (tapCompletesTurn: boolean) => {
+    const drag = dragRef.current;
+    if (!drag) return;
+    const complete = drag.progress >= 0.2 || (tapCompletesTurn && !drag.moved);
+    if (complete) playFlipSound();
+    animateSheet(drag.direction, drag.toPage, drag.progress, complete ? 1 : 0);
+  };
 
   useEffect(() => {
     if (!isAutoPlaying) return;
@@ -795,287 +865,90 @@ export default function Home() {
   }, [nextPage, prevPage]);
 
   const handleTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
-    if (isTurning) return;
     const target = event.target as HTMLElement | null;
+    // الأزرار (بما فيهم زوايا الورقة) عندها المعالجة ديالها، باش ما يوقعش تقليب مزدوج
     touchStartedInteractive.current = Boolean(
-      target?.closest("button:not([data-peel-corner]), a, input, textarea, select, label"),
+      target?.closest("button, a, input, textarea, select, label"),
     );
     touchStartX.current = event.touches[0]?.clientX ?? null;
     touchStartY.current = event.touches[0]?.clientY ?? null;
   };
 
   const handleTouchMove = (event: React.TouchEvent<HTMLDivElement>) => {
-    if (isTurning || totalPages <= 1) return;
     const startX = touchStartX.current;
     const startY = touchStartY.current;
     if (touchStartedInteractive.current || startX === null || startY === null) return;
+    const x = event.touches[0]?.clientX ?? startX;
+    const y = event.touches[0]?.clientY ?? startY;
 
-    const currentX = event.touches[0]?.clientX ?? startX;
-    const currentY = event.touches[0]?.clientY ?? startY;
-    const dx = currentX - startX;
-    const dy = currentY - startY;
-    const bounds = event.currentTarget.getBoundingClientRect();
-    const width = Math.max(120, bounds.width);
-    const height = Math.max(120, bounds.height);
-
-    // إذا لم يبدأ رفع الورقة بعد، نحدد اتجاه لمس الإصبع:
-    // 1) من تحت جهة اليسار نحو اليمين/الفوق -> رفع الورقة الحالية لإظهار الورقة الأخرى (next)
-    // 2) من جهة اليمين/الفوق نحو تحت جهة اليسار -> إرجاع الورقة السابقة (prev)
-    if (!peelDrag) {
-      const startedInBottomLeft =
-        startX - bounds.left < width * 0.55 && startY - bounds.top > height * 0.45;
-      const startedInRightOrTopRight =
-        startX - bounds.left > width * 0.45;
-
-      const isLiftingFromBottomLeftToRight =
-        (startedInBottomLeft && (dx > 12 || dy < -14) && dx >= -10) ||
-        (dx > 20 && Math.abs(dx) > Math.abs(dy) * 0.75);
-
-      const isReturningFromRightToBottomLeft =
-        (startedInRightOrTopRight && dx < -14 && dy >= -12) ||
-        (dx < -20 && Math.abs(dx) > Math.abs(dy) * 0.75);
-
-      // احترام التمرير العمودي العادي للقراءة إذا لم يكن السحب قطرياً من زاوية الورقة
-      if (
-        !isLiftingFromBottomLeftToRight &&
-        !isReturningFromRightToBottomLeft &&
-        Math.abs(dy) > 22 &&
-        Math.abs(dy) > Math.abs(dx) * 1.25
-      ) {
-        return;
-      }
-
-      const direction: "next" | "prev" | null = isLiftingFromBottomLeftToRight
-        ? "next"
-        : isReturningFromRightToBottomLeft
-          ? "prev"
-          : null;
-
-      if (!direction) return;
-      const step = direction === "next" ? 1 : -1;
-      const turn = getBoundedPageChange(currentPage, totalPages, step);
-      if (!turn) return;
-
-      const fromItems = processedArticles.slice(
-        currentPage * articlesPerView,
-        (currentPage + 1) * articlesPerView,
-      );
-      const toItems = processedArticles.slice(
-        turn.toPage * articlesPerView,
-        (turn.toPage + 1) * articlesPerView,
-      );
-      setTurningFromItems(fromItems);
-      setTurningToItems(toItems);
-      setTurningFromPage(currentPage);
-      setTurningToPage(turn.toPage);
-      setTurnDirection(direction);
-      const initialProgress = getBottomLeftPeelProgress(
-        startX,
-        startY,
-        currentX,
-        currentY,
-        width,
-        height,
-        direction,
-      );
-      setPeelDrag({
-        direction,
-        progress: Math.max(0.06, initialProgress),
-        startX,
-        startY,
-        moved: true,
-      });
+    if (dragRef.current) {
+      if (dragRef.current.source === "touch") updateDrag(x, y);
       return;
     }
+    if (turnLockRef.current) return;
 
-    // تحديث ارتفاع الورقة في الوقت الحقيقي مع حركة الإصبع على الشاشة
-    const nextProgress = getBottomLeftPeelProgress(
-      peelDrag.startX,
-      peelDrag.startY,
-      currentX,
-      currentY,
-      width,
-      height,
-      peelDrag.direction,
-    );
-    setPeelDrag((prev) =>
-      prev
-        ? {
-            ...prev,
-            progress: Math.max(0.04, nextProgress),
-            moved: true,
-          }
-        : null,
-    );
+    const dx = x - startX;
+    const dy = y - startY;
+    // ما كيبدا التقليب حتى تكون الحركة أفقية واضحة، باش القراءة والتمرير العمودي يبقاو عاديين
+    if (Math.abs(dx) < 14 || Math.abs(dx) < Math.abs(dy) * 1.1) return;
+    // الصبع لليمين = رفع الورقة من تحت اليسار لليمين (التالي) • الصبع لليسار = إرجاع الورقة (السابق)
+    if (beginDrag(dx > 0 ? "next" : "prev", startX, startY, "touch")) updateDrag(x, y);
   };
 
-  const handleTouchEnd = (event: React.TouchEvent<HTMLDivElement>) => {
-    const startX = touchStartX.current;
-    const startY = touchStartY.current;
-    const wasInteractive = touchStartedInteractive.current;
+  const handleTouchEnd = () => {
     touchStartX.current = null;
     touchStartY.current = null;
     touchStartedInteractive.current = false;
-
-    if (peelDrag) {
-      const { direction, progress } = peelDrag;
-      setPeelDrag(null);
-      if (progress >= 0.12) {
-        requestPageChange(direction === "next" ? 1 : -1);
-      }
-      return;
-    }
-
-    if (wasInteractive || startX === null || startY === null) return;
-
-    const endX = event.changedTouches[0]?.clientX ?? startX;
-    const endY = event.changedTouches[0]?.clientY ?? startY;
-    const deltaX = endX - startX;
-    const deltaY = endY - startY;
-    const bounds = event.currentTarget.getBoundingClientRect();
-    const startedInBottomLeftZone =
-      startX - bounds.left < bounds.width * 0.45 &&
-      startY - bounds.top > bounds.height * 0.52;
-    const startedInTopRightZone =
-      startX - bounds.left > bounds.width * 0.55 &&
-      startY - bounds.top < bounds.height * 0.48;
-
-    // إذا بدأ السحب بالإصبع من تحت جهة اليسار وطلع الفوق/اليمين، نرفع الورقة للتالي باش تبان الورقة الأخرى
-    if (startedInBottomLeftZone && (deltaX > 18 || deltaY < -20)) {
-      requestPageChange(1);
-      return;
-    }
-
-    // إذا بدأ السحب بالإصبع من جهة اليمين ونزل لتحت جهة اليسار، نرجع الورقة السابقة
-    if (startedInTopRightZone && (deltaX < -18 || deltaY > 20)) {
-      requestPageChange(-1);
-      return;
-    }
-
-    // Respect vertical scrolling on Android phones & tablets without accidentally flipping pages
-    if (Math.abs(deltaY) > 18 && Math.abs(deltaY) > Math.abs(deltaX)) {
-      return;
-    }
-
-    // السحب من اليسار لليمين (deltaX > 34) يرفع الورقة نحو اليمين (التالي)، ومن اليمين لليسار يرجع الورقة السابقة
-    if (Math.abs(deltaX) >= 34) {
-      requestPageChange(deltaX > 0 ? 1 : -1);
-      return;
-    }
-
-    const swipeStep = getSwipeStep(deltaX);
-    if (swipeStep !== 0) {
-      requestPageChange(swipeStep);
-      return;
-    }
-
-    // In single-page mode, avoid accidental taps while reading/selecting text
-    if (isSinglePage) return;
-
-    requestPageChange(endX - bounds.left < bounds.width / 2 ? 1 : -1);
+    if (dragRef.current?.source === "touch") endDrag(false);
   };
 
   const startCornerPeelDrag = (
     direction: "next" | "prev",
     event: React.PointerEvent<HTMLButtonElement>,
   ) => {
-    if (isTurning || totalPages <= 1) return;
-    const step = direction === "next" ? 1 : -1;
-    const turn = getBoundedPageChange(currentPage, totalPages, step);
-    if (!turn) return;
-
     event.stopPropagation();
+    if (!beginDrag(direction, event.clientX, event.clientY, "pointer")) return;
     try {
       event.currentTarget.setPointerCapture(event.pointerId);
     } catch {
       // ignore pointer capture issues
     }
-
-    const fromItems = processedArticles.slice(
-      currentPage * articlesPerView,
-      (currentPage + 1) * articlesPerView,
-    );
-    const toItems = processedArticles.slice(
-      turn.toPage * articlesPerView,
-      (turn.toPage + 1) * articlesPerView,
-    );
-    setTurningFromItems(fromItems);
-    setTurningToItems(toItems);
-    setTurningFromPage(currentPage);
-    setTurningToPage(turn.toPage);
-    setTurnDirection(direction);
-    setPeelDrag({
-      direction,
-      progress: 0.08,
-      startX: event.clientX,
-      startY: event.clientY,
-      moved: false,
-    });
   };
 
   const moveCornerPeelDrag = (event: React.PointerEvent<HTMLButtonElement>) => {
-    if (!peelDrag) return;
+    if (dragRef.current?.source !== "pointer") return;
     event.stopPropagation();
-    const bounds = spreadRef.current?.getBoundingClientRect();
-    const width = bounds?.width ?? 640;
-    const height = bounds?.height ?? 520;
-    const dist = Math.hypot(event.clientX - peelDrag.startX, event.clientY - peelDrag.startY);
-    const nextProgress = getBottomLeftPeelProgress(
-      peelDrag.startX,
-      peelDrag.startY,
-      event.clientX,
-      event.clientY,
-      width,
-      height,
-      peelDrag.direction,
-    );
-    setPeelDrag((prev) =>
-      prev
-        ? {
-            ...prev,
-            progress: Math.max(0.08, nextProgress),
-            moved: prev.moved || dist > 10,
-          }
-        : null,
-    );
+    updateDrag(event.clientX, event.clientY);
   };
 
   const endCornerPeelDrag = (event: React.PointerEvent<HTMLButtonElement>) => {
-    if (!peelDrag) return;
+    if (dragRef.current?.source !== "pointer") return;
     event.stopPropagation();
-    const { direction, progress, moved } = peelDrag;
-    setPeelDrag(null);
-    // إذا نقر المستخدم على الزاوية أو سحب الورقة بما يكفي، نكمل رفع الورقة أو إرجاعها
-    if (!moved || progress >= 0.14) {
-      requestPageChange(direction === "next" ? 1 : -1);
-    }
+    endDrag(true);
+  };
+
+  const cancelCornerPeelDrag = () => {
+    if (dragRef.current?.source === "pointer") endDrag(false);
   };
 
   const currentItems = processedArticles.slice(
     currentPage * articlesPerView,
     (currentPage + 1) * articlesPerView
   );
-  const isInteractivePeeling = Boolean(peelDrag);
-  const isSheetActive = isTurning || isInteractivePeeling;
+  const isSheetActive = Boolean(peelDrag);
   const activeDirection = peelDrag ? peelDrag.direction : turnDirection;
-  const hasReachedContentSwap = isTurning && currentPage !== turningFromPage;
 
-  // عندما ترفع الورقة من تحت جهة اليسار إلى اليمين (next)، تظهر الورقة الأخرى (turningToItems) مباشرة تحتها!
-  // وعندما يرجع المستخدم الورقة السابقة (prev)، تبقى الورقة الحالية تحتها ريثما تنزل الورقة السابقة من اليمين لتحت اليسار وتغطيها.
+  // التالي: الورقة الجاية كتبان مباشرة تحت الورقة اللي كترفع • السابق: الورقة الحالية كتبقى تحت حتى تنزل عليها الورقة السابقة
   const frontItems = isSheetActive
     ? activeDirection === "next"
       ? turningToItems
-      : hasReachedContentSwap
-        ? currentItems
-        : turningFromItems
+      : turningFromItems
     : currentItems;
 
   const displayPageIndex = isSheetActive
     ? activeDirection === "next"
       ? turningToPage
-      : hasReachedContentSwap
-        ? currentPage
-        : turningFromPage
+      : turningFromPage
     : currentPage;
 
   // كل spread فيه جوج صفحات حقيقيين: الورقة المرفوعة كتهز الصفحة كاملة من تحت اليسار لجهة اليمين، وفالـprev كترجع بالعكس.
@@ -1257,7 +1130,7 @@ export default function Home() {
           </div>
 
           {/* طية الورقة الطبيعية من تحت جهة اليسار (بدون كتابة أو تعليمات) للرفع بالإصبع نحو اليمين */}
-          {!isSheetActive && currentPage < totalPages - 1 && (
+          {currentPage < totalPages - 1 && (
             <button
               type="button"
               data-peel-corner="bottom-left"
@@ -1266,12 +1139,12 @@ export default function Home() {
               onPointerDown={(e) => startCornerPeelDrag("next", e)}
               onPointerMove={moveCornerPeelDrag}
               onPointerUp={endCornerPeelDrag}
-              onPointerCancel={() => setPeelDrag(null)}
+              onPointerCancel={cancelCornerPeelDrag}
             />
           )}
 
           {/* طية إرجاع الورقة السابقة من جهة اليمين (بدون كتابة أو تعليمات) للسحب بالإصبع نحو تحت اليسار */}
-          {!isSheetActive && currentPage > 0 && (
+          {currentPage > 0 && (
             <button
               type="button"
               data-peel-corner="top-right"
@@ -1280,13 +1153,13 @@ export default function Home() {
               onPointerDown={(e) => startCornerPeelDrag("prev", e)}
               onPointerMove={moveCornerPeelDrag}
               onPointerUp={endCornerPeelDrag}
-              onPointerCancel={() => setPeelDrag(null)}
+              onPointerCancel={cancelCornerPeelDrag}
             />
           )}
 
           {isSheetActive && (
             <div
-              className={`jarida-turning-page ${isTurning ? "is-turning" : ""} ${isInteractivePeeling ? "is-dragging" : ""} turn-${activeDirection}`}
+              className={`jarida-turning-page is-dragging turn-${activeDirection}`}
               style={
                 peelDrag
                   ? ({ "--jarida-peel-progress": peelDrag.progress } as React.CSSProperties)
