@@ -17,10 +17,13 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed. Please use POST." });
   }
 
-  const apiKey =
+  const rawKey =
     process.env.GEMINI_API_KEY ||
     process.env.GOOGLE_API_KEY ||
-    process.env.GOOGLE_GENAI_API_KEY;
+    process.env.GOOGLE_GENAI_API_KEY ||
+    process.env.VITE_GEMINI_API_KEY ||
+    process.env.GEMINI_KEY;
+  const apiKey = rawKey ? rawKey.trim() : "";
   if (!apiKey) {
     console.error("[Gemini Token] GEMINI_API_KEY environment variable is missing.");
     return res.status(500).json({
