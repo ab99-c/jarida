@@ -1127,11 +1127,12 @@ export default function Home() {
             <div className="jarida-rack">
               <div className="jarida-rack-pole" aria-hidden="true" />
               <div className="jarida-rack-tiers">
-                {dailyEditions.map((ed) => (
+                {dailyEditions.map((ed, edIndex) => (
                   <button
                     key={ed.key}
                     type="button"
                     className="jarida-rack-pocket jarida-focusable"
+                    style={{ "--row": Math.floor(edIndex / 2), "--col": edIndex % 2 } as React.CSSProperties}
                     onClick={() => openEditionFromRack(ed.firstIndex)}
                     title={ed.lead?.title}
                   >
