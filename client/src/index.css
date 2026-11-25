@@ -800,3 +800,254 @@ body {
   .jarida-install-prompt { inset-inline: .55rem; bottom: .55rem; max-width: none; }
   .jarida-install-copy span { font-size: .64rem; }
 }
+
+/* ==========================================================================
+ * Android Phone & Android TV Single-Page Mode (صفحة واحدة)
+ * Preserves existing desktop double-page spread and all data structures.
+ * ========================================================================== */
+
+.jarida-topbar {
+  position: relative;
+  align-self: flex-end;
+}
+
+@media (min-width: 1024px) {
+  .fb-wrapper:not(.jarida-single-page-mode) .jarida-topbar {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+  }
+}
+
+.jarida-focusable:focus-visible,
+.fb-controls button:focus-visible {
+  outline: 3px solid var(--jarida-gold-light);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 5px rgba(220, 180, 91, 0.25);
+}
+
+/* Allow vertical scrolling inside paper pages in both spread & single-page modes */
+.jarida-paper-page {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.jarida-single-page-mode.fb-wrapper {
+  height: 100dvh;
+  min-height: 100dvh;
+  padding:
+    max(10px, env(safe-area-inset-top))
+    max(10px, env(safe-area-inset-right))
+    max(12px, env(safe-area-inset-bottom))
+    max(10px, env(safe-area-inset-left));
+  gap: 10px;
+  justify-content: flex-start;
+  overflow: hidden;
+}
+
+.jarida-single-page-mode .jarida-topbar {
+  width: min(100%, 760px);
+  flex: 0 0 auto;
+  align-self: center;
+  border-radius: 14px;
+  padding: 6px 10px;
+  justify-content: space-between;
+}
+
+.jarida-single-page-mode .fb-book {
+  width: min(100%, 760px);
+  flex: 1 1 auto;
+  height: auto;
+  max-height: none;
+  min-height: 0;
+  padding: clamp(12px, 2.6vw, 24px);
+  border-radius: 10px;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.jarida-single-page-mode .fb-book > .np-mast {
+  padding: 4px 8px 10px;
+  margin-bottom: 10px;
+}
+
+.jarida-single-page-mode .fb-book > .np-mast h1 {
+  font-size: clamp(1.75rem, 6vw, 3rem);
+  line-height: 1.15;
+}
+
+.jarida-single-page-mode .jarida-spread {
+  grid-template-columns: minmax(0, 1fr) !important;
+  cursor: default;
+  padding: 6px;
+}
+
+.jarida-single-page-mode .jarida-spread::after {
+  display: none;
+}
+
+.jarida-single-page-mode .jarida-static-spread,
+.jarida-single-page-mode .jarida-static-spread-content {
+  grid-template-columns: minmax(0, 1fr) !important;
+  min-height: 0;
+  height: 100%;
+  width: 100%;
+}
+
+.jarida-single-page-mode .jarida-paper-page {
+  padding: clamp(14px, 3.2vw, 28px) clamp(14px, 3.5vw, 32px);
+  height: 100%;
+  max-height: 100%;
+  overflow-y: auto;
+  user-select: text;
+}
+
+.jarida-single-page-mode .jarida-article-headline {
+  font-size: clamp(1.25rem, 4.6vw, 1.95rem) !important;
+  line-height: 1.4 !important;
+}
+
+.jarida-single-page-mode .jarida-article-image {
+  height: auto;
+  max-height: 36vh;
+  filter: sepia(.12) contrast(1.04);
+}
+
+.jarida-single-page-mode .jarida-article-summary {
+  font-size: clamp(0.95rem, 3.4vw, 1.15rem) !important;
+  line-height: 1.85 !important;
+}
+
+.jarida-single-page-mode .jarida-article-body {
+  font-size: clamp(0.88rem, 3.1vw, 1.05rem) !important;
+  line-height: 1.8 !important;
+}
+
+.jarida-single-page-mode .jarida-turning-page {
+  width: 100% !important;
+  left: 0;
+  right: 0;
+  transform-origin: left center;
+}
+
+.jarida-single-page-mode .jarida-turning-page.turn-prev {
+  width: 100% !important;
+  left: 0;
+  right: 0;
+  transform-origin: right center;
+}
+
+.jarida-page-progress {
+  width: 100%;
+  height: 4px;
+  margin-top: 8px;
+  background: rgba(239, 231, 212, 0.16);
+  border-radius: 999px;
+  overflow: hidden;
+  flex: 0 0 auto;
+}
+
+.jarida-page-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--jarida-gold), var(--jarida-gold-light));
+  transition: width 0.35s ease;
+}
+
+.jarida-single-page-mode .fb-controls {
+  margin-top: 10px;
+  padding-top: 10px;
+  gap: 8px;
+}
+
+.jarida-single-page-mode .fb-controls button {
+  min-height: 40px;
+  padding: 8px 16px;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.jarida-single-page-mode .fb-controls > span {
+  max-width: 54%;
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+/* Android TV 10-foot viewing enhancements (safe overscan + larger readable typography) */
+.jarida-tv-mode.jarida-single-page-mode.fb-wrapper {
+  padding: 28px 48px;
+}
+
+.jarida-tv-mode.jarida-single-page-mode .jarida-topbar {
+  width: min(100%, 1180px);
+  padding: 10px 18px;
+}
+
+.jarida-tv-mode.jarida-single-page-mode .jarida-topbar button {
+  font-size: 0.95rem;
+  padding: 6px 12px;
+}
+
+.jarida-tv-mode.jarida-single-page-mode .fb-book {
+  width: min(100%, 1180px);
+  padding: 24px 32px;
+}
+
+.jarida-tv-mode.jarida-single-page-mode .jarida-article-headline {
+  font-size: clamp(1.8rem, 2.8vw, 2.55rem) !important;
+  line-height: 1.35 !important;
+}
+
+.jarida-tv-mode.jarida-single-page-mode .jarida-article-summary {
+  font-size: clamp(1.2rem, 1.7vw, 1.5rem) !important;
+  line-height: 1.9 !important;
+}
+
+.jarida-tv-mode.jarida-single-page-mode .jarida-article-body {
+  font-size: clamp(1.05rem, 1.45vw, 1.32rem) !important;
+  line-height: 1.85 !important;
+}
+
+.jarida-tv-mode.jarida-single-page-mode .fb-controls button {
+  min-height: 48px;
+  padding: 10px 26px;
+  font-size: 1rem;
+}
+
+.jarida-tv-mode.jarida-single-page-mode .fb-controls > span {
+  font-size: 0.95rem;
+}
+
+@media (max-width: 520px) {
+  .jarida-single-page-mode.fb-wrapper {
+    padding:
+      max(6px, env(safe-area-inset-top))
+      max(6px, env(safe-area-inset-right))
+      max(8px, env(safe-area-inset-bottom))
+      max(6px, env(safe-area-inset-left));
+    gap: 6px;
+  }
+
+  .jarida-single-page-mode .fb-book {
+    width: 100%;
+    padding: 9px;
+  }
+
+  .jarida-single-page-mode .fb-book > .np-mast {
+    padding: 2px 4px 8px;
+    margin-bottom: 6px;
+  }
+
+  .jarida-single-page-mode .fb-book > .np-mast h1 {
+    font-size: 1.75rem;
+  }
+
+  .jarida-single-page-mode .jarida-paper-page {
+    padding: 12px 10px;
+  }
+
+  .jarida-single-page-mode .fb-controls button {
+    padding: 7px 12px;
+    font-size: 0.78rem;
+  }
+}

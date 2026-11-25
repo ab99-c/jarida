@@ -110,4 +110,11 @@
 - [x] إضافة إشعار تثبيت اختياري يدعم beforeinstallprompt وdismissal محلياً
 - [x] إضافة metadata وfavicon وApple touch icon للتثبيت من المتصفح
 - [x] تشغيل TypeScript واختبارات الحركة وproduction build والتحقق من ملفات PWA
-- [ ] حفظ checkpoint ورفع نسخة PWA إلى GitHub عند طلب المستخدم
+- [x] حفظ checkpoint ورفع نسخة PWA إلى GitHub عند طلب المستخدم
+
+## تحديثات Google AI Studio (2026-11-25): وضع الصفحة الواحدة (Android Phone & Android TV) وتحسينات RSS
+- [x] إضافة كشف الأجهزة وإدارة وضع العرض (`client/src/pages/deviceMode.ts` و`client/src/pages/deviceMode.test.ts`)
+- [x] دعم وضع الصفحة الواحدة (`صفحة واحدة`) لهواتف Android وأجهزة Android TV مع التنقل بالريموت والسحب والتمرير (`client/src/pages/Home.tsx` و`client/src/index.css`)
+- [x] تحسين جلب RSS بالتوازي (`Promise.all`) وتحديث رابط خلاصة `maroc24.com/rss.xml` (`server/services/rss.ts`)
+- [x] تفعيل خطوط Google Fonts العربية وإعدادات viewport-fit في `client/index.html`
+- [x] رفع التعديلات إلى GitHub `ab99-c/jarida` على فرع `main`

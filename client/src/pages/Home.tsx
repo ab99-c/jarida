@@ -1,8 +1,17 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { trpc } from "@/lib/trpc";
 import { formatArabicEditionDate } from "@shared/date";
-import { Volume2, VolumeX, RefreshCw, ChevronLeft, ChevronRight, Share2, MessageSquare, Send, Check } from "lucide-react";
+import { Volume2, VolumeX, RefreshCw, ChevronLeft, ChevronRight, Share2, MessageSquare, Send, Check, FileText, BookOpen } from "lucide-react";
 import { getBoundedPageChange, getSwipeStep, PAGE_TURN_DURATION_MS, PAGE_TURN_MIDPOINT_MS } from "./pageTurnTiming";
+import {
+  convertPageIndexBetweenModes,
+  detectDeviceKind,
+  getDefaultViewMode,
+  type JaridaDeviceKind,
+  type JaridaViewMode,
+} from "./deviceMode";
+
+const VIEW_MODE_STORAGE_KEY = "jarida-view-mode";
 
 function ArticleComments({ article }: { article: any }) {
   const [authorName, setAuthorName] = useState("");
@@ -73,26 +82,30 @@ function ArticleComments({ article }: { article: any }) {
           <Share2 className="w-3.5 h-3.5" /> مشاركة:
         </span>
         <button
+          type="button"
           onClick={() => handleShare("whatsapp")}
-          className="px-2 py-1 bg-[#25D366] text-white rounded hover:opacity-90 transition font-medium cursor-pointer"
+          className="px-2.5 py-1.5 bg-[#25D366] text-white rounded hover:opacity-90 transition font-medium cursor-pointer"
         >
           واتساب
         </button>
         <button
+          type="button"
           onClick={() => handleShare("facebook")}
-          className="px-2 py-1 bg-[#1877F2] text-white rounded hover:opacity-90 transition font-medium cursor-pointer"
+          className="px-2.5 py-1.5 bg-[#1877F2] text-white rounded hover:opacity-90 transition font-medium cursor-pointer"
         >
           فيسبوك
         </button>
         <button
+          type="button"
           onClick={() => handleShare("twitter")}
-          className="px-2 py-1 bg-black text-white rounded hover:opacity-90 transition font-medium cursor-pointer"
+          className="px-2.5 py-1.5 bg-black text-white rounded hover:opacity-90 transition font-medium cursor-pointer"
         >
           X (تويتر)
         </button>
         <button
+          type="button"
           onClick={() => handleShare("copy")}
-          className="px-2 py-1 bg-[#e0ceb1] text-black rounded hover:bg-[#d3c49b] transition font-medium flex items-center gap-1 cursor-pointer"
+          className="px-2.5 py-1.5 bg-[#e0ceb1] text-black rounded hover:bg-[#d3c49b] transition font-medium flex items-center gap-1 cursor-pointer"
         >
           {copied ? <Check className="w-3 h-3 text-green-700" /> : null}
           <span>{copied ? "تم النسخ" : "نسخ الرابط"}</span>
@@ -190,10 +203,46 @@ function TurningPagePreview({ items }: { items: any[] }) {
   );
 }
 
+function readInitialDeviceState(): { deviceKind: JaridaDeviceKind; viewMode: JaridaViewMode } {
+  if (typeof window === "undefined") {
+    return { deviceKind: "desktop", viewMode: "spread" };
+  }
+  const env = {
+    userAgent: navigator.userAgent || "",
+    viewportWidth: window.innerWidth,
+    viewportHeight: window.innerHeight,
+    search: window.location.search,
+  };
+  let saved: string | null = null;
+  try {
+    saved = window.localStorage.getItem(VIEW_MODE_STORAGE_KEY);
+  } catch {
+    saved = null;
+  }
+  return {
+    deviceKind: detectDeviceKind(env),
+    viewMode: getDefaultViewMode(env, saved),
+  };
+}
+
 export default function Home() {
+  const initialState = readInitialDeviceState();
   const [currentPage, setCurrentPage] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== "undefined" ? window.innerWidth < 1024 : false,
+  );
+  const [deviceKind, setDeviceKind] = useState<JaridaDeviceKind>(initialState.deviceKind);
+  const [viewMode, setViewMode] = useState<JaridaViewMode>(initialState.viewMode);
+  const [hasManualViewChoice, setHasManualViewChoice] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      const saved = window.localStorage.getItem(VIEW_MODE_STORAGE_KEY);
+      return saved === "single" || saved === "spread";
+    } catch {
+      return false;
+    }
+  });
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
   const [isTurning, setIsTurning] = useState(false);
   const [turnDirection, setTurnDirection] = useState<"next" | "prev">("next");
@@ -201,6 +250,9 @@ export default function Home() {
   const [turningToItems, setTurningToItems] = useState<any[]>([]);
   const [turningFromPage, setTurningFromPage] = useState(0);
   const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
+  const touchStartedInteractive = useRef(false);
+  const activePageScrollRef = useRef<HTMLDivElement | null>(null);
 
   const {
     data: dailyData,
@@ -216,48 +268,75 @@ export default function Home() {
 
   useEffect(() => {
     const handleResize = () => {
-      setIsMobile(window.innerWidth < 1024);
+      const nextIsMobile = window.innerWidth < 1024;
+      setIsMobile(nextIsMobile);
+      const env = {
+        userAgent: navigator.userAgent || "",
+        viewportWidth: window.innerWidth,
+        viewportHeight: window.innerHeight,
+        search: window.location.search,
+      };
+      const detected = detectDeviceKind(env);
+      setDeviceKind(detected);
+      if (!hasManualViewChoice) {
+        const nextMode = getDefaultViewMode(env, null);
+        setViewMode((prev) => {
+          if (prev !== nextMode) {
+            setCurrentPage((page) =>
+              convertPageIndexBetweenModes(page, prev, nextMode, Array.isArray(articles) ? articles.length : 0),
+            );
+          }
+          return nextMode;
+        });
+      }
     };
     handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
-  }, []);
+  }, [hasManualViewChoice, articles]);
 
-  const playFlipSound = () => {
+  const playFlipSound = useCallback(() => {
     if (isMuted) return;
     try {
       const audio = new Audio("https://www.soundjay.com/buttons/sounds/button-16.mp3");
       audio.volume = 0.4;
       audio.play().catch(() => {});
     } catch (e) {}
-  };
+  }, [isMuted]);
 
   // لا نعرضش أخباراً تجريبية أو قديمة عندما تكون الـAPI فارغة؛ الجريدة خاصها تبين حالة التحديث بوضوح.
   const processedArticles = Array.isArray(articles) ? articles : [];
 
+  const isSinglePage = viewMode === "single";
+  const isAndroidTV = deviceKind === "android-tv";
+  const isAndroid = deviceKind === "android-phone" || deviceKind === "android-tv";
+
   const ARTICLES_PER_SPREAD = 2;
-  const totalPages = Math.ceil(processedArticles.length / ARTICLES_PER_SPREAD);
+  const articlesPerView = isSinglePage ? 1 : ARTICLES_PER_SPREAD;
+  const totalPages = Math.ceil(processedArticles.length / articlesPerView);
 
+  // Keep page index safely clamped whenever totalPages changes
   useEffect(() => {
-    if (!isAutoPlaying) return;
-    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
-    if (mediaQuery.matches) return;
+    if (totalPages > 0 && currentPage >= totalPages) {
+      setCurrentPage(totalPages - 1);
+    }
+  }, [totalPages, currentPage]);
 
-    const interval = setInterval(() => {
-      requestPageChange(currentPage < totalPages - 1 ? 1 : -currentPage);
-    }, 10000);
+  // Reset single-page scroll to the top whenever the active page changes
+  useEffect(() => {
+    if (activePageScrollRef.current) {
+      activePageScrollRef.current.scrollTop = 0;
+    }
+  }, [currentPage, isSinglePage]);
 
-    return () => clearInterval(interval);
-  }, [isAutoPlaying, totalPages, isMuted, currentPage, isTurning]);
-
-  const requestPageChange = (step: number) => {
+  const requestPageChange = useCallback((step: number) => {
     if (isTurning || totalPages <= 1) return;
     const turn = getBoundedPageChange(currentPage, totalPages, step);
     if (!turn) return;
     const nextPageIndex = turn.toPage;
 
-    const fromItems = processedArticles.slice(currentPage * ARTICLES_PER_SPREAD, (currentPage + 1) * ARTICLES_PER_SPREAD);
-    const toItems = processedArticles.slice(nextPageIndex * ARTICLES_PER_SPREAD, (nextPageIndex + 1) * ARTICLES_PER_SPREAD);
+    const fromItems = processedArticles.slice(currentPage * articlesPerView, (currentPage + 1) * articlesPerView);
+    const toItems = processedArticles.slice(nextPageIndex * articlesPerView, (nextPageIndex + 1) * articlesPerView);
     setTurningFromItems(fromItems);
     setTurningToItems(toItems);
     setTurningFromPage(currentPage);
@@ -271,56 +350,168 @@ export default function Home() {
     window.setTimeout(() => {
       setIsTurning(false);
     }, PAGE_TURN_DURATION_MS);
-  };
+  }, [isTurning, totalPages, currentPage, processedArticles, articlesPerView, playFlipSound]);
 
-  const nextPage = () => requestPageChange(1);
-  const prevPage = () => requestPageChange(-1);
+  useEffect(() => {
+    if (!isAutoPlaying) return;
+    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    if (mediaQuery.matches) return;
+
+    const interval = setInterval(() => {
+      requestPageChange(currentPage < totalPages - 1 ? 1 : -currentPage);
+    }, 10000);
+
+    return () => clearInterval(interval);
+  }, [isAutoPlaying, totalPages, isMuted, currentPage, isTurning, requestPageChange]);
+
+  const nextPage = useCallback(() => requestPageChange(1), [requestPageChange]);
+  const prevPage = useCallback(() => requestPageChange(-1), [requestPageChange]);
+
+  const toggleViewMode = useCallback(() => {
+    const nextMode: JaridaViewMode = isSinglePage ? "spread" : "single";
+    setCurrentPage((prevPageIdx) =>
+      convertPageIndexBetweenModes(prevPageIdx, viewMode, nextMode, processedArticles.length),
+    );
+    setViewMode(nextMode);
+    setHasManualViewChoice(true);
+    try {
+      window.localStorage.setItem(VIEW_MODE_STORAGE_KEY, nextMode);
+    } catch {
+      // ignore storage errors
+    }
+  }, [isSinglePage, viewMode, processedArticles.length]);
+
+  // Android TV remote (D-pad) & keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.tagName === "SELECT" ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
+
+      if (
+        event.key === "ArrowLeft" ||
+        event.key === "PageDown" ||
+        event.key === "ChannelUp" ||
+        event.key === "MediaTrackNext"
+      ) {
+        event.preventDefault();
+        nextPage();
+      } else if (
+        event.key === "ArrowRight" ||
+        event.key === "PageUp" ||
+        event.key === "ChannelDown" ||
+        event.key === "MediaTrackPrevious"
+      ) {
+        event.preventDefault();
+        prevPage();
+      } else if (event.key === "ArrowDown" && activePageScrollRef.current) {
+        event.preventDefault();
+        activePageScrollRef.current.scrollBy({ top: 180, behavior: "smooth" });
+      } else if (event.key === "ArrowUp" && activePageScrollRef.current) {
+        event.preventDefault();
+        activePageScrollRef.current.scrollBy({ top: -180, behavior: "smooth" });
+      } else if (event.key === "MediaPlayPause") {
+        event.preventDefault();
+        setIsAutoPlaying((prev) => !prev);
+      } else if (event.key === "m" || event.key === "M") {
+        setIsMuted((prev) => !prev);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [nextPage, prevPage]);
 
   const handleTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
+    const target = event.target as HTMLElement | null;
+    touchStartedInteractive.current = Boolean(
+      target?.closest("button, a, input, textarea, select, label"),
+    );
     touchStartX.current = event.touches[0]?.clientX ?? null;
+    touchStartY.current = event.touches[0]?.clientY ?? null;
   };
 
   const handleTouchEnd = (event: React.TouchEvent<HTMLDivElement>) => {
     const startX = touchStartX.current;
-    const endX = event.changedTouches[0]?.clientX ?? startX ?? 0;
+    const startY = touchStartY.current;
+    const wasInteractive = touchStartedInteractive.current;
     touchStartX.current = null;
-    if (startX === null) return;
+    touchStartY.current = null;
+    touchStartedInteractive.current = false;
+
+    if (wasInteractive || startX === null || startY === null) return;
+
+    const endX = event.changedTouches[0]?.clientX ?? startX;
+    const endY = event.changedTouches[0]?.clientY ?? startY;
     const deltaX = endX - startX;
+    const deltaY = endY - startY;
+
+    // Respect vertical scrolling on Android phones & tablets without accidentally flipping pages
+    if (Math.abs(deltaY) > 18 && Math.abs(deltaY) > Math.abs(deltaX)) {
+      return;
+    }
+
     const swipeStep = getSwipeStep(deltaX);
     if (swipeStep !== 0) {
       requestPageChange(swipeStep);
       return;
     }
+
+    // In single-page mode, avoid accidental taps while reading/selecting text
+    if (isSinglePage) return;
+
     const bounds = event.currentTarget.getBoundingClientRect();
     requestPageChange(endX - bounds.left > bounds.width / 2 ? 1 : -1);
   };
 
   const currentItems = processedArticles.slice(
-    currentPage * ARTICLES_PER_SPREAD,
-    (currentPage + 1) * ARTICLES_PER_SPREAD
+    currentPage * articlesPerView,
+    (currentPage + 1) * articlesPerView
   );
   const hasReachedContentSwap = isTurning && currentPage !== turningFromPage;
   const frontItems = isTurning && !hasReachedContentSwap ? turningFromItems : currentItems;
   const displayPageIndex = isTurning && !hasReachedContentSwap ? turningFromPage : currentPage;
   // كل spread فيه جوج صفحات حقيقيين: الأولى على اليمين والثانية على اليسار.
   // فالـnext كتدور صفحة اليمين للجهة اليسرى، وفالـprev كتدور صفحة اليسار بالعكس.
-  const turnedFromArticle = turnDirection === "next"
+  const turnedFromArticle = isSinglePage
     ? turningFromItems[0]
-    : turningFromItems[1] ?? turningFromItems[0];
-  const turnedToArticle = turnDirection === "next"
-    ? turningToItems[1] ?? turningToItems[0]
-    : turningToItems[0] ?? turningToItems[1];
+    : turnDirection === "next"
+      ? turningFromItems[0]
+      : turningFromItems[1] ?? turningFromItems[0];
+  const turnedToArticle = isSinglePage
+    ? turningToItems[0]
+    : turnDirection === "next"
+      ? turningToItems[1] ?? turningToItems[0]
+      : turningToItems[0] ?? turningToItems[1];
   const turningSheetFromItems = [turnedFromArticle].filter(Boolean);
   const turningSheetToItems = [turnedToArticle].filter(Boolean);
 
+  const progressPercent = totalPages > 0 ? Math.round(((displayPageIndex + 1) / totalPages) * 100) : 0;
+
   return (
-    <div data-jarida-release="jarida-immersive-83ae373f" data-jarida-skin="reference-book-20261007" data-jarida-spread-mode="paired-articles" className="fb-wrapper min-h-screen text-[#2b2b2b] select-none relative overflow-x-hidden" dir="rtl">
+    <div
+      data-jarida-release="jarida-immersive-83ae373f"
+      data-jarida-skin="reference-book-20261007"
+      data-jarida-spread-mode="paired-articles"
+      data-jarida-view-mode={viewMode}
+      data-jarida-device={deviceKind}
+      className={`fb-wrapper min-h-screen text-[#2b2b2b] select-none relative overflow-x-hidden ${isSinglePage ? "jarida-single-page-mode" : ""} ${isAndroidTV ? "jarida-tv-mode" : ""}`}
+      dir="rtl"
+    >
       {/* Top minimal header controls */}
-      <div className="absolute top-4 right-4 z-20 flex items-center gap-3 bg-[#f5e6cc]/90 backdrop-blur px-3 py-1.5 rounded-full shadow-md border border-[#d3c49b]">
+      <div className="jarida-topbar z-20 flex flex-wrap items-center justify-center gap-2 sm:gap-3 bg-[#f5e6cc]/95 backdrop-blur px-3 py-1.5 rounded-full shadow-md border border-[#d3c49b]">
         <button
+          type="button"
           onClick={() => refreshMutation.mutate()}
           disabled={refreshMutation.isPending}
-          className="flex items-center gap-1.5 text-xs text-[#554a32] hover:text-black transition cursor-pointer"
+          className="jarida-focusable flex items-center gap-1.5 text-xs text-[#554a32] hover:text-black transition cursor-pointer px-1.5 py-0.5 rounded"
           title="تحديث الأخبار الآن"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${refreshMutation.isPending ? "animate-spin" : ""}`} />
@@ -328,33 +519,46 @@ export default function Home() {
         </button>
         <span className="text-xs text-[#a39371]">|</span>
         <button
+          type="button"
+          onClick={toggleViewMode}
+          className={`jarida-focusable flex items-center gap-1.5 text-xs px-2 py-0.5 rounded transition cursor-pointer ${isSinglePage ? "bg-[#233c30] text-[#dcb45b] font-bold" : "text-[#554a32] hover:text-black"}`}
+          title={isSinglePage ? "التبديل إلى عرض صفحتين" : "التبديل إلى عرض صفحة واحدة"}
+        >
+          {isSinglePage ? <FileText className="w-3.5 h-3.5" /> : <BookOpen className="w-3.5 h-3.5" />}
+          <span>{isSinglePage ? "صفحة واحدة" : "صفحتان"}</span>
+        </button>
+        <span className="text-xs text-[#a39371]">|</span>
+        <button
+          type="button"
           onClick={() => setIsAutoPlaying(!isAutoPlaying)}
-          className={`flex items-center gap-1 text-xs px-2 py-0.5 rounded transition cursor-pointer ${isAutoPlaying ? "bg-[#d3c49b]/60 text-black font-bold" : "text-[#554a32] hover:text-black"}`}
+          className={`jarida-focusable flex items-center gap-1 text-xs px-2 py-0.5 rounded transition cursor-pointer ${isAutoPlaying ? "bg-[#d3c49b]/60 text-black font-bold" : "text-[#554a32] hover:text-black"}`}
           title={isAutoPlaying ? "إيقاف التقليب التلقائي" : "تشغيل التقليب التلقائي"}
         >
           <span>{isAutoPlaying ? "تقليب تلقائي: مفعل" : "تقليب تلقائي: متوقف"}</span>
         </button>
         <span className="text-xs text-[#a39371]">|</span>
         <button
+          type="button"
           onClick={() => setIsMuted(!isMuted)}
-          className="flex items-center gap-1 text-xs text-[#554a32] hover:text-black transition cursor-pointer"
+          className="jarida-focusable flex items-center gap-1 text-xs text-[#554a32] hover:text-black transition cursor-pointer p-1 rounded"
           title={isMuted ? "تفعيل الصوت" : "كتم الصوت"}
+          aria-label={isMuted ? "تفعيل الصوت" : "كتم الصوت"}
         >
           {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
         </button>
       </div>
 
-      {/* Newspaper Spread Container (Vintage Book Layout) */}
+      {/* Newspaper Spread Container (Vintage Book Layout / Android Single-Page Mode) */}
       <div className="fb-book relative text-[#1a1a1a] my-auto flex flex-col justify-between">
-        <div className="fb-spine" aria-hidden="true" />
-        <div className="fb-ribbon" aria-hidden="true" />
+        {!isSinglePage && <div className="fb-spine" aria-hidden="true" />}
+        {!isSinglePage && <div className="fb-ribbon" aria-hidden="true" />}
         
         {/* Masthead */}
         <div className="np-mast text-center border-b-2 border-black pb-4 mb-6">
           <div className="flex justify-between items-center text-xs text-[#555] mb-1 px-2 font-sans font-semibold">
             <span>{formatArabicEditionDate(editionDate)}</span>
             <span>الإصدار اليومي الشامل</span>
-            <span>العدد {displayPageIndex + 1}</span>
+            <span>{isSinglePage ? `صفحة ${displayPageIndex + 1} / ${Math.max(1, totalPages)}` : `العدد ${displayPageIndex + 1}`}</span>
           </div>
           <h1 className="np-title text-4xl md:text-6xl font-black tracking-tight text-black font-serif">
             جريدة الأفق
@@ -364,11 +568,12 @@ export default function Home() {
           </p>
         </div>
 
-        {/* Content Spread: double-page newspaper on desktop, tablet, and phone */}
+        {/* Content Spread: single clean page on Android / TV / mobile, double-page newspaper on desktop */}
         <div
-          className="jarida-spread relative grid grid-cols-2 gap-0 lg:gap-12 flex-grow items-start divide-x divide-x-reverse divide-[#d3c49b]"
+          className={`jarida-spread relative ${isSinglePage ? "grid grid-cols-1 gap-0" : "grid grid-cols-2 gap-0 lg:gap-12 divide-x divide-x-reverse divide-[#d3c49b]"} flex-grow items-start`}
           dir="rtl"
           onClick={(event) => {
+            if (isSinglePage) return;
             const target = event.target as HTMLElement;
             if (target.closest("button, a, input, textarea")) return;
             const bounds = event.currentTarget.getBoundingClientRect();
@@ -378,10 +583,12 @@ export default function Home() {
           onTouchEnd={handleTouchEnd}
         >
           <div className="jarida-static-spread">
-            <div className="jarida-static-spread-content relative grid grid-cols-2 gap-0 lg:gap-12 items-start divide-x divide-x-reverse divide-[#d3c49b]">
+            <div className={`jarida-static-spread-content relative ${isSinglePage ? "grid grid-cols-1 gap-0" : "grid grid-cols-2 gap-0 lg:gap-12 divide-x divide-x-reverse divide-[#d3c49b]"} items-start`}>
           
-          {/* Center Book Spine Shadow (Desktop only) */}
-          <div className="hidden lg:block absolute top-0 bottom-0 right-1/2 w-8 bg-gradient-to-l from-black/10 to-transparent pointer-events-none -mr-4 z-10" />
+          {/* Center Book Spine Shadow (Desktop spread only) */}
+          {!isSinglePage && (
+            <div className="hidden lg:block absolute top-0 bottom-0 right-1/2 w-8 bg-gradient-to-l from-black/10 to-transparent pointer-events-none -mr-4 z-10" />
+          )}
 
           {frontItems.length === 0 && (
             <div className="col-span-full min-h-[46vh] flex flex-col items-center justify-center text-center px-8 py-12 text-[#665533]">
@@ -396,7 +603,7 @@ export default function Home() {
                 <button
                   type="button"
                   onClick={() => refetch()}
-                  className="mt-5 border border-[#77613b] px-5 py-2 text-xs font-sans font-bold hover:bg-[#e6d4ae] transition cursor-pointer"
+                  className="jarida-focusable mt-5 border border-[#77613b] px-5 py-2 text-xs font-sans font-bold hover:bg-[#e6d4ae] transition cursor-pointer"
                 >
                   إعادة تحميل العدد
                 </button>
@@ -407,19 +614,27 @@ export default function Home() {
           {frontItems.map((article: any, idx: number) => (
             <div
               key={article.id || idx}
+              ref={idx === 0 ? activePageScrollRef : undefined}
               id={`article-${article.id || idx}`}
               data-page-slot={idx === 0 ? "right" : "left"}
               data-article-id={article.id || idx}
               className="jarida-paper-page flex flex-col justify-between h-full px-2 md:px-6"
             >
               <div>
-                <div className="flex justify-between items-center text-[11px] text-[#775f3a] mb-2 font-sans font-bold">
-                  <span className="bg-[#ebd9bc] px-2.5 py-0.5 rounded text-black border border-[#d3c49b]">
-                    {article.source || "وكالة الأنباء"}
-                  </span>
+                <div className="flex justify-between items-center text-[11px] text-[#775f3a] mb-2 font-sans font-bold gap-2 flex-wrap">
+                  <div className="flex items-center gap-2">
+                    <span className="bg-[#ebd9bc] px-2.5 py-0.5 rounded text-black border border-[#d3c49b]">
+                      {article.source || "وكالة الأنباء"}
+                    </span>
+                    {article.category && (
+                      <span className="text-[11px] text-[#6c624a] font-semibold">
+                        • {article.category}
+                      </span>
+                    )}
+                  </div>
                   <span>{new Date(article.publishedAt).toLocaleDateString("ar-MA")}</span>
                 </div>
-                <h2 className="text-xl md:text-2xl font-bold text-black mb-3 leading-snug">
+                <h2 className="jarida-article-headline text-xl md:text-2xl font-bold text-black mb-3 leading-snug">
                   {article.title}
                 </h2>
                 {article.imageUrl && (
@@ -427,15 +642,15 @@ export default function Home() {
                     <img 
                       src={article.imageUrl} 
                       alt={article.title} 
-                      className="w-full h-44 md:h-52 object-cover filter grayscale contrast-125 hover:grayscale-0 transition duration-500"
+                      className="jarida-article-image w-full h-44 md:h-52 object-cover filter grayscale contrast-125 hover:grayscale-0 transition duration-500"
                     />
                   </div>
                 )}
-                <p className="text-sm md:text-base text-[#2c2c2c] leading-relaxed text-justify mb-3 font-serif">
+                <p className="jarida-article-summary text-sm md:text-base text-[#2c2c2c] leading-relaxed text-justify mb-3 font-serif">
                   {article.summary}
                 </p>
-                {article.content && (
-                  <p className="text-xs md:text-sm text-[#4a4a4a] leading-relaxed text-justify font-serif border-t border-[#e2d5b3] pt-2 mb-4">
+                {article.content && article.content.trim() !== article.summary?.trim() && (
+                  <p className="jarida-article-body text-xs md:text-sm text-[#4a4a4a] leading-relaxed text-justify font-serif border-t border-[#e2d5b3] pt-2 mb-4">
                     {article.content}
                   </p>
                 )}
@@ -445,13 +660,13 @@ export default function Home() {
               </div>
               <div className="mt-6 pt-2 border-t border-[#e2d5b3] flex justify-between items-center text-xs text-[#776644] font-sans">
                 <span>جريدة الأفق الإلكترونية</span>
-                <span>صفحة {displayPageIndex * ARTICLES_PER_SPREAD + idx + 1} من {processedArticles.length}</span>
+                <span>صفحة {displayPageIndex * articlesPerView + idx + 1} من {processedArticles.length}</span>
               </div>
             </div>
           ))}
 
           {/* الصفحة المقابلة تبقى ظاهرة حتى في آخر spread، بحال ورقة جريدة حقيقية. */}
-          {frontItems.length === 1 && (
+          {!isSinglePage && frontItems.length === 1 && (
             <div data-page-slot="left" aria-label="صفحة فارغة" className="jarida-empty-page flex flex-col justify-center items-center h-full min-h-[18rem] text-center p-8 text-[#998866] italic">
               <p className="text-base">تابعوا المزيد من المستجدات والتقارير في الإصدارات القادمة.</p>
             </div>
@@ -475,25 +690,40 @@ export default function Home() {
           )}
         </div>
 
+        {/* Subtle progress bar in single-page / TV mode */}
+        {isSinglePage && totalPages > 0 && (
+          <div className="jarida-page-progress" aria-hidden="true">
+            <div className="jarida-page-progress-bar" style={{ width: `${progressPercent}%` }} />
+          </div>
+        )}
+
         {/* Navigation Arrows & Footer */}
         <div className="fb-controls mt-8 pt-4 border-t-2 border-black flex justify-between items-center text-xs text-[#444] font-sans">
           <button 
+            type="button"
             onClick={prevPage} 
             disabled={isTurning || currentPage === 0}
-            className={`flex items-center gap-1 px-3 py-1.5 rounded border border-[#c5b48b] bg-[#ebd9bc] hover:bg-[#ded0b1] transition ${currentPage === 0 ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
+            className={`jarida-focusable flex items-center gap-1 px-3 py-1.5 rounded border border-[#c5b48b] bg-[#ebd9bc] hover:bg-[#ded0b1] transition ${currentPage === 0 ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
           >
             <ChevronRight className="w-4 h-4" />
             <span>السابق</span>
           </button>
 
             <span className="text-center italic font-serif">
-            {isMobile ? 'جوج صفحات • اسحب أو انقر لقلب الورقة' : 'انقر على يمين أو يسار الصفحة للقلب'}
+            {isAndroidTV
+              ? `صفحة ${displayPageIndex + 1} من ${Math.max(1, totalPages)} • استعمل أزرار الريموت ◀ ▶ للتقليب`
+              : isSinglePage
+                ? `صفحة ${displayPageIndex + 1} من ${Math.max(1, totalPages)} • اسحب للتقليب أو مرّر للقراءة`
+                : isMobile || isAndroid
+                  ? 'جوج صفحات • اسحب أو انقر لقلب الورقة'
+                  : 'انقر على يمين أو يسار الصفحة للقلب'}
             </span>
 
           <button 
+            type="button"
             onClick={nextPage} 
             disabled={isTurning || currentPage >= totalPages - 1}
-            className={`flex items-center gap-1 px-3 py-1.5 rounded border border-[#c5b48b] bg-[#ebd9bc] hover:bg-[#ded0b1] transition ${currentPage >= totalPages - 1 ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
+            className={`jarida-focusable flex items-center gap-1 px-3 py-1.5 rounded border border-[#c5b48b] bg-[#ebd9bc] hover:bg-[#ded0b1] transition ${currentPage >= totalPages - 1 ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
           >
             <span>التالي</span>
             <ChevronLeft className="w-4 h-4" />
