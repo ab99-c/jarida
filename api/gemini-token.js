@@ -17,10 +17,17 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed. Please use POST." });
   }
 
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey =
+    process.env.GEMINI_API_KEY ||
+    process.env.GOOGLE_API_KEY ||
+    process.env.GOOGLE_GENAI_API_KEY;
   if (!apiKey) {
     console.error("[Gemini Token] GEMINI_API_KEY environment variable is missing.");
-    return res.status(500).json({ error: "Server configuration error: missing GEMINI_API_KEY." });
+    return res.status(500).json({
+      error: "Server configuration error: missing GEMINI_API_KEY.",
+      message:
+        "يرجى إضافة GEMINI_API_KEY في إعدادات Vercel (Project Settings > Environment Variables) ثم إعادة النشر (Redeploy).",
+    });
   }
 
   try {

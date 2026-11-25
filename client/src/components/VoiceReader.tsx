@@ -168,7 +168,11 @@ export default function VoiceReader({
 
       if (!tokenRes.ok) {
         const errorJson = await tokenRes.json().catch(() => ({}));
-        throw new Error(errorJson.message || errorJson.error || "تعذر الحصول على رمز المحادثة الصوتية.");
+        const rawErr = errorJson.message || errorJson.error || "";
+        if (rawErr.includes("GEMINI_API_KEY")) {
+          throw new Error("يرجى إضافة GEMINI_API_KEY في إعدادات Vercel (Project Settings > Environment Variables) ثم عمل Redeploy.");
+        }
+        throw new Error(rawErr || "تعذر الحصول على رمز المحادثة الصوتية.");
       }
 
       const { token } = await tokenRes.json();
