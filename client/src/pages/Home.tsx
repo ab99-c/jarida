@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { trpc } from "@/lib/trpc";
 import { formatArabicEditionDate } from "@shared/date";
-import { Volume2, VolumeX, RefreshCw, ChevronLeft, ChevronRight, Share2, MessageSquare, Send, Check, FileText, BookOpen, CornerUpRight, CornerDownLeft } from "lucide-react";
+import { Volume2, VolumeX, RefreshCw, Share2, MessageSquare, Send, Check, FileText, BookOpen } from "lucide-react";
 import {
   getBottomLeftPeelProgress,
   getBoundedPageChange,
@@ -511,12 +511,118 @@ export default function Home() {
   }, [nextPage, prevPage]);
 
   const handleTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
+    if (isTurning) return;
     const target = event.target as HTMLElement | null;
     touchStartedInteractive.current = Boolean(
-      target?.closest("button, a, input, textarea, select, label"),
+      target?.closest("button:not([data-peel-corner]), a, input, textarea, select, label"),
     );
     touchStartX.current = event.touches[0]?.clientX ?? null;
     touchStartY.current = event.touches[0]?.clientY ?? null;
+  };
+
+  const handleTouchMove = (event: React.TouchEvent<HTMLDivElement>) => {
+    if (isTurning || totalPages <= 1) return;
+    const startX = touchStartX.current;
+    const startY = touchStartY.current;
+    if (touchStartedInteractive.current || startX === null || startY === null) return;
+
+    const currentX = event.touches[0]?.clientX ?? startX;
+    const currentY = event.touches[0]?.clientY ?? startY;
+    const dx = currentX - startX;
+    const dy = currentY - startY;
+    const bounds = event.currentTarget.getBoundingClientRect();
+    const width = Math.max(120, bounds.width);
+    const height = Math.max(120, bounds.height);
+
+    // إذا لم يبدأ رفع الورقة بعد، نحدد اتجاه لمس الإصبع:
+    // 1) من تحت جهة اليسار نحو اليمين/الفوق -> رفع الورقة الحالية لإظهار الورقة الأخرى (next)
+    // 2) من جهة اليمين/الفوق نحو تحت جهة اليسار -> إرجاع الورقة السابقة (prev)
+    if (!peelDrag) {
+      const startedInBottomLeft =
+        startX - bounds.left < width * 0.55 && startY - bounds.top > height * 0.45;
+      const startedInRightOrTopRight =
+        startX - bounds.left > width * 0.45;
+
+      const isLiftingFromBottomLeftToRight =
+        (startedInBottomLeft && (dx > 12 || dy < -14) && dx >= -10) ||
+        (dx > 20 && Math.abs(dx) > Math.abs(dy) * 0.75);
+
+      const isReturningFromRightToBottomLeft =
+        (startedInRightOrTopRight && dx < -14 && dy >= -12) ||
+        (dx < -20 && Math.abs(dx) > Math.abs(dy) * 0.75);
+
+      // احترام التمرير العمودي العادي للقراءة إذا لم يكن السحب قطرياً من زاوية الورقة
+      if (
+        !isLiftingFromBottomLeftToRight &&
+        !isReturningFromRightToBottomLeft &&
+        Math.abs(dy) > 22 &&
+        Math.abs(dy) > Math.abs(dx) * 1.25
+      ) {
+        return;
+      }
+
+      const direction: "next" | "prev" | null = isLiftingFromBottomLeftToRight
+        ? "next"
+        : isReturningFromRightToBottomLeft
+          ? "prev"
+          : null;
+
+      if (!direction) return;
+      const step = direction === "next" ? 1 : -1;
+      const turn = getBoundedPageChange(currentPage, totalPages, step);
+      if (!turn) return;
+
+      const fromItems = processedArticles.slice(
+        currentPage * articlesPerView,
+        (currentPage + 1) * articlesPerView,
+      );
+      const toItems = processedArticles.slice(
+        turn.toPage * articlesPerView,
+        (turn.toPage + 1) * articlesPerView,
+      );
+      setTurningFromItems(fromItems);
+      setTurningToItems(toItems);
+      setTurningFromPage(currentPage);
+      setTurningToPage(turn.toPage);
+      setTurnDirection(direction);
+      const initialProgress = getBottomLeftPeelProgress(
+        startX,
+        startY,
+        currentX,
+        currentY,
+        width,
+        height,
+        direction,
+      );
+      setPeelDrag({
+        direction,
+        progress: Math.max(0.06, initialProgress),
+        startX,
+        startY,
+        moved: true,
+      });
+      return;
+    }
+
+    // تحديث ارتفاع الورقة في الوقت الحقيقي مع حركة الإصبع على الشاشة
+    const nextProgress = getBottomLeftPeelProgress(
+      peelDrag.startX,
+      peelDrag.startY,
+      currentX,
+      currentY,
+      width,
+      height,
+      peelDrag.direction,
+    );
+    setPeelDrag((prev) =>
+      prev
+        ? {
+            ...prev,
+            progress: Math.max(0.04, nextProgress),
+            moved: true,
+          }
+        : null,
+    );
   };
 
   const handleTouchEnd = (event: React.TouchEvent<HTMLDivElement>) => {
@@ -527,6 +633,15 @@ export default function Home() {
     touchStartY.current = null;
     touchStartedInteractive.current = false;
 
+    if (peelDrag) {
+      const { direction, progress } = peelDrag;
+      setPeelDrag(null);
+      if (progress >= 0.12) {
+        requestPageChange(direction === "next" ? 1 : -1);
+      }
+      return;
+    }
+
     if (wasInteractive || startX === null || startY === null) return;
 
     const endX = event.changedTouches[0]?.clientX ?? startX;
@@ -535,26 +650,32 @@ export default function Home() {
     const deltaY = endY - startY;
     const bounds = event.currentTarget.getBoundingClientRect();
     const startedInBottomLeftZone =
-      startX - bounds.left < bounds.width * 0.42 &&
-      startY - bounds.top > bounds.height * 0.55;
+      startX - bounds.left < bounds.width * 0.45 &&
+      startY - bounds.top > bounds.height * 0.52;
     const startedInTopRightZone =
-      startX - bounds.left > bounds.width * 0.58 &&
-      startY - bounds.top < bounds.height * 0.45;
+      startX - bounds.left > bounds.width * 0.55 &&
+      startY - bounds.top < bounds.height * 0.48;
 
-    // إذا بدأ السحب من تحت جهة اليسار وطلع الفوق/اليمين، نرفع الورقة للتالي باش تبان الورقة الأخرى
-    if (startedInBottomLeftZone && (deltaX > 24 || deltaY < -28)) {
+    // إذا بدأ السحب بالإصبع من تحت جهة اليسار وطلع الفوق/اليمين، نرفع الورقة للتالي باش تبان الورقة الأخرى
+    if (startedInBottomLeftZone && (deltaX > 18 || deltaY < -20)) {
       requestPageChange(1);
       return;
     }
 
-    // إذا بدأ السحب من الفوق جهة اليمين ونزل لتحت جهة اليسار، نرجع الورقة السابقة
-    if (startedInTopRightZone && (deltaX < -24 || deltaY > 28)) {
+    // إذا بدأ السحب بالإصبع من جهة اليمين ونزل لتحت جهة اليسار، نرجع الورقة السابقة
+    if (startedInTopRightZone && (deltaX < -18 || deltaY > 20)) {
       requestPageChange(-1);
       return;
     }
 
     // Respect vertical scrolling on Android phones & tablets without accidentally flipping pages
     if (Math.abs(deltaY) > 18 && Math.abs(deltaY) > Math.abs(deltaX)) {
+      return;
+    }
+
+    // السحب من اليسار لليمين (deltaX > 34) يرفع الورقة نحو اليمين (التالي)، ومن اليمين لليسار يرجع الورقة السابقة
+    if (Math.abs(deltaX) >= 34) {
+      requestPageChange(deltaX > 0 ? 1 : -1);
       return;
     }
 
@@ -567,7 +688,7 @@ export default function Home() {
     // In single-page mode, avoid accidental taps while reading/selecting text
     if (isSinglePage) return;
 
-    requestPageChange(endX - bounds.left > bounds.width / 2 ? 1 : -1);
+    requestPageChange(endX - bounds.left < bounds.width / 2 ? 1 : -1);
   };
 
   const startCornerPeelDrag = (
@@ -770,6 +891,7 @@ export default function Home() {
             requestPageChange(event.clientX - bounds.left < bounds.width / 2 ? 1 : -1);
           }}
           onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
         >
           <div className="jarida-static-spread">
@@ -864,42 +986,32 @@ export default function Home() {
             </div>
           </div>
 
-          {/* زاوية رفع الورقة من تحت جهة اليسار نحو اليمين لإظهار الورقة الأخرى */}
+          {/* طية الورقة الطبيعية من تحت جهة اليسار (بدون كتابة أو تعليمات) للرفع بالإصبع نحو اليمين */}
           {!isSheetActive && currentPage < totalPages - 1 && (
             <button
               type="button"
               data-peel-corner="bottom-left"
-              aria-label="ارفع الورقة من تحت جهة اليسار لإظهار الورقة التالية"
-              title="ارفع الورقة أو اسحبها من تحت جهة اليسار لجهة اليمين"
+              aria-label="طية الورقة التالية"
               className="jarida-corner-peel-next jarida-focusable"
               onPointerDown={(e) => startCornerPeelDrag("next", e)}
               onPointerMove={moveCornerPeelDrag}
               onPointerUp={endCornerPeelDrag}
               onPointerCancel={() => setPeelDrag(null)}
-            >
-              <span className="jarida-corner-peel-label">
-                <CornerUpRight className="w-3 h-3" />
-                <span>ارفع الورقة</span>
-              </span>
-            </button>
+            />
           )}
 
-          {/* زاوية إرجاع الورقة السابقة من جهة اليمين إلى تحت جهة اليسار */}
+          {/* طية إرجاع الورقة السابقة من جهة اليمين (بدون كتابة أو تعليمات) للسحب بالإصبع نحو تحت اليسار */}
           {!isSheetActive && currentPage > 0 && (
             <button
               type="button"
               data-peel-corner="top-right"
-              aria-label="إرجاع الورقة السابقة من جهة اليمين"
-              title="اسحب أو انقر لإرجاع الورقة السابقة"
+              aria-label="طية الورقة السابقة"
               className="jarida-corner-peel-prev jarida-focusable"
               onPointerDown={(e) => startCornerPeelDrag("prev", e)}
               onPointerMove={moveCornerPeelDrag}
               onPointerUp={endCornerPeelDrag}
               onPointerCancel={() => setPeelDrag(null)}
-            >
-              <CornerDownLeft className="w-3.5 h-3.5" />
-              <span>إرجاع الورقة</span>
-            </button>
+            />
           )}
 
           {isSheetActive && (
@@ -936,43 +1048,12 @@ export default function Home() {
           )}
         </div>
 
-        {/* Subtle progress bar in single-page / TV mode */}
+        {/* Subtle progress bar in single-page / TV mode (without any bottom instructions) */}
         {isSinglePage && totalPages > 0 && (
           <div className="jarida-page-progress" aria-hidden="true">
             <div className="jarida-page-progress-bar" style={{ width: `${progressPercent}%` }} />
           </div>
         )}
-
-        {/* Navigation Arrows & Footer */}
-        <div className="fb-controls mt-8 pt-4 border-t-2 border-black flex justify-between items-center text-xs text-[#444] font-sans">
-          <button 
-            type="button"
-            onClick={prevPage} 
-            disabled={isTurning || currentPage === 0}
-            className={`jarida-focusable flex items-center gap-1 px-3 py-1.5 rounded border border-[#c5b48b] bg-[#ebd9bc] hover:bg-[#ded0b1] transition ${currentPage === 0 ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
-          >
-            <ChevronRight className="w-4 h-4" />
-            <span>إرجاع الورقة</span>
-          </button>
-
-            <span className="text-center italic font-serif">
-            {isAndroidTV
-              ? `صفحة ${displayPageIndex + 1} من ${Math.max(1, totalPages)} • استعمل أزرار الريموت ◀ ▶ لرفع أو إرجاع الورقة`
-              : isSinglePage
-                ? `صفحة ${displayPageIndex + 1} من ${Math.max(1, totalPages)} • ارفع الورقة من تحت اليسار لليمين أو أرجعها`
-                : 'ارفع الورقة من تحت جهة اليسار لجهة اليمين باش تبان الورقة الأخرى'}
-            </span>
-
-          <button 
-            type="button"
-            onClick={nextPage} 
-            disabled={isTurning || currentPage >= totalPages - 1}
-            className={`jarida-focusable flex items-center gap-1 px-3 py-1.5 rounded border border-[#c5b48b] bg-[#ebd9bc] hover:bg-[#ded0b1] transition ${currentPage >= totalPages - 1 ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
-          >
-            <span>ارفع الورقة (التالي)</span>
-            <ChevronLeft className="w-4 h-4" />
-          </button>
-        </div>
 
       </div>
     </div>

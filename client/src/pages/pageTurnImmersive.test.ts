@@ -42,10 +42,12 @@ describe("immersive page sheet implementation", () => {
 
   it("keeps swipe handling, corner peel drag, and reduced-motion behavior present", () => {
     expect(home).toContain("handleTouchStart");
+    expect(home).toContain("handleTouchMove");
     expect(home).toContain("startCornerPeelDrag");
     expect(home).toContain("PAGE_TURN_MIDPOINT_MS");
     expect(home).toContain("PAGE_TURN_DURATION_MS");
     expect(home).toContain("handleTouchEnd");
+    expect(home).not.toContain("fb-controls");
     expect(css).toContain("@media (prefers-reduced-motion: reduce)");
   });
 });

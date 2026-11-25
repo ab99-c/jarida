@@ -555,14 +555,14 @@ body {
   100% { opacity: 0.1; transform: translate3d(0, 0, 0) scale(0.85); }
 }
 
-/* زاوية رفع الورقة التفاعلية من تحت جهة اليسار + زاوية إرجاع الورقة من جهة اليمين */
+/* زاوية رفع الورقة التفاعلية من تحت جهة اليسار + زاوية إرجاع الورقة من جهة اليمين (طية ورقة طبيعية بدون نصوص) */
 .jarida-corner-peel-next {
   position: absolute;
   left: 0;
   bottom: 0;
   z-index: 35;
-  width: clamp(64px, 10vw, 108px);
-  height: clamp(64px, 10vw, 108px);
+  width: clamp(54px, 11vw, 88px);
+  height: clamp(54px, 11vw, 88px);
   border: 0;
   padding: 0;
   background: transparent;
@@ -580,8 +580,8 @@ body {
   position: absolute;
   left: 0;
   bottom: 0;
-  width: 72%;
-  height: 72%;
+  width: 66%;
+  height: 66%;
   background:
     linear-gradient(
       45deg,
@@ -602,58 +602,56 @@ body {
 
 .jarida-corner-peel-next:hover::before,
 .jarida-corner-peel-next:focus-visible::before {
-  width: 92%;
-  height: 92%;
-  transform: translate3d(4px, -4px, 0) rotate(-4deg);
-}
-
-.jarida-corner-peel-label {
-  position: absolute;
-  left: 10px;
-  bottom: 10px;
-  z-index: 2;
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  padding: 3px 8px;
-  border-radius: 999px;
-  background: rgba(35, 60, 48, 0.9);
-  color: #f6ebd2;
-  border: 1px solid rgba(220, 180, 91, 0.75);
-  font-family: 'Tajawal', sans-serif;
-  font-size: 10px;
-  font-weight: 700;
-  white-space: nowrap;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
-  pointer-events: none;
+  width: 88%;
+  height: 88%;
+  transform: translate3d(3px, -3px, 0) rotate(-3deg);
 }
 
 .jarida-corner-peel-prev {
   position: absolute;
-  right: 8px;
-  top: 8px;
+  right: 0;
+  top: 0;
   z-index: 35;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 5px 11px;
-  border-radius: 999px 4px 14px 999px;
-  border: 1px solid rgba(124, 96, 52, 0.65);
-  background: linear-gradient(135deg, #f6ebd2 0%, #decba2 100%);
-  color: #261c10;
-  font-family: 'Tajawal', sans-serif;
-  font-size: 11px;
-  font-weight: 700;
-  cursor: pointer;
+  width: clamp(46px, 9vw, 72px);
+  height: clamp(46px, 9vw, 72px);
+  border: 0;
+  padding: 0;
+  background: transparent;
+  cursor: grab;
   touch-action: none;
-  box-shadow: -4px 6px 14px rgba(34, 21, 7, 0.22);
-  transition: transform 0.22s ease, box-shadow 0.22s ease;
+  user-select: none;
 }
 
-.jarida-corner-peel-prev:hover,
-.jarida-corner-peel-prev:focus-visible {
-  transform: translate3d(-3px, 2px, 0);
-  box-shadow: -6px 9px 18px rgba(34, 21, 7, 0.3);
+.jarida-corner-peel-prev::before {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 62%;
+  height: 62%;
+  background:
+    linear-gradient(
+      225deg,
+      #c9b180 0%,
+      #f6ebd2 46%,
+      #dfd0ae 72%,
+      #9a7e4d 100%
+    );
+  clip-path: polygon(100% 0, 0 0, 100% 100%);
+  border-bottom: 1px solid rgba(118, 91, 49, 0.55);
+  border-left: 1px solid rgba(118, 91, 49, 0.55);
+  box-shadow:
+    -7px 7px 16px rgba(34, 21, 7, 0.25),
+    inset 4px -4px 10px rgba(255, 251, 238, 0.75);
+  transition: transform 0.25s ease, width 0.25s ease, height 0.25s ease;
+  transform-origin: right top;
+}
+
+.jarida-corner-peel-prev:hover::before,
+.jarida-corner-peel-prev:focus-visible::before {
+  width: 84%;
+  height: 84%;
+  transform: translate3d(-2px, 2px, 0);
 }
 
 @media (max-width: 1023px) {
