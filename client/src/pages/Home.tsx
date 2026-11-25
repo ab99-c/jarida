@@ -111,9 +111,45 @@ interface NewspaperPageSheet {
   allArticles: any[];
   sectionTitle: string;
   pageDate: Date;
+  dayKey?: string;
+  isBlank?: boolean;
 }
 
-function buildNewspaperPages(allArticles: any[]): NewspaperPageSheet[] {
+// كل يوم عندو صفحاته الخاصة: الصفحة الأولى ديال النهار كتبدا دائماً بالمانشيت ديالو، وما كتخلطش مع نهار آخر
+function buildNewspaperPages(allArticles: any[], padToEven = false): NewspaperPageSheet[] {
+  if (!allArticles || allArticles.length === 0) return [];
+  const groups = new Map<string, any[]>();
+  [...allArticles]
+    .filter((a) => !Number.isNaN(new Date(a?.publishedAt).getTime()))
+    .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
+    .forEach((a) => {
+      const key = new Date(a.publishedAt).toISOString().slice(0, 10);
+      const list = groups.get(key);
+      if (list) list.push(a);
+      else groups.set(key, [a]);
+    });
+
+  const pages: NewspaperPageSheet[] = [];
+  groups.forEach((list, key) => {
+    pages.push(...buildNewspaperPagesFlat(list).map((p) => ({ ...p, dayKey: key })));
+    if (padToEven && pages.length % 2 === 1) {
+      pages.push({
+        id: `blank-${key}`,
+        pageNumber: 0,
+        leadArticle: null,
+        columnArticles: [],
+        allArticles: [],
+        sectionTitle: "",
+        pageDate: new Date(key),
+        dayKey: key,
+        isBlank: true,
+      });
+    }
+  });
+  return pages.map((p, i) => ({ ...p, pageNumber: i + 1 }));
+}
+
+function buildNewspaperPagesFlat(allArticles: any[]): NewspaperPageSheet[] {
   if (!allArticles || allArticles.length === 0) return [];
   const pages: NewspaperPageSheet[] = [];
   for (let i = 0; i < allArticles.length; i += ARTICLES_PER_NEWSPAPER_PAGE) {
@@ -321,6 +357,13 @@ function NewspaperSheetContent({
   totalArticlesCount: number;
   showComments?: boolean;
 }) {
+  if (sheet.isBlank) {
+    return (
+      <div className="fb-content flex items-center justify-center h-full text-center text-[#666] italic p-8">
+        <p className="text-base">نهاية عدد هذا اليوم • اقلب الورقة للعدد الموالي</p>
+      </div>
+    );
+  }
   const lead = sheet.leadArticle || sheet;
   const cols = Array.isArray(sheet.columnArticles) ? sheet.columnArticles : [];
   const leftColArticles = cols.filter((_: any, i: number) => i % 2 === 0);
@@ -597,37 +640,30 @@ export default function Home() {
     ];
     return merged;
   })();
-  const processedArticles = buildNewspaperPages(allDailyArticles);
+  const processedArticles = buildNewspaperPages(allDailyArticles, viewMode !== "single");
 
   // رف الجرائد: كل يوم = عدد (جورنال يومي) كيتحط فـ جيب من جيوب الرف
   const [isRackOpen, setIsRackOpen] = useState(true);
   const [enteringKey, setEnteringKey] = useState<string | null>(null);
   const dailyEditions = (() => {
-    const byDay = new Map<string, { key: string; firstIndex: number; count: number; lead: any }>();
-    allDailyArticles.forEach((article: any, index: number) => {
-      const d = new Date(article?.publishedAt);
-      if (Number.isNaN(d.getTime())) return;
-      const key = d.toISOString().slice(0, 10);
-      const existing = byDay.get(key);
-      if (existing) {
-        existing.count += 1;
-      } else {
-        byDay.set(key, { key, firstIndex: index, count: 1, lead: article });
-      }
+    const seen = new Map<string, { key: string; pageIndex: number; count: number; lead: any }>();
+    processedArticles.forEach((page, pageIndex) => {
+      if (page.isBlank || !page.dayKey) return;
+      const existing = seen.get(page.dayKey);
+      const n = page.allArticles.length;
+      if (existing) existing.count += n;
+      else seen.set(page.dayKey, { key: page.dayKey, pageIndex, count: n, lead: page.leadArticle });
     });
-    return Array.from(byDay.values())
-      .sort((a, b) => (a.key < b.key ? 1 : -1))
-      .slice(0, 16);
+    return Array.from(seen.values()).slice(0, 16);
   })();
 
-  const openEditionFromRack = (firstIndex: number, key: string) => {
+  const openEditionFromRack = (pageIndex: number, key: string) => {
     if (enteringKey) return;
     // الجريدة المختارة كتقرب للكاميرا (دخول) وبعدها كتتفتح الجريدة وتقدر تقلب فيها
     setEnteringKey(key);
     window.setTimeout(() => {
-      const newspaperPage = Math.floor(firstIndex / ARTICLES_PER_NEWSPAPER_PAGE);
       const perView = viewMode === "single" ? 1 : 2;
-      setCurrentPage(Math.floor(newspaperPage / perView));
+      setCurrentPage(Math.floor(pageIndex / perView));
       setIsAutoPlaying(false);
       setIsRackOpen(false);
       setEnteringKey(null);
@@ -1140,7 +1176,7 @@ export default function Home() {
                     type="button"
                     className={`jarida-rack-pocket jarida-focusable ${enteringKey === ed.key ? "is-entering" : enteringKey ? "is-dimmed" : ""}`}
                     style={{ "--row": Math.floor(edIndex / 2), "--col": edIndex % 2 } as React.CSSProperties}
-                    onClick={() => openEditionFromRack(ed.firstIndex, ed.key)}
+                    onClick={() => openEditionFromRack(ed.pageIndex, ed.key)}
                     title={ed.lead?.title}
                   >
                     <span className="jarida-rack-cover">
