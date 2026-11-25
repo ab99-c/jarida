@@ -1,7 +1,8 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { trpc } from "@/lib/trpc";
 import { formatArabicEditionDate } from "@shared/date";
-import { Volume2, VolumeX, RefreshCw, Share2, MessageSquare, Send, Check, FileText, BookOpen, Library, X } from "lucide-react";
+import { Volume2, VolumeX, RefreshCw, Share2, MessageSquare, Send, Check, FileText, BookOpen, Library, X, Headphones } from "lucide-react";
+import CategoryFilterBar from "../components/CategoryFilterBar";
 import {
   getBottomLeftPeelProgress,
   getBoundedPageChange,
@@ -606,17 +607,71 @@ export default function Home() {
     } catch (e) {}
   }, [isMuted]);
 
-  // دمج كل الداتا اليومية الحية مع الداتا اليومية الفايتة (الأرشيف اليومي) باش تعمر صفحات الجريدة بحال الجرائد اليومية
-  const allDailyArticles = (() => {
+  const [activeCategory, setActiveCategory] = useState("الكل");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isSpeakingAudio, setIsSpeakingAudio] = useState(false);
+
+  // دمج كل الداتا اليومية الحية مع الداتا اليومية الفايتة (الأرشيف اليومي)
+  const allDailyArticles = useMemo(() => {
     const liveList = Array.isArray(articles) ? articles : [];
     const seenTitles = new Set(liveList.map((a: any) => a?.title?.trim()));
-    const merged = [
+    return [
       ...liveList,
       ...ARCHIVE_DAILY_ARTICLES.filter((a) => !seenTitles.has(a.title.trim())),
     ];
-    return merged;
-  })();
-  const processedArticles = buildNewspaperPages(allDailyArticles, false);
+  }, [articles]);
+
+  const categories = useMemo(() => {
+    return ["الكل", "مغرب", "اقتصاد", "دولي", "رياضة", "رأي"];
+  }, []);
+
+  const filteredArticles = useMemo(() => {
+    return allDailyArticles.filter((art: any) => {
+      const matchesCategory =
+        activeCategory === "الكل" ||
+        (art.category && art.category.toLowerCase().includes(activeCategory.toLowerCase()));
+      const matchesSearch =
+        !searchQuery.trim() ||
+        (art.title && art.title.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (art.summary && art.summary.toLowerCase().includes(searchQuery.toLowerCase()));
+      return matchesCategory && matchesSearch;
+    });
+  }, [allDailyArticles, activeCategory, searchQuery]);
+
+  const displayArticles = searchQuery.trim() || activeCategory !== "الكل" ? filteredArticles : allDailyArticles;
+  const processedArticles = useMemo(() => buildNewspaperPages(displayArticles, false), [displayArticles]);
+
+  useEffect(() => {
+    setCurrentPage(0);
+  }, [activeCategory, searchQuery]);
+
+  const toggleAudioBriefing = useCallback(() => {
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
+    if (isSpeakingAudio) {
+      window.speechSynthesis.cancel();
+      setIsSpeakingAudio(false);
+      return;
+    }
+
+    const topArticles = displayArticles.slice(0, 3);
+    if (topArticles.length === 0) return;
+
+    const textToRead = "الموجز الصوتي لجريدة الأفق اليومية. " + topArticles.map((a: any, idx: number) => `الخبر ${idx + 1}: ${a.title}. ${a.summary || ""}`).join(" ");
+
+    const utterance = new SpeechSynthesisUtterance(textToRead);
+    utterance.lang = "ar-SA";
+    utterance.rate = 0.95;
+
+    const voices = window.speechSynthesis.getVoices();
+    const arabicVoice = voices.find((v) => v.lang.startsWith("ar"));
+    if (arabicVoice) utterance.voice = arabicVoice;
+
+    utterance.onend = () => setIsSpeakingAudio(false);
+    utterance.onerror = () => setIsSpeakingAudio(false);
+
+    window.speechSynthesis.speak(utterance);
+    setIsSpeakingAudio(true);
+  }, [isSpeakingAudio, displayArticles]);
 
   // رف الجرائد: كل يوم = عدد (جورنال يومي) كيتحط فـ جيب من جيوب الرف
   const [isRackOpen, setIsRackOpen] = useState(true);
@@ -961,6 +1016,16 @@ export default function Home() {
         <span className="text-xs text-[#a39371]">|</span>
         <button
           type="button"
+          onClick={toggleAudioBriefing}
+          className={`jarida-focusable flex items-center gap-1 text-xs px-2 py-0.5 rounded transition cursor-pointer ${isSpeakingAudio ? "bg-[#d3c49b]/80 text-black font-bold ring-1 ring-[#947743]" : "text-[#554a32] hover:text-black"}`}
+          title={isSpeakingAudio ? "إيقاف الموجز الصوتي" : "الموجز الصوتي لأهم العناوين"}
+        >
+          <Headphones className={`w-3.5 h-3.5 ${isSpeakingAudio ? "animate-pulse text-[#7a5b1e]" : ""}`} />
+          <span>{isSpeakingAudio ? "إيقاف الموجز" : "الموجز الصوتي 🎙️"}</span>
+        </button>
+        <span className="text-xs text-[#a39371]">|</span>
+        <button
+          type="button"
           onClick={() => setIsAutoPlaying(!isAutoPlaying)}
           className={`jarida-focusable flex items-center gap-1 text-xs px-2 py-0.5 rounded transition cursor-pointer ${isAutoPlaying ? "bg-[#d3c49b]/60 text-black font-bold" : "text-[#554a32] hover:text-black"}`}
           title={isAutoPlaying ? "إيقاف التقليب التلقائي" : "تشغيل التقليب التلقائي"}
@@ -987,6 +1052,19 @@ export default function Home() {
           <Library className="w-3.5 h-3.5" />
           <span>رف الجرائد</span>
         </button>
+      </div>
+
+      {/* Category Filter & Instant Search */}
+      <div className="z-10 w-full max-w-4xl mx-auto px-2 mt-2 mb-1">
+        <CategoryFilterBar
+          categories={categories}
+          activeCategory={activeCategory}
+          onSelectCategory={setActiveCategory}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          totalFiltered={displayArticles.length}
+          totalAll={allDailyArticles.length}
+        />
       </div>
 
       {isRackOpen && (

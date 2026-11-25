@@ -40,8 +40,13 @@ export default function InstallPrompt() {
   };
 
   return (
-    <aside className="jarida-install-prompt" dir="rtl" role="dialog" aria-label="تثبيت جريدة الأفق">
-      <button type="button" className="jarida-install-close" onClick={dismiss} aria-label="إغلاق">
+    <aside className="jarida-install-prompt relative pl-10" dir="rtl" role="dialog" aria-label="تثبيت جريدة الأفق">
+      <button
+        type="button"
+        className="jarida-install-close absolute top-2 left-2 hover:bg-white/20 transition rounded-full p-1"
+        onClick={dismiss}
+        aria-label="إغلاق"
+      >
         <X className="h-4 w-4" />
       </button>
       <div className="jarida-install-copy">

@@ -1140,8 +1140,8 @@ body {
   display: flex;
   align-items: center;
   gap: .75rem;
-  max-width: min(92vw, 390px);
-  padding: .75rem .85rem;
+  max-width: min(92vw, 420px);
+  padding: .75rem 1rem .75rem 2.6rem;
   color: #efe7d4;
   background: linear-gradient(145deg, #233c30, #12211a);
   border: 1px solid rgba(220,180,91,.65);
