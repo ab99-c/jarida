@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { trpc } from "@/lib/trpc";
 import { formatArabicEditionDate } from "@shared/date";
-import { Volume2, VolumeX, RefreshCw, Share2, MessageSquare, Send, Check, FileText, BookOpen } from "lucide-react";
+import { Volume2, VolumeX, RefreshCw, Share2, MessageSquare, Send, Check, FileText, BookOpen, Library, X } from "lucide-react";
 import {
   getBottomLeftPeelProgress,
   getBoundedPageChange,
@@ -599,6 +599,34 @@ export default function Home() {
   })();
   const processedArticles = buildNewspaperPages(allDailyArticles);
 
+  // رف الجرائد: كل يوم = عدد (جورنال يومي) كيتحط فـ جيب من جيوب الرف
+  const [isRackOpen, setIsRackOpen] = useState(false);
+  const dailyEditions = (() => {
+    const byDay = new Map<string, { key: string; firstIndex: number; count: number; lead: any }>();
+    allDailyArticles.forEach((article: any, index: number) => {
+      const d = new Date(article?.publishedAt);
+      if (Number.isNaN(d.getTime())) return;
+      const key = d.toISOString().slice(0, 10);
+      const existing = byDay.get(key);
+      if (existing) {
+        existing.count += 1;
+      } else {
+        byDay.set(key, { key, firstIndex: index, count: 1, lead: article });
+      }
+    });
+    return Array.from(byDay.values())
+      .sort((a, b) => (a.key < b.key ? 1 : -1))
+      .slice(0, 16);
+  })();
+
+  const openEditionFromRack = (firstIndex: number) => {
+    const newspaperPage = Math.floor(firstIndex / ARTICLES_PER_NEWSPAPER_PAGE);
+    const perView = viewMode === "single" ? 1 : 2;
+    setCurrentPage(Math.floor(newspaperPage / perView));
+    setIsAutoPlaying(false);
+    setIsRackOpen(false);
+  };
+
   const isSinglePage = viewMode === "single";
   const isAndroidTV = deviceKind === "android-tv";
   const isAndroid = deviceKind === "android-phone" || deviceKind === "android-tv";
@@ -1068,7 +1096,65 @@ export default function Home() {
         >
           {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
         </button>
+        <span className="text-xs text-[#a39371]">|</span>
+        <button
+          type="button"
+          onClick={() => setIsRackOpen(true)}
+          className="jarida-focusable flex items-center gap-1.5 text-xs text-[#554a32] hover:text-black transition cursor-pointer px-1.5 py-0.5 rounded"
+          title="رف الجرائد اليومية"
+        >
+          <Library className="w-3.5 h-3.5" />
+          <span>رف الجرائد</span>
+        </button>
       </div>
+
+      {isRackOpen && (
+        <div
+          className="jarida-rack-overlay"
+          role="dialog"
+          aria-label="رف الجرائد اليومية"
+          onClick={() => setIsRackOpen(false)}
+        >
+          <div className="jarida-rack-stage" onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              className="jarida-rack-close jarida-focusable"
+              onClick={() => setIsRackOpen(false)}
+              aria-label="إغلاق الرف"
+            >
+              <X className="w-4 h-4" />
+            </button>
+            <div className="jarida-rack">
+              <div className="jarida-rack-pole" aria-hidden="true" />
+              <div className="jarida-rack-tiers">
+                {dailyEditions.map((ed) => (
+                  <button
+                    key={ed.key}
+                    type="button"
+                    className="jarida-rack-pocket jarida-focusable"
+                    onClick={() => openEditionFromRack(ed.firstIndex)}
+                    title={ed.lead?.title}
+                  >
+                    <span className="jarida-rack-cover">
+                      <span className="jarida-rack-mast">جريدة الأفق</span>
+                      <span className="jarida-rack-date">
+                        {new Date(ed.key).toLocaleDateString("ar-MA", { weekday: "short", day: "numeric", month: "long" })}
+                      </span>
+                      {ed.lead?.imageUrl && (
+                        <img src={ed.lead.imageUrl} alt="" aria-hidden="true" />
+                      )}
+                      <span className="jarida-rack-title">{ed.lead?.title}</span>
+                      <span className="jarida-rack-count">{ed.count} خبر</span>
+                    </span>
+                    <span className="jarida-rack-wire" aria-hidden="true" />
+                  </button>
+                ))}
+              </div>
+              <div className="jarida-rack-base" aria-hidden="true" />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Newspaper Spread Container (Authentic Daily Newspaper Layout / مثل الجرائد اليومية) */}
       <div className="fb-book relative text-[#111] my-auto flex flex-col justify-between">
