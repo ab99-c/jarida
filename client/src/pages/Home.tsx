@@ -600,7 +600,8 @@ export default function Home() {
   const processedArticles = buildNewspaperPages(allDailyArticles);
 
   // رف الجرائد: كل يوم = عدد (جورنال يومي) كيتحط فـ جيب من جيوب الرف
-  const [isRackOpen, setIsRackOpen] = useState(false);
+  const [isRackOpen, setIsRackOpen] = useState(true);
+  const [enteringKey, setEnteringKey] = useState<string | null>(null);
   const dailyEditions = (() => {
     const byDay = new Map<string, { key: string; firstIndex: number; count: number; lead: any }>();
     allDailyArticles.forEach((article: any, index: number) => {
@@ -619,12 +620,18 @@ export default function Home() {
       .slice(0, 16);
   })();
 
-  const openEditionFromRack = (firstIndex: number) => {
-    const newspaperPage = Math.floor(firstIndex / ARTICLES_PER_NEWSPAPER_PAGE);
-    const perView = viewMode === "single" ? 1 : 2;
-    setCurrentPage(Math.floor(newspaperPage / perView));
-    setIsAutoPlaying(false);
-    setIsRackOpen(false);
+  const openEditionFromRack = (firstIndex: number, key: string) => {
+    if (enteringKey) return;
+    // الجريدة المختارة كتقرب للكاميرا (دخول) وبعدها كتتفتح الجريدة وتقدر تقلب فيها
+    setEnteringKey(key);
+    window.setTimeout(() => {
+      const newspaperPage = Math.floor(firstIndex / ARTICLES_PER_NEWSPAPER_PAGE);
+      const perView = viewMode === "single" ? 1 : 2;
+      setCurrentPage(Math.floor(newspaperPage / perView));
+      setIsAutoPlaying(false);
+      setIsRackOpen(false);
+      setEnteringKey(null);
+    }, 650);
   };
 
   const isSinglePage = viewMode === "single";
@@ -1131,9 +1138,9 @@ export default function Home() {
                   <button
                     key={ed.key}
                     type="button"
-                    className="jarida-rack-pocket jarida-focusable"
+                    className={`jarida-rack-pocket jarida-focusable ${enteringKey === ed.key ? "is-entering" : enteringKey ? "is-dimmed" : ""}`}
                     style={{ "--row": Math.floor(edIndex / 2), "--col": edIndex % 2 } as React.CSSProperties}
-                    onClick={() => openEditionFromRack(ed.firstIndex)}
+                    onClick={() => openEditionFromRack(ed.firstIndex, ed.key)}
                     title={ed.lead?.title}
                   >
                     <span className="jarida-rack-cover">

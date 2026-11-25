@@ -1690,3 +1690,26 @@ body {
   .jarida-rack { transform: rotateY(-14deg) rotateX(4deg) scale(0.92); padding: 14px 14px 0 26px; }
   .jarida-rack-cover { height: 138px; }
 }
+
+/* الدخول للجريدة: كتقرب من الكاميرا وكتتكبر، والباقي كيتخفى */
+.jarida-rack-pocket.is-dimmed {
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+}
+
+.jarida-rack-pocket.is-entering,
+.jarida-rack-pocket.is-entering:nth-child(even) {
+  z-index: 60;
+  transition: transform 0.65s cubic-bezier(0.22, 0.74, 0.18, 1);
+  transform: translateZ(520px) translateY(-30px) scale(1.5);
+}
+
+.jarida-rack-pocket.is-entering .jarida-rack-cover {
+  transform: rotateX(0deg);
+  transition: transform 0.65s ease;
+}
+
+.jarida-rack-overlay {
+  background: radial-gradient(circle at 50% 30%, #2b2b2b 0%, #0b0b0b 100%);
+}
