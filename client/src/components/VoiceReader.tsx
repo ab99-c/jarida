@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { GoogleGenAI, Modality } from "@google/genai";
-import { Mic, MicOff, Loader2, Square, Volume2, X } from "lucide-react";
+import { Mic, Loader2, Square, Volume2, X, Key, ShieldCheck, Sparkles, AlertCircle } from "lucide-react";
 
 interface VoiceReaderProps {
   articleTitle?: string;
@@ -10,6 +10,8 @@ interface VoiceReaderProps {
 
 type VoiceStatus = "idle" | "connecting" | "listening" | "speaking" | "error";
 
+const STORAGE_KEY = "jarida_gemini_api_key";
+
 export default function VoiceReader({
   articleTitle,
   articleContent,
@@ -17,6 +19,15 @@ export default function VoiceReader({
 }: VoiceReaderProps) {
   const [status, setStatus] = useState<VoiceStatus>("idle");
   const [errorMessage, setErrorMessage] = useState<string>("");
+  const [apiKeyModalOpen, setApiKeyModalOpen] = useState(false);
+  const [inputApiKey, setInputApiKey] = useState("");
+  const [savedKey, setSavedKey] = useState<string>(() => {
+    try {
+      return localStorage.getItem(STORAGE_KEY) || "";
+    } catch {
+      return "";
+    }
+  });
 
   const statusRef = useRef<VoiceStatus>("idle");
   statusRef.current = status;
@@ -155,22 +166,34 @@ export default function VoiceReader({
     [getOutputAudioContext],
   );
 
-  const startVoiceSession = async () => {
+  const startVoiceSession = async (overrideKey?: string) => {
     setErrorMessage("");
     setStatus("connecting");
 
+    const keyToUse = overrideKey !== undefined ? overrideKey : savedKey;
+
     try {
       // 1. Fetch ephemeral token from backend
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (keyToUse && keyToUse.trim()) {
+        headers["x-gemini-api-key"] = keyToUse.trim();
+      }
+
       const tokenRes = await fetch("/api/gemini-token", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
       });
 
       if (!tokenRes.ok) {
         const errorJson = await tokenRes.json().catch(() => ({}));
         const rawErr = errorJson.message || errorJson.error || "";
-        if (rawErr.includes("GEMINI_API_KEY")) {
-          throw new Error("يرجى إضافة GEMINI_API_KEY في إعدادات Vercel (Project Settings > Environment Variables) ثم عمل Redeploy.");
+        if (
+          tokenRes.status === 400 ||
+          tokenRes.status === 500 && (rawErr.includes("missing_api_key") || rawErr.includes("GEMINI_API_KEY"))
+        ) {
+          setStatus("idle");
+          setApiKeyModalOpen(true);
+          return;
         }
         throw new Error(rawErr || "تعذر الحصول على رمز المحادثة الصوتية.");
       }
@@ -329,6 +352,26 @@ export default function VoiceReader({
     }
   };
 
+  const handleSaveApiKey = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const trimmed = inputApiKey.trim();
+    if (!trimmed) return;
+    try {
+      localStorage.setItem(STORAGE_KEY, trimmed);
+    } catch {}
+    setSavedKey(trimmed);
+    setApiKeyModalOpen(false);
+    startVoiceSession(trimmed);
+  };
+
+  const handleClearApiKey = () => {
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch {}
+    setSavedKey("");
+    setInputApiKey("");
+  };
+
   const handleToggle = () => {
     if (status === "idle" || status === "error") {
       startVoiceSession();
@@ -340,64 +383,190 @@ export default function VoiceReader({
   const isLive = status === "listening" || status === "speaking";
 
   return (
-    <div className={`relative inline-flex items-center ${className}`} dir="rtl">
-      <button
-        type="button"
-        onClick={handleToggle}
-        className={`jarida-focusable flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full transition-all duration-200 cursor-pointer font-sans shadow-sm ${
-          isLive
-            ? "bg-[#6b5435] text-[#fbf6ec] ring-2 ring-[#d4c5b0] hover:bg-[#584428]"
-            : status === "connecting"
-              ? "bg-[#e8dcbf] text-[#6b5435] cursor-wait"
-              : "bg-[#f5e6cc] text-[#554a32] hover:bg-[#ebd8b7] hover:text-black border border-[#d3c49b]"
-        }`}
-        title={
-          isLive
-            ? "انقر لإنهاء المحادثة الصوتية"
-            : "محادثة صوتية حية ومباشرة مع مذيع الأفق الذكي حول المقال"
-        }
-        aria-live="polite"
-      >
-        {status === "connecting" ? (
-          <>
-            <Loader2 className="w-3.5 h-3.5 animate-spin text-[#6b5435]" />
-            <span className="font-medium">جاري الاتصال...</span>
-          </>
-        ) : isLive ? (
-          <>
-            {status === "speaking" ? (
-              <Volume2 className="w-3.5 h-3.5 animate-pulse text-[#d4c5b0]" />
-            ) : (
-              <span className="relative flex h-2.5 w-2.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-              </span>
-            )}
-            <span className="font-bold">
-              {status === "speaking" ? "المذيع يتحدث..." : "🎙️ تفضل، أنا كنسمعك..."}
-            </span>
-            <Square className="w-3 h-3 mr-1 text-[#fbf6ec]/80 hover:text-red-300 transition" />
-          </>
-        ) : (
-          <>
-            <Mic className="w-3.5 h-3.5 text-[#6b5435]" />
-            <span className="font-medium">🎙️ ناقش الخبر صوتياً</span>
-          </>
-        )}
-      </button>
-
-      {/* Error Tooltip / Badge if permission denied or connection failed */}
-      {errorMessage && status === "idle" && (
-        <span
-          className="absolute top-full mt-1.5 right-0 z-30 whitespace-nowrap text-[11px] bg-red-100 text-red-800 border border-red-300 px-2.5 py-1 rounded shadow-md flex items-center gap-1.5 cursor-pointer"
-          role="alert"
-          onClick={() => setErrorMessage("")}
-          title="انقر للإغلاق"
+    <>
+      <div className={`relative inline-flex items-center gap-1 ${className}`} dir="rtl">
+        <button
+          type="button"
+          onClick={handleToggle}
+          className={`jarida-focusable flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full transition-all duration-200 cursor-pointer font-sans shadow-sm ${
+            isLive
+              ? "bg-[#6b5435] text-[#fbf6ec] ring-2 ring-[#d4c5b0] hover:bg-[#584428]"
+              : status === "connecting"
+                ? "bg-[#e8dcbf] text-[#6b5435] cursor-wait"
+                : "bg-[#f5e6cc] text-[#554a32] hover:bg-[#ebd8b7] hover:text-black border border-[#d3c49b]"
+          }`}
+          title={
+            isLive
+              ? "انقر لإنهاء المحادثة الصوتية"
+              : "محادثة صوتية حية ومباشرة مع مذيع الأفق الذكي حول المقال"
+          }
+          aria-live="polite"
         >
-          <span>{errorMessage}</span>
-          <X className="w-3 h-3 hover:text-black transition flex-shrink-0" />
-        </span>
+          {status === "connecting" ? (
+            <>
+              <Loader2 className="w-3.5 h-3.5 animate-spin text-[#6b5435]" />
+              <span className="font-medium">جاري الاتصال...</span>
+            </>
+          ) : isLive ? (
+            <>
+              {status === "speaking" ? (
+                <Volume2 className="w-3.5 h-3.5 animate-pulse text-[#d4c5b0]" />
+              ) : (
+                <span className="relative flex h-2.5 w-2.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                </span>
+              )}
+              <span className="font-bold">
+                {status === "speaking" ? "المذيع يتحدث..." : "🎙️ تفضل، أنا كنسمعك..."}
+              </span>
+              <Square className="w-3 h-3 mr-1 text-[#fbf6ec]/80 hover:text-red-300 transition" />
+            </>
+          ) : (
+            <>
+              <Mic className="w-3.5 h-3.5 text-[#6b5435]" />
+              <span className="font-medium">🎙️ ناقش الخبر صوتياً</span>
+            </>
+          )}
+        </button>
+
+        {/* Small settings button to set or change Gemini API key */}
+        <button
+          type="button"
+          onClick={() => {
+            setInputApiKey(savedKey);
+            setApiKeyModalOpen(true);
+          }}
+          className="p-1 rounded-full text-[#8c7355] hover:text-[#3a2918] hover:bg-[#ebdcc4] transition cursor-pointer"
+          title="إعداد مفتاح Gemini API للمساعد الصوتي"
+          aria-label="إعداد مفتاح Gemini"
+        >
+          <Key className="w-3 h-3" />
+        </button>
+
+        {/* Error Tooltip / Badge if permission denied or connection failed */}
+        {errorMessage && status === "idle" && (
+          <span
+            className="absolute top-full mt-1.5 right-0 z-30 whitespace-nowrap text-[11px] bg-red-100 text-red-800 border border-red-300 px-2.5 py-1 rounded shadow-md flex items-center gap-1.5 cursor-pointer"
+            role="alert"
+            onClick={() => setErrorMessage("")}
+            title="انقر للإغلاق"
+          >
+            <span>{errorMessage}</span>
+            <X className="w-3 h-3 hover:text-black transition flex-shrink-0" />
+          </span>
+        )}
+      </div>
+
+      {/* Gemini API Key Modal */}
+      {apiKeyModalOpen && (
+        <div
+          className="fixed inset-0 z-[320] flex items-center justify-center p-3 sm:p-4"
+          style={{
+            background: "rgba(10, 8, 5, 0.82)",
+            backdropFilter: "blur(5px)",
+          }}
+          dir="rtl"
+          role="dialog"
+          aria-modal="true"
+          onClick={() => setApiKeyModalOpen(false)}
+        >
+          <div
+            className="relative w-full max-w-md rounded-2xl bg-[#fdfaf3] border-2 border-[#cbb387] p-5 sm:p-6 shadow-2xl text-right font-sans"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setApiKeyModalOpen(false)}
+              className="absolute top-3 left-3 w-8 h-8 rounded-full bg-[#ebdcc4] hover:bg-[#dfc8a5] text-[#4a341e] flex items-center justify-center transition cursor-pointer"
+              aria-label="إغلاق"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#6b5435] to-[#45331e] flex items-center justify-center text-white shadow-md flex-shrink-0">
+                <Sparkles className="w-6 h-6 text-[#dcb45b]" />
+              </div>
+              <div>
+                <h3 className="font-serif font-black text-lg text-[#2a1d11]">
+                  تفعيل المذيع والمحلل الصوتي الذكي 🎙️
+                </h3>
+                <p className="text-xs text-[#705536]">
+                  محادثة صوتية حية ثنائية الاتجاه مع Gemini Live
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-[#f5ede0] p-3 rounded-xl border border-[#ded0b6] text-xs text-[#3a2918] mb-4 space-y-2">
+              <div className="flex items-start gap-2">
+                <ShieldCheck className="w-4 h-4 text-emerald-600 mt-0.5 flex-shrink-0" />
+                <span>
+                  لم يتم العثور على مفتاح <strong>GEMINI_API_KEY</strong> في إعدادات الخادم (Vercel).
+                </span>
+              </div>
+              <p className="text-[11px] text-[#5c442a] leading-relaxed">
+                يمكنك إدخال مفتاح <strong>Google Gemini API</strong> الخاص بك هنا لتجربة المساعد الصوتي فوراً. يتم حفظ المفتاح محلياً على جهازك فقط ويُستخدم لتوليد جلسة صوتية آمنة.
+              </p>
+            </div>
+
+            <form onSubmit={handleSaveApiKey} className="space-y-3">
+              <div>
+                <label className="block text-xs font-bold text-[#2a1d11] mb-1">
+                  مفتاح Gemini API:
+                </label>
+                <input
+                  type="password"
+                  dir="ltr"
+                  placeholder="AIzaSy..."
+                  value={inputApiKey}
+                  onChange={(e) => setInputApiKey(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg bg-white border border-[#cbb387] text-sm text-[#2a1d11] focus:outline-none focus:ring-2 focus:ring-[#6b5435]"
+                  autoFocus
+                />
+              </div>
+
+              <div className="flex items-center justify-between text-[11px] text-[#705536] pt-1">
+                <a
+                  href="https://aistudio.google.com/apikey"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline hover:text-[#2a1d11] flex items-center gap-1"
+                >
+                  الحصول على مفتاح مجاني من Google AI Studio ↗
+                </a>
+                {savedKey && (
+                  <button
+                    type="button"
+                    onClick={handleClearApiKey}
+                    className="text-red-600 hover:underline"
+                  >
+                    حذف المفتاح المحفوظ
+                  </button>
+                )}
+              </div>
+
+              <div className="pt-2 flex gap-2">
+                <button
+                  type="submit"
+                  disabled={!inputApiKey.trim()}
+                  className="flex-1 py-2.5 px-4 rounded-xl bg-gradient-to-r from-[#6b5435] to-[#45331e] hover:from-[#584428] hover:to-[#382816] text-[#fbf6ec] font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition shadow-md disabled:opacity-50 cursor-pointer"
+                >
+                  <Mic className="w-4 h-4 text-[#dcb45b]" />
+                  <span>حفظ وبدء المحادثة الصوتية 🎙️</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setApiKeyModalOpen(false)}
+                  className="py-2.5 px-3 rounded-xl bg-[#ebdcc4] hover:bg-[#dfc8a5] text-[#4a341e] text-xs font-bold transition cursor-pointer"
+                >
+                  إلغاء
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
-    </div>
+    </>
   );
 }

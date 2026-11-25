@@ -8,6 +8,7 @@ interface ApkDownloadModalProps {
 
 export const APK_DOWNLOAD_URL = "https://github.com/ab99-c/jarida/releases/download/v1.0.0/Jarida-Live.apk";
 export const APK_RELEASES_PAGE = "https://github.com/ab99-c/jarida/releases";
+export const APK_ACTIONS_PAGE = "https://github.com/ab99-c/jarida/actions";
 
 export default function ApkDownloadModal({ isOpen, onClose }: ApkDownloadModalProps) {
   if (!isOpen) return null;
@@ -88,6 +89,16 @@ export default function ApkDownloadModal({ isOpen, onClose }: ApkDownloadModalPr
           >
             <ExternalLink className="w-3.5 h-3.5 text-[#8f6d33]" />
             <span>صفحة الإصدارات في GitHub (Releases)</span>
+          </a>
+
+          <a
+            href={APK_ACTIONS_PAGE}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full py-1.5 px-3 rounded-lg bg-transparent hover:bg-[#ebdcc4] text-[#705536] text-[11px] font-medium flex items-center justify-center gap-1 transition cursor-pointer"
+          >
+            <ExternalLink className="w-3 h-3 text-[#705536]" />
+            <span>متابعة حالة بناء التطبيق (GitHub Actions)</span>
           </a>
         </div>
 
