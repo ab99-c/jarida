@@ -6,7 +6,8 @@ interface ApkDownloadModalProps {
   onClose: () => void;
 }
 
-export const APK_DOWNLOAD_URL = "https://github.com/ab99-c/jarida/releases/latest/download/Jarida-Live.apk";
+export const APK_DOWNLOAD_URL = "https://github.com/ab99-c/jarida/releases/download/v1.0.0/Jarida-Live.apk";
+export const APK_RELEASES_PAGE = "https://github.com/ab99-c/jarida/releases";
 
 export default function ApkDownloadModal({ isOpen, onClose }: ApkDownloadModalProps) {
   if (!isOpen) return null;
@@ -69,14 +70,26 @@ export default function ApkDownloadModal({ isOpen, onClose }: ApkDownloadModalPr
         </div>
 
         {/* Download Direct APK Button */}
-        <a
-          href={APK_DOWNLOAD_URL}
-          download="Jarida-Live.apk"
-          className="w-full mb-3 py-3 px-4 rounded-xl bg-gradient-to-r from-[#233c30] to-[#2f4f3e] hover:from-[#1b3026] hover:to-[#243d30] text-[#fbf6ec] font-bold text-sm flex items-center justify-center gap-2 transition shadow-md cursor-pointer group"
-        >
-          <Download className="w-4 h-4 text-[#dcb45b] group-hover:translate-y-0.5 transition" />
-          <span>تحميل ملف APK للأندرويد (تنزيل مباشر)</span>
-        </a>
+        <div className="space-y-2 mb-4">
+          <a
+            href={APK_DOWNLOAD_URL}
+            download="Jarida-Live.apk"
+            className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-[#233c30] to-[#2f4f3e] hover:from-[#1b3026] hover:to-[#243d30] text-[#fbf6ec] font-bold text-sm flex items-center justify-center gap-2 transition shadow-md cursor-pointer group"
+          >
+            <Download className="w-4 h-4 text-[#dcb45b] group-hover:translate-y-0.5 transition" />
+            <span>تحميل ملف APK المباشر (تنزيل)</span>
+          </a>
+
+          <a
+            href={APK_RELEASES_PAGE}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full py-2 px-3 rounded-lg bg-[#efe5d2] hover:bg-[#e4d6be] text-[#4a341e] border border-[#cfbc97] text-xs font-bold flex items-center justify-center gap-1.5 transition cursor-pointer"
+          >
+            <ExternalLink className="w-3.5 h-3.5 text-[#8f6d33]" />
+            <span>صفحة الإصدارات في GitHub (Releases)</span>
+          </a>
+        </div>
 
         {/* Installation Instructions */}
         <div className="border-t border-[#e2d5bd] pt-3 text-[11px] text-[#6b5235] space-y-1 leading-relaxed">
