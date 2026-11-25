@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { GoogleGenAI, Modality } from "@google/genai";
-import { Mic, MicOff, Loader2, Square, Volume2 } from "lucide-react";
+import { Mic, MicOff, Loader2, Square, Volume2, X } from "lucide-react";
 
 interface VoiceReaderProps {
   articleTitle?: string;
@@ -389,10 +389,13 @@ export default function VoiceReader({
       {/* Error Tooltip / Badge if permission denied or connection failed */}
       {errorMessage && status === "idle" && (
         <span
-          className="absolute top-full mt-1.5 right-0 z-30 whitespace-nowrap text-[11px] bg-red-100 text-red-800 border border-red-300 px-2 py-0.5 rounded shadow-md"
+          className="absolute top-full mt-1.5 right-0 z-30 whitespace-nowrap text-[11px] bg-red-100 text-red-800 border border-red-300 px-2.5 py-1 rounded shadow-md flex items-center gap-1.5 cursor-pointer"
           role="alert"
+          onClick={() => setErrorMessage("")}
+          title="انقر للإغلاق"
         >
-          {errorMessage}
+          <span>{errorMessage}</span>
+          <X className="w-3 h-3 hover:text-black transition flex-shrink-0" />
         </span>
       )}
     </div>

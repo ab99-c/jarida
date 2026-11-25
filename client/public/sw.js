@@ -1,4 +1,4 @@
-const CACHE_NAME = "jarida-live-shell-v2";
+const CACHE_NAME = "jarida-live-shell-v4";
 const APP_SHELL = ["/", "/manifest.webmanifest", "/icons/jarida-icon.svg"];
 
 self.addEventListener("install", (event) => {
