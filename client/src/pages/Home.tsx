@@ -522,7 +522,7 @@ function TurningPagePreview({
 
 function readInitialDeviceState(): { deviceKind: JaridaDeviceKind; viewMode: JaridaViewMode } {
   if (typeof window === "undefined") {
-    return { deviceKind: "desktop", viewMode: "spread" };
+    return { deviceKind: "desktop", viewMode: "single" };
   }
   const env = {
     userAgent: navigator.userAgent || "",
@@ -530,15 +530,9 @@ function readInitialDeviceState(): { deviceKind: JaridaDeviceKind; viewMode: Jar
     viewportHeight: window.innerHeight,
     search: window.location.search,
   };
-  let saved: string | null = null;
-  try {
-    saved = window.localStorage.getItem(VIEW_MODE_STORAGE_KEY);
-  } catch {
-    saved = null;
-  }
   return {
     deviceKind: detectDeviceKind(env),
-    viewMode: getDefaultViewMode(env, saved),
+    viewMode: "single",
   };
 }
 
@@ -550,16 +544,8 @@ export default function Home() {
     typeof window !== "undefined" ? window.innerWidth < 1024 : false,
   );
   const [deviceKind, setDeviceKind] = useState<JaridaDeviceKind>(initialState.deviceKind);
-  const [viewMode, setViewMode] = useState<JaridaViewMode>(initialState.viewMode);
-  const [hasManualViewChoice, setHasManualViewChoice] = useState(() => {
-    if (typeof window === "undefined") return false;
-    try {
-      const saved = window.localStorage.getItem(VIEW_MODE_STORAGE_KEY);
-      return saved === "single" || saved === "spread";
-    } catch {
-      return false;
-    }
-  });
+  const [viewMode, setViewMode] = useState<JaridaViewMode>("single");
+  const [hasManualViewChoice, setHasManualViewChoice] = useState(false);
   const [isAutoPlaying, setIsAutoPlaying] = useState(false);
   const [isTurning, setIsTurning] = useState(false);
   const [turnDirection, setTurnDirection] = useState<"next" | "prev">("next");
@@ -604,22 +590,12 @@ export default function Home() {
       };
       const detected = detectDeviceKind(env);
       setDeviceKind(detected);
-      if (!hasManualViewChoice) {
-        const nextMode = getDefaultViewMode(env, null);
-        setViewMode((prev) => {
-          if (prev !== nextMode) {
-            setCurrentPage((page) =>
-              convertPageIndexBetweenModes(page, prev, nextMode, Array.isArray(articles) ? articles.length : 0),
-            );
-          }
-          return nextMode;
-        });
-      }
+      setViewMode("single");
     };
     handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
-  }, [hasManualViewChoice, articles]);
+  }, []);
 
   const playFlipSound = useCallback(() => {
     if (isMuted) return;
@@ -640,7 +616,7 @@ export default function Home() {
     ];
     return merged;
   })();
-  const processedArticles = buildNewspaperPages(allDailyArticles, viewMode !== "single");
+  const processedArticles = buildNewspaperPages(allDailyArticles, false);
 
   // رف الجرائد: كل يوم = عدد (جورنال يومي) كيتحط فـ جيب من جيوب الرف
   const [isRackOpen, setIsRackOpen] = useState(true);
@@ -662,21 +638,20 @@ export default function Home() {
     // الجريدة المختارة كتقرب للكاميرا (دخول) وبعدها كتتفتح الجريدة وتقدر تقلب فيها
     setEnteringKey(key);
     window.setTimeout(() => {
-      const perView = viewMode === "single" ? 1 : 2;
-      setCurrentPage(Math.floor(pageIndex / perView));
+      setCurrentPage(pageIndex);
       setIsAutoPlaying(false);
       setIsRackOpen(false);
       setEnteringKey(null);
     }, 650);
   };
 
-  const isSinglePage = viewMode === "single";
+  const isSinglePage = true;
   const isAndroidTV = deviceKind === "android-tv";
   const isAndroid = deviceKind === "android-phone" || deviceKind === "android-tv";
 
   const ARTICLES_PER_SPREAD = 2;
-  const articlesPerView = isSinglePage ? 1 : ARTICLES_PER_SPREAD;
-  const totalPages = Math.ceil(processedArticles.length / articlesPerView);
+  const articlesPerView = 1;
+  const totalPages = processedArticles.length;
 
   // Keep page index safely clamped whenever totalPages changes
   useEffect(() => {
@@ -986,16 +961,6 @@ export default function Home() {
         <span className="text-xs text-[#a39371]">|</span>
         <button
           type="button"
-          onClick={toggleViewMode}
-          className={`jarida-focusable flex items-center gap-1.5 text-xs px-2 py-0.5 rounded transition cursor-pointer ${isSinglePage ? "bg-[#233c30] text-[#dcb45b] font-bold" : "text-[#554a32] hover:text-black"}`}
-          title={isSinglePage ? "التبديل إلى عرض صفحتين" : "التبديل إلى عرض صفحة واحدة"}
-        >
-          {isSinglePage ? <FileText className="w-3.5 h-3.5" /> : <BookOpen className="w-3.5 h-3.5" />}
-          <span>{isSinglePage ? "صفحة واحدة" : "صفحتان"}</span>
-        </button>
-        <span className="text-xs text-[#a39371]">|</span>
-        <button
-          type="button"
           onClick={() => setIsAutoPlaying(!isAutoPlaying)}
           className={`jarida-focusable flex items-center gap-1 text-xs px-2 py-0.5 rounded transition cursor-pointer ${isAutoPlaying ? "bg-[#d3c49b]/60 text-black font-bold" : "text-[#554a32] hover:text-black"}`}
           title={isAutoPlaying ? "إيقاف التقليب التلقائي" : "تشغيل التقليب التلقائي"}
@@ -1083,7 +1048,6 @@ export default function Home() {
           className={`jarida-spread relative ${isSinglePage ? "grid grid-cols-1 gap-0" : "grid grid-cols-2 gap-0 lg:gap-8 divide-x divide-x-reverse divide-[#ccc]"} flex-grow items-start`}
           dir="rtl"
           onClick={(event) => {
-            if (isSinglePage) return;
             const target = event.target as HTMLElement;
             if (target.closest("button, a, input, textarea")) return;
             const bounds = event.currentTarget.getBoundingClientRect();

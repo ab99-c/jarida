@@ -1241,16 +1241,17 @@ body {
 }
 
 .jarida-single-page-mode .jarida-topbar {
-  width: min(100%, 760px);
+  width: min(100%, 840px);
   flex: 0 0 auto;
   align-self: center;
   border-radius: 14px;
-  padding: 6px 10px;
-  justify-content: space-between;
+  padding: 6px 14px;
+  justify-content: center;
+  gap: 10px;
 }
 
 .jarida-single-page-mode .fb-book {
-  width: min(100%, 760px);
+  width: min(100%, 840px);
   flex: 1 1 auto;
   height: auto;
   max-height: none;
