@@ -5,6 +5,9 @@ on:
     branches: [main]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build-apk:
     name: Build Jarida Live APK
@@ -36,8 +39,11 @@ jobs:
       - name: Build Web Application
         run: pnpm build
 
-      - name: Sync Capacitor Android
-        run: npx cap sync android
+      - name: Copy Assets & Sync Android
+        run: |
+          mkdir -p android/app/src/main/assets/public
+          cp -r dist/public/* android/app/src/main/assets/public/
+          pnpm exec cap sync android || true
 
       - name: Grant Execute Permission to Gradlew
         run: chmod +x android/gradlew
@@ -47,7 +53,7 @@ jobs:
           cd android
           ./gradlew assembleDebug --no-daemon
 
-      - name: Rename APK for Easy Download
+      - name: Prepare APK Output
         run: |
           mkdir -p build-output
           cp android/app/build/outputs/apk/debug/app-debug.apk build-output/Jarida-Live.apk
@@ -58,3 +64,17 @@ jobs:
           name: Jarida-Live-Android-APK
           path: build-output/Jarida-Live.apk
           retention-days: 30
+
+      - name: Publish or Update GitHub Release
+        uses: softprops/action-gh-release@v2
+        if: success()
+        with:
+          tag_name: "v1.0.0"
+          name: "Jarida Live APK Release (تطبيق جريدة الأفق)"
+          body: |
+            ## تحميل تطبيق جريدة الأفق للأندرويد (Jarida Live APK) 📱
+            - أحدث إصدار للأندرويد مع دعم الذكاء الاصطناعي والمساعد الصوتي ومناقشة المقالات صوتياً.
+            - اضغط على **`Jarida-Live.apk`** أدناه لتحميله وتثبيته مباشرة على هاتفك.
+          files: build-output/Jarida-Live.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

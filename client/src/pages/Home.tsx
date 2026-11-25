@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { trpc } from "@/lib/trpc";
 import { formatArabicEditionDate } from "@shared/date";
-import { Volume2, VolumeX, RefreshCw, Share2, MessageSquare, Send, Check, FileText, BookOpen, Library, X, Headphones } from "lucide-react";
+import { Volume2, VolumeX, RefreshCw, Share2, MessageSquare, Send, Check, FileText, BookOpen, Library, X, Headphones, Smartphone } from "lucide-react";
 import CategoryFilterBar from "../components/CategoryFilterBar";
 import VoiceReader from "../components/VoiceReader";
 import ArchiveChest from "../components/ArchiveChest";
+import ApkDownloadModal from "../components/ApkDownloadModal";
 import {
   getBottomLeftPeelProgress,
   getBoundedPageChange,
@@ -718,6 +719,7 @@ export default function Home() {
   // رف الجرائد: كل يوم = عدد (جورنال يومي) كيتحط فـ جيب من جيوب الرف
   const [isRackOpen, setIsRackOpen] = useState(true);
   const [isChestOpen, setIsChestOpen] = useState(false);
+  const [isApkModalOpen, setIsApkModalOpen] = useState(false);
   const [enteringKey, setEnteringKey] = useState<string | null>(null);
   const dailyEditions = (() => {
     const seen = new Map<string, { key: string; pageIndex: number; count: number; lead: any }>();
@@ -1118,6 +1120,16 @@ export default function Home() {
           <span className="text-sm">🪵</span>
           <span>صندوق الأرشيف</span>
         </button>
+        <span className="text-xs text-[#a39371]">|</span>
+        <button
+          type="button"
+          onClick={() => setIsApkModalOpen(true)}
+          className="jarida-focusable flex items-center gap-1.5 text-xs text-[#1e4620] hover:text-black transition cursor-pointer px-2 py-0.5 rounded bg-[#e1eee2] hover:bg-[#cfdfd0] border border-[#a4c9a7] font-bold shadow-xs"
+          title="تحميل تطبيق أندرويد (APK)"
+        >
+          <Smartphone className="w-3.5 h-3.5 text-[#2d6630]" />
+          <span>تحميل APK 📱</span>
+        </button>
       </div>
 
       {/* Category Filter & Instant Search */}
@@ -1191,6 +1203,12 @@ export default function Home() {
           openEditionFromRack(pageIndex, key);
           setIsChestOpen(false);
         }}
+      />
+
+      {/* Download APK Modal */}
+      <ApkDownloadModal
+        isOpen={isApkModalOpen}
+        onClose={() => setIsApkModalOpen(false)}
       />
 
       {/* Newspaper Spread Container (Authentic Daily Newspaper Layout / مثل الجرائد اليومية) */}

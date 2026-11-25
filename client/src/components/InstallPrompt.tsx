@@ -53,10 +53,19 @@ export default function InstallPrompt() {
         <strong>ثبّت الجريدة فالهاتف</strong>
         <span>خلي Jarida Live قريبة منك بحال تطبيق.</span>
       </div>
-      <button type="button" className="jarida-install-button" onClick={install}>
-        <Download className="h-4 w-4" />
-        تثبيت
-      </button>
+      <div className="flex items-center gap-1.5 flex-wrap">
+        <button type="button" className="jarida-install-button" onClick={install}>
+          <Download className="h-3.5 w-3.5" />
+          تثبيت فوري
+        </button>
+        <a
+          href="https://github.com/ab99-c/jarida/releases/latest/download/Jarida-Live.apk"
+          download="Jarida-Live.apk"
+          className="jarida-install-button bg-[#3d2716] text-[#eddcc4] hover:bg-[#52341d] border border-[#a8824f]/60 text-xs py-1 px-2 rounded font-bold flex items-center gap-1"
+        >
+          <span>تحميل APK 📱</span>
+        </a>
+      </div>
     </aside>
   );
 }
