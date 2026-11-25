@@ -4,6 +4,7 @@ import { formatArabicEditionDate } from "@shared/date";
 import { Volume2, VolumeX, RefreshCw, Share2, MessageSquare, Send, Check, FileText, BookOpen, Library, X, Headphones } from "lucide-react";
 import CategoryFilterBar from "../components/CategoryFilterBar";
 import VoiceReader from "../components/VoiceReader";
+import ArchiveChest from "../components/ArchiveChest";
 import {
   getBottomLeftPeelProgress,
   getBoundedPageChange,
@@ -102,6 +103,46 @@ const ARCHIVE_DAILY_ARTICLES = [
     category: "رأي وتحليل",
     imageUrl: "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?auto=format&fit=crop&w=700&q=80",
     publishedAt: new Date("2026-11-17T09:00:00Z"),
+  },
+  {
+    id: "archive-9",
+    title: "ملف خاص: الثورة الرقمية وتحديث الإدارة العمومية بالمملكة",
+    summary: "استراتيجية المغرب الرقمي 2030 تدخل مراحلها التنفيذية لتسهيل المساطر الإدارية وربط الخدمات بالمواطنين والفاعلين الاقتصاديين.",
+    content: "تسريع ورش التحول الرقمي بالمرافق العمومية وملاءمة الإطار القانوني لتطوير منظومة الخدمات المرقمنة والأمن السيبراني.",
+    source: "جريدة الأفق",
+    category: "تكنولوجيا وإدارة",
+    imageUrl: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=700&q=80",
+    publishedAt: new Date("2026-11-15T11:00:00Z"),
+  },
+  {
+    id: "archive-10",
+    title: "المغرب الفاسي والوداد: قمة كروية ساخنة بحضور جماهيري غفير",
+    summary: "مواجهة كروية بطابع خاص في الدوري المغربي للمحترفين تنتهي بتعادل مثير وأجواء احتفالية رائعة في المدرجات.",
+    content: "ندية عالية وتكتيك محكم بين الفريقين مع إشادة واسعة بالروح الرياضية والتنظيم المحكم للمباراة.",
+    source: "الأفق الرياضي",
+    category: "رياضة",
+    imageUrl: "https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=700&q=80",
+    publishedAt: new Date("2026-11-13T18:30:00Z"),
+  },
+  {
+    id: "archive-11",
+    title: "القمة المناخية: إشادة دولية بالمبادرات المغربية في الاقتصاد الأخضر",
+    summary: "ممثلو الوفود الدولية يؤكدون ريادة المغرب الإقليمية في إنتاج الهيدروجين الأخضر والتكيف مع التغيرات المناخية.",
+    content: "عرض المشاريع النموذجية للمملكة في تدوير المياه وتحلية البحر واستعمال الطاقات النظيفة في القطاع الصناعي.",
+    source: "وكالة الأفق",
+    category: "بيئة واقتصاد",
+    imageUrl: "https://images.unsplash.com/photo-1497435334941-8c899ee9e8e9?auto=format&fit=crop&w=700&q=80",
+    publishedAt: new Date("2026-11-11T14:15:00Z"),
+  },
+  {
+    id: "archive-12",
+    title: "المعرض الدولي للكتاب والتراث: إقبال قياسي واحتفاء بالأدب المغربي",
+    summary: "اختتام فعاليات المعرض الثقافي بمشاركة أكثر من 50 دولة وندوات فكرية تسلط الضوء على عمق الهوية والتراث الوطني.",
+    content: "تتويج مؤلفين مغاربة بجوائز الاستحقاق وندوات حوارية مفتوحة حول الكتاب والإبداع في العصر الرقمي.",
+    source: "هيئة التحرير",
+    category: "ثقافة وفنون",
+    imageUrl: "https://images.unsplash.com/photo-1457369804613-52c61a468e7d?auto=format&fit=crop&w=700&q=80",
+    publishedAt: new Date("2026-11-09T10:00:00Z"),
   },
 ];
 
@@ -676,6 +717,7 @@ export default function Home() {
 
   // رف الجرائد: كل يوم = عدد (جورنال يومي) كيتحط فـ جيب من جيوب الرف
   const [isRackOpen, setIsRackOpen] = useState(true);
+  const [isChestOpen, setIsChestOpen] = useState(false);
   const [enteringKey, setEnteringKey] = useState<string | null>(null);
   const dailyEditions = (() => {
     const seen = new Map<string, { key: string; pageIndex: number; count: number; lead: any }>();
@@ -1066,6 +1108,16 @@ export default function Home() {
           <Library className="w-3.5 h-3.5" />
           <span>رف الجرائد</span>
         </button>
+        <span className="text-xs text-[#a39371]">|</span>
+        <button
+          type="button"
+          onClick={() => setIsChestOpen(true)}
+          className="jarida-focusable flex items-center gap-1.5 text-xs text-[#422c19] hover:text-black transition cursor-pointer px-2 py-0.5 rounded bg-[#ebd7b5]/80 hover:bg-[#dfc79f] border border-[#b89b6c] font-bold shadow-xs"
+          title="صندوق الأرشيف الخشبي (الأعداد السابقة)"
+        >
+          <span className="text-sm">🪵</span>
+          <span>صندوق الأرشيف</span>
+        </button>
       </div>
 
       {/* Category Filter & Instant Search */}
@@ -1129,6 +1181,17 @@ export default function Home() {
           </div>
         </div>
       )}
+
+      {/* 3D Mango Wood Archive Chest (خزانة الأرشيف والأعداد السابقة) */}
+      <ArchiveChest
+        isOpen={isChestOpen}
+        onClose={() => setIsChestOpen(false)}
+        editions={dailyEditions}
+        onSelectEdition={(pageIndex, key) => {
+          openEditionFromRack(pageIndex, key);
+          setIsChestOpen(false);
+        }}
+      />
 
       {/* Newspaper Spread Container (Authentic Daily Newspaper Layout / مثل الجرائد اليومية) */}
       <div className="fb-book relative text-[#111] my-auto flex flex-col justify-between">
