@@ -42,6 +42,19 @@ export default function ArchiveChest({
     });
   }, [editions, searchQuery]);
 
+  const editionsByMonth = useMemo(() => {
+    const months = new Map<string, ArchivedEditionItem[]>();
+    [...filteredEditions]
+      .sort((a, b) => b.key.localeCompare(a.key))
+      .forEach((edition) => {
+        const monthKey = edition.key.slice(0, 7);
+        const monthEditions = months.get(monthKey);
+        if (monthEditions) monthEditions.push(edition);
+        else months.set(monthKey, [edition]);
+      });
+    return Array.from(months.entries());
+  }, [filteredEditions]);
+
   if (!isOpen) return null;
 
   const handlePick = (pageIndex: number, key: string) => {
@@ -117,85 +130,96 @@ export default function ArchiveChest({
         </div>
 
         {/* Editions Grid */}
-        <div className="w-full">
+        <div className="w-full max-h-[58vh] overflow-y-auto pl-1 pr-1 custom-chest-scrollbar">
           {filteredEditions.length === 0 ? (
             <div className="text-center py-16 text-[#9e8564]">
               <p className="text-sm">لم يتم العثور على أعداد تطابق عبارة البحث.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3.5 sm:gap-4 max-h-[58vh] overflow-y-auto pl-1 pr-1 custom-chest-scrollbar">
-              {filteredEditions.map((ed) => {
-                const isPicked = selectedKey === ed.key;
-                const dateObj = new Date(ed.key);
-                const arabicDate = dateObj.toLocaleDateString("ar-MA", {
-                  weekday: "short",
-                  day: "numeric",
-                  month: "long",
-                  year: "numeric",
-                });
+            editionsByMonth.map(([monthKey, monthEditions]) => {
+              const monthDate = new Date(`${monthKey}-01T12:00:00.000Z`);
+              const monthLabel = monthDate.toLocaleDateString("ar-MA", {
+                month: "long",
+                year: "numeric",
+                timeZone: "Africa/Casablanca",
+              });
 
-                return (
-                  <button
-                    key={ed.key}
-                    type="button"
-                    onClick={() => handlePick(ed.pageIndex, ed.key)}
-                    className={`jarida-archive-card group relative text-right p-3.5 rounded-xl border transition-all duration-300 cursor-pointer flex flex-col justify-between overflow-hidden ${
-                      isPicked
-                        ? "bg-[#faf0d9] text-black ring-4 ring-[#d4af37] -translate-y-2 scale-102 shadow-2xl z-30"
-                        : "bg-[#f8f5ed] text-[#241a10] border-[#d8c7a8] hover:-translate-y-1.5 hover:shadow-xl hover:border-[#b48d56]"
-                    }`}
-                  >
-                    <div>
-                      {/* Card Header */}
-                      <div className="flex items-center justify-between border-b border-[#dfd0b6] pb-2 mb-2">
-                        <span className="font-serif font-black text-xs text-[#2c1d0f] tracking-wide">
-                          جريدة الأفق
-                        </span>
-                        <span className="text-[10.5px] font-sans font-bold text-[#70522a] flex items-center gap-1">
-                          <Calendar className="w-3 h-3 text-[#947743]" />
-                          {arabicDate}
-                        </span>
-                      </div>
+              return (
+                <section key={monthKey} className="mb-5 last:mb-0" aria-label={`أعداد شهر ${monthLabel}`}>
+                  <div className="mb-3 flex items-center justify-between gap-3 rounded-xl border border-[#80603b] bg-[#2d1e12] px-3 py-2.5">
+                    <h3 className="font-serif text-sm font-black text-[#f5ebd7]">{monthLabel}</h3>
+                    <span className="text-[11px] text-[#d8c2a3]">{monthEditions.length} عدد يومي</span>
+                  </div>
 
-                      {/* Headline */}
-                      <h4 className="font-serif font-bold text-xs sm:text-[13px] line-clamp-2 leading-snug mb-2 text-[#1a120a] group-hover:text-[#825419] transition">
-                        {ed.lead?.title || "عدد أرشيفي شامل"}
-                      </h4>
+                  <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 sm:gap-4">
+                    {monthEditions.map((ed) => {
+                      const isPicked = selectedKey === ed.key;
+                      const dateObj = new Date(ed.key);
+                      const arabicDate = dateObj.toLocaleDateString("ar-MA", {
+                        weekday: "short",
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric",
+                      });
 
-                      {/* Thumbnail preview */}
-                      {ed.lead?.imageUrl && (
-                        <div className="w-full h-24 mb-2 rounded-lg overflow-hidden border border-[#dfd0b6] bg-[#ede1c7]">
-                          <img
-                            src={ed.lead.imageUrl}
-                            alt=""
-                            className="w-full h-full object-cover filter contrast-[1.04] group-hover:scale-105 transition duration-300"
-                            loading="lazy"
-                          />
-                        </div>
-                      )}
+                      return (
+                        <button
+                          key={ed.key}
+                          type="button"
+                          onClick={() => handlePick(ed.pageIndex, ed.key)}
+                          className={`jarida-archive-card group relative flex flex-col justify-between overflow-hidden rounded-xl border p-3.5 text-right transition-all duration-300 ${
+                            isPicked
+                              ? "z-30 -translate-y-2 scale-102 bg-[#faf0d9] text-black shadow-2xl ring-4 ring-[#d4af37]"
+                              : "cursor-pointer border-[#d8c7a8] bg-[#f8f5ed] text-[#241a10] hover:-translate-y-1.5 hover:border-[#b48d56] hover:shadow-xl"
+                          }`}
+                        >
+                          <div>
+                            <div className="mb-2 flex items-center justify-between border-b border-[#dfd0b6] pb-2">
+                              <span className="font-serif text-xs font-black tracking-wide text-[#2c1d0f]">
+                                جريدة الأفق
+                              </span>
+                              <span className="flex items-center gap-1 font-sans text-[10.5px] font-bold text-[#70522a]">
+                                <Calendar className="h-3 w-3 text-[#947743]" />
+                                {arabicDate}
+                              </span>
+                            </div>
 
-                      {/* Summary */}
-                      {ed.lead?.summary && (
-                        <p className="text-[11px] text-[#52412d] line-clamp-2 leading-relaxed">
-                          {ed.lead.summary}
-                        </p>
-                      )}
-                    </div>
+                            <h4 className="mb-2 line-clamp-2 font-serif text-xs font-bold leading-snug text-[#1a120a] transition group-hover:text-[#825419] sm:text-[13px]">
+                              {ed.lead?.title || "عدد أرشيفي شامل"}
+                            </h4>
 
-                    {/* Card Footer */}
-                    <div className="mt-3 pt-2 border-t border-[#e2d5bd] flex items-center justify-between text-[10.5px] font-sans">
-                      <span className="text-[#85663b] font-semibold">
-                        {ed.count} مقال ومادة
-                      </span>
-                      <span className="px-2.5 py-1 rounded-md bg-[#2d1e12] text-[#f4ebdc] group-hover:bg-[#1a120b] transition flex items-center gap-1 font-bold">
-                        <BookOpen className="w-3 h-3 text-[#d4af37]" />
-                        <span>تصفح العدد</span>
-                      </span>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
+                            {ed.lead?.imageUrl && (
+                              <div className="mb-2 h-24 w-full overflow-hidden rounded-lg border border-[#dfd0b6] bg-[#ede1c7]">
+                                <img
+                                  src={ed.lead.imageUrl}
+                                  alt=""
+                                  className="h-full w-full object-cover contrast-[1.04] transition duration-300 group-hover:scale-105"
+                                  loading="lazy"
+                                />
+                              </div>
+                            )}
+
+                            {ed.lead?.summary && (
+                              <p className="line-clamp-2 text-[11px] leading-relaxed text-[#52412d]">
+                                {ed.lead.summary}
+                              </p>
+                            )}
+                          </div>
+
+                          <div className="mt-3 flex items-center justify-between border-t border-[#e2d5bd] pt-2 font-sans text-[10.5px]">
+                            <span className="font-semibold text-[#85663b]">{ed.count} مقال ومادة</span>
+                            <span className="flex items-center gap-1 rounded-md bg-[#2d1e12] px-2.5 py-1 font-bold text-[#f4ebdc] transition group-hover:bg-[#1a120b]">
+                              <BookOpen className="h-3 w-3 text-[#d4af37]" />
+                              <span>تصفح العدد</span>
+                            </span>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </section>
+              );
+            })
           )}
         </div>
       </div>

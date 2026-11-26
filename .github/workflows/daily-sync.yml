@@ -35,4 +35,5 @@ jobs:
         env:
           CI: "true"
           GIT_PUSH_REMOTE: origin
+          JARIDA_APP_URL: ${{ vars.JARIDA_APP_URL || 'https://jarida-tan.vercel.app' }}
         run: pnpm auto:sync

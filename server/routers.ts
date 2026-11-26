@@ -4,7 +4,8 @@ import { systemRouter } from "./_core/systemRouter.js";
 import { publicProcedure, router } from "./_core/trpc.js";
 import { getDb } from "./db.js";
 import { articles, comments } from "../drizzle/schema.js";
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, gte } from "drizzle-orm";
+import { getArchiveStartDate } from "../shared/date.js";
 import { z } from "zod";
 import { fetchAndStoreRSS, fetchLatestRSS } from "./services/rss.js";
 import { moderateComment } from "./services/gemini.js";
@@ -40,11 +41,17 @@ export const appRouter = router({
   jarida: router({
     getDailyEdition: publicProcedure.query(async () => {
       const db = await getDb();
+      const archiveStartDate = getArchiveStartDate();
       let list: typeof articles.$inferSelect[] = [];
       if (db) {
         try {
           list = await Promise.race([
-            db.select().from(articles).orderBy(desc(articles.publishedAt)).limit(200),
+            db
+              .select()
+              .from(articles)
+              .where(gte(articles.publishedAt, archiveStartDate))
+              .orderBy(desc(articles.publishedAt))
+              .limit(5000),
             new Promise<never>((_, reject) => setTimeout(() => reject(new Error("Database query timeout")), 2500)),
           ]);
         } catch (error) {

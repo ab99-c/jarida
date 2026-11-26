@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { trpc } from "@/lib/trpc";
-import { formatArabicEditionDate } from "@shared/date";
+import { formatArabicEditionDate, getArchiveStartDate } from "@shared/date";
 import { Volume2, VolumeX, RefreshCw, Share2, MessageSquare, Send, Check, FileText, BookOpen, Library, X, Headphones, Smartphone, Scale, Search, Archive } from "lucide-react";
 import { isInstalledAppOrApk } from "@/lib/apiBase";
 import VoiceReader from "../components/VoiceReader";
@@ -655,14 +655,16 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isSpeakingAudio, setIsSpeakingAudio] = useState(false);
 
-  // دمج كل الداتا اليومية الحية مع الداتا اليومية الفايتة (الأرشيف اليومي)
+  // الأرشيف كيبدا من شتنبر، والعينات كتخدم غير كاحتياط إلا ماكانتش أخبار حية.
   const allDailyArticles = useMemo(() => {
     const liveList = Array.isArray(articles) ? articles : [];
-    const seenTitles = new Set(liveList.map((a: any) => a?.title?.trim()));
-    return [
-      ...liveList,
-      ...ARCHIVE_DAILY_ARTICLES.filter((a) => !seenTitles.has(a.title.trim())),
-    ];
+    // Keep historical sample stories as an offline fallback; never mix them into live editions.
+    const sourceList = liveList.length > 0 ? liveList : ARCHIVE_DAILY_ARTICLES;
+    const archiveStartTime = getArchiveStartDate().getTime();
+    return sourceList.filter((article: any) => {
+      const publishedAt = new Date(article?.publishedAt).getTime();
+      return Number.isFinite(publishedAt) && publishedAt >= archiveStartTime;
+    });
   }, [articles]);
 
   const categories = useMemo(() => {
@@ -684,6 +686,7 @@ export default function Home() {
 
   const displayArticles = searchQuery.trim() || activeCategory !== "الكل" ? filteredArticles : allDailyArticles;
   const processedArticles = useMemo(() => buildNewspaperPages(displayArticles, false), [displayArticles]);
+  const allProcessedArticles = useMemo(() => buildNewspaperPages(allDailyArticles, false), [allDailyArticles]);
 
   useEffect(() => {
     setCurrentPage(0);
@@ -725,19 +728,21 @@ export default function Home() {
   const [enteringKey, setEnteringKey] = useState<string | null>(null);
   const dailyEditions = (() => {
     const seen = new Map<string, { key: string; pageIndex: number; count: number; lead: any }>();
-    processedArticles.forEach((page, pageIndex) => {
+    allProcessedArticles.forEach((page, pageIndex) => {
       if (page.isBlank || !page.dayKey) return;
       const existing = seen.get(page.dayKey);
       const n = page.allArticles.length;
       if (existing) existing.count += n;
       else seen.set(page.dayKey, { key: page.dayKey, pageIndex, count: n, lead: page.leadArticle });
     });
-    return Array.from(seen.values()).slice(0, 16);
+    return Array.from(seen.values());
   })();
 
   const openEditionFromRack = (pageIndex: number, key: string) => {
     if (enteringKey) return;
     // الجريدة المختارة كتقرب للكاميرا (دخول) وبعدها كتتفتح الجريدة وتقدر تقلب فيها
+    setActiveCategory("الكل");
+    setSearchQuery("");
     setEnteringKey(key);
     window.setTimeout(() => {
       setCurrentPage(pageIndex);
