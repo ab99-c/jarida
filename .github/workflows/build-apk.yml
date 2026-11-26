@@ -48,11 +48,14 @@ jobs:
             const fs = require('fs');
             const p = 'android/capacitor.settings.gradle';
             const code = \"include ':capacitor-android'\\n\" +
-              \"def capDir = new File('../node_modules/@capacitor/android/capacitor')\\n\" +
+              \"def capDir = new File(settingsDir, '../node_modules/@capacitor/android/capacitor')\\n\" +
               \"if (!capDir.exists()) {\\n\" +
-              \"  def pnpmDirs = new File('../node_modules/.pnpm').listFiles()?.findAll { it.name.startsWith('@capacitor+android') }\\n\" +
-              \"  if (pnpmDirs && pnpmDirs.size() > 0) {\\n\" +
-              \"    capDir = new File(pnpmDirs[0], 'node_modules/@capacitor/android/capacitor')\\n\" +
+              \"  def pnpmDir = new File(settingsDir, '../node_modules/.pnpm')\\n\" +
+              \"  if (pnpmDir.exists()) {\\n\" +
+              \"    def found = pnpmDir.listFiles()?.find { it.name.startsWith('@capacitor+android') }\\n\" +
+              \"    if (found) {\\n\" +
+              \"      capDir = new File(found, 'node_modules/@capacitor/android/capacitor')\\n\" +
+              \"    }\\n\" +
               \"  }\\n\" +
               \"}\\n\" +
               \"project(':capacitor-android').projectDir = capDir\\n\";
@@ -70,7 +73,13 @@ jobs:
       - name: Build Android Debug APK
         run: |
           cd android
-          ./gradlew assembleDebug --no-daemon --stacktrace
+          ./gradlew assembleDebug --no-daemon --stacktrace -x test -x lint 2>&1 | tee build.log || {
+            echo "### ❌ Gradle Build Error Log" >> $GITHUB_STEP_SUMMARY
+            echo '```text' >> $GITHUB_STEP_SUMMARY
+            tail -n 120 build.log >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            exit 1
+          }
 
       - name: Prepare APK Output
         run: |

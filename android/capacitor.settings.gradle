@@ -1,10 +1,13 @@
 // Dynamic resolution for Capacitor Android project dir across pnpm and standard setups
 include ':capacitor-android'
-def capDir = new File('../node_modules/@capacitor/android/capacitor')
+def capDir = new File(settingsDir, '../node_modules/@capacitor/android/capacitor')
 if (!capDir.exists()) {
-    def pnpmDirs = new File('../node_modules/.pnpm').listFiles()?.findAll { it.name.startsWith('@capacitor+android') }
-    if (pnpmDirs && pnpmDirs.size() > 0) {
-        capDir = new File(pnpmDirs[0], 'node_modules/@capacitor/android/capacitor')
+    def pnpmDir = new File(settingsDir, '../node_modules/.pnpm')
+    if (pnpmDir.exists()) {
+        def found = pnpmDir.listFiles()?.find { it.name.startsWith('@capacitor+android') }
+        if (found) {
+            capDir = new File(found, 'node_modules/@capacitor/android/capacitor')
+        }
     }
 }
 project(':capacitor-android').projectDir = capDir
