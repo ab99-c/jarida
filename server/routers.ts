@@ -44,7 +44,7 @@ export const appRouter = router({
       if (db) {
         try {
           list = await Promise.race([
-            db.select().from(articles).orderBy(desc(articles.publishedAt)).limit(200),
+            db.select().from(articles).orderBy(desc(articles.publishedAt)).limit(1000),
             new Promise<never>((_, reject) => setTimeout(() => reject(new Error("Database query timeout")), 2500)),
           ]);
         } catch (error) {

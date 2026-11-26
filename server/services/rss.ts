@@ -65,6 +65,7 @@ export async function fetchAndStoreRSS() {
   }
 
   let totalInserted = 0;
+  let successfulFeeds = 0;
 
   // Retrieve recent articles to deduplicate across feeds
   const recentArticles = await db
@@ -83,6 +84,7 @@ export async function fetchAndStoreRSS() {
         fetchFeed(feedInfo.url),
         new Promise<never>((_, reject) => setTimeout(() => reject(new Error("RSS request timeout")), 6500)),
       ]);
+      successfulFeeds++;
 
       for (const item of feed.items || []) {
         if (!item.link || !item.title) continue;
@@ -174,8 +176,13 @@ export async function fetchAndStoreRSS() {
     }
   }
 
-  console.log(`[RSS] Successfully inserted ${totalInserted} validated articles.`);
-  return { success: true, count: totalInserted };
+  console.log(`[RSS] Read ${successfulFeeds}/${RSS_FEEDS.length} feeds and inserted ${totalInserted} validated articles.`);
+  return {
+    success: successfulFeeds > 0,
+    count: totalInserted,
+    successfulFeeds,
+    failedFeeds: RSS_FEEDS.length - successfulFeeds,
+  };
 }
 
 export async function fetchLatestRSS() {

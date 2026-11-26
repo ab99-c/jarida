@@ -658,11 +658,8 @@ export default function Home() {
   // دمج كل الداتا اليومية الحية مع الداتا اليومية الفايتة (الأرشيف اليومي)
   const allDailyArticles = useMemo(() => {
     const liveList = Array.isArray(articles) ? articles : [];
-    const seenTitles = new Set(liveList.map((a: any) => a?.title?.trim()));
-    return [
-      ...liveList,
-      ...ARCHIVE_DAILY_ARTICLES.filter((a) => !seenTitles.has(a.title.trim())),
-    ];
+    // Keep historical sample stories as an offline fallback; never mix them into live editions.
+    return liveList.length > 0 ? liveList : ARCHIVE_DAILY_ARTICLES;
   }, [articles]);
 
   const categories = useMemo(() => {
@@ -684,6 +681,7 @@ export default function Home() {
 
   const displayArticles = searchQuery.trim() || activeCategory !== "الكل" ? filteredArticles : allDailyArticles;
   const processedArticles = useMemo(() => buildNewspaperPages(displayArticles, false), [displayArticles]);
+  const allProcessedArticles = useMemo(() => buildNewspaperPages(allDailyArticles, false), [allDailyArticles]);
 
   useEffect(() => {
     setCurrentPage(0);
@@ -725,19 +723,21 @@ export default function Home() {
   const [enteringKey, setEnteringKey] = useState<string | null>(null);
   const dailyEditions = (() => {
     const seen = new Map<string, { key: string; pageIndex: number; count: number; lead: any }>();
-    processedArticles.forEach((page, pageIndex) => {
+    allProcessedArticles.forEach((page, pageIndex) => {
       if (page.isBlank || !page.dayKey) return;
       const existing = seen.get(page.dayKey);
       const n = page.allArticles.length;
       if (existing) existing.count += n;
       else seen.set(page.dayKey, { key: page.dayKey, pageIndex, count: n, lead: page.leadArticle });
     });
-    return Array.from(seen.values()).slice(0, 16);
+    return Array.from(seen.values());
   })();
 
   const openEditionFromRack = (pageIndex: number, key: string) => {
     if (enteringKey) return;
     // الجريدة المختارة كتقرب للكاميرا (دخول) وبعدها كتتفتح الجريدة وتقدر تقلب فيها
+    setActiveCategory("الكل");
+    setSearchQuery("");
     setEnteringKey(key);
     window.setTimeout(() => {
       setCurrentPage(pageIndex);
