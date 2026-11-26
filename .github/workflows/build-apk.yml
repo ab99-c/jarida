@@ -44,8 +44,13 @@ jobs:
         run: |
           mkdir -p android/app/src/main/assets/public
           cp -r dist/public/* android/app/src/main/assets/public/
+          mkdir -p android/capacitor-cordova-android-plugins
           node -e "
             const fs = require('fs');
+            const cv = 'android/capacitor-cordova-android-plugins/cordova.variables.gradle';
+            if (!fs.existsSync(cv)) {
+              fs.writeFileSync(cv, 'ext {\\n  cdvMinSdkVersion = 24\\n  cdvPluginPostBuildExtras = []\\n  cordovaConfig = [:]\\n}\\n');
+            }
             const p = 'android/capacitor.settings.gradle';
             const code = \"include ':capacitor-android'\\n\" +
               \"def capDir = new File(settingsDir, '../node_modules/@capacitor/android/capacitor')\\n\" +
