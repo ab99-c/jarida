@@ -20,3 +20,24 @@ export function getApiBaseUrl(): string {
   }
   return "";
 }
+
+/**
+ * Detects if the application is running inside a native mobile APK (Capacitor/WebView)
+ * or installed PWA standalone mode. In this mode, APK download prompts and buttons
+ * should be hidden because the user already has the application installed.
+ */
+export function isInstalledAppOrApk(): boolean {
+  if (typeof window === "undefined") return false;
+  const { protocol, hostname } = window.location;
+  const isCapacitor =
+    protocol === "capacitor:" ||
+    protocol === "file:" ||
+    (window as any).Capacitor !== undefined ||
+    hostname === "localhost" ||
+    hostname === "127.0.0.1";
+  const isStandalone =
+    window.matchMedia("(display-mode: standalone)").matches ||
+    ("standalone" in navigator && (navigator as any).standalone === true);
+  return isCapacitor || isStandalone;
+}
+

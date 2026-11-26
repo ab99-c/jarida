@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { trpc } from "@/lib/trpc";
 import { formatArabicEditionDate } from "@shared/date";
-import { Volume2, VolumeX, RefreshCw, Share2, MessageSquare, Send, Check, FileText, BookOpen, Library, X, Headphones, Smartphone, Scale } from "lucide-react";
-import CategoryFilterBar from "../components/CategoryFilterBar";
+import { Volume2, VolumeX, RefreshCw, Share2, MessageSquare, Send, Check, FileText, BookOpen, Library, X, Headphones, Smartphone, Scale, Search } from "lucide-react";
+import { isInstalledAppOrApk } from "@/lib/apiBase";
 import VoiceReader from "../components/VoiceReader";
 import ArchiveChest from "../components/ArchiveChest";
 import ApkDownloadModal from "../components/ApkDownloadModal";
@@ -750,6 +750,7 @@ export default function Home() {
   const isSinglePage = true;
   const isAndroidTV = deviceKind === "android-tv";
   const isAndroid = deviceKind === "android-phone" || deviceKind === "android-tv";
+  const isNativeApk = useMemo(() => isInstalledAppOrApk(), []);
 
   const ARTICLES_PER_SPREAD = 2;
   const articlesPerView = 1;
@@ -1056,106 +1057,158 @@ export default function Home() {
       className={`fb-wrapper min-h-screen text-[#2b2b2b] select-none relative overflow-x-hidden ${isSinglePage ? "jarida-single-page-mode" : ""} ${isAndroidTV ? "jarida-tv-mode" : ""}`}
       dir="rtl"
     >
-      {/* Top minimal header controls */}
-      <div className="jarida-topbar z-20 flex flex-wrap items-center justify-center gap-2 sm:gap-3 bg-[#f5e6cc]/95 backdrop-blur px-3 py-1.5 rounded-full shadow-md border border-[#d3c49b]">
-        <button
-          type="button"
-          onClick={() => refreshMutation.mutate()}
-          disabled={refreshMutation.isPending}
-          className="jarida-focusable flex items-center gap-1.5 text-xs text-[#554a32] hover:text-black transition cursor-pointer px-1.5 py-0.5 rounded"
-          title="تحديث الأخبار الآن"
-        >
-          <RefreshCw className={`w-3.5 h-3.5 ${refreshMutation.isPending ? "animate-spin" : ""}`} />
-          <span>تحديث</span>
-        </button>
-        <span className="text-xs text-[#a39371]">|</span>
-        <button
-          type="button"
-          onClick={toggleAudioBriefing}
-          className={`jarida-focusable flex items-center gap-1 text-xs px-2 py-0.5 rounded transition cursor-pointer ${isSpeakingAudio ? "bg-[#d3c49b]/80 text-black font-bold ring-1 ring-[#947743]" : "text-[#554a32] hover:text-black"}`}
-          title={isSpeakingAudio ? "إيقاف الموجز الصوتي" : "الموجز الصوتي لأهم العناوين"}
-        >
-          <Headphones className={`w-3.5 h-3.5 ${isSpeakingAudio ? "animate-pulse text-[#7a5b1e]" : ""}`} />
-          <span>{isSpeakingAudio ? "إيقاف الموجز" : "الموجز الصوتي 🎙️"}</span>
-        </button>
-        <span className="text-xs text-[#a39371]">|</span>
-        <VoiceReader
-          articleTitle={currentArticleTitle}
-          articleContent={currentArticleContent}
-        />
-        <span className="text-xs text-[#a39371]">|</span>
-        <button
-          type="button"
-          onClick={() => setIsAutoPlaying(!isAutoPlaying)}
-          className={`jarida-focusable flex items-center gap-1 text-xs px-2 py-0.5 rounded transition cursor-pointer ${isAutoPlaying ? "bg-[#d3c49b]/60 text-black font-bold" : "text-[#554a32] hover:text-black"}`}
-          title={isAutoPlaying ? "إيقاف التقليب التلقائي" : "تشغيل التقليب التلقائي"}
-        >
-          <span>{isAutoPlaying ? "تقليب تلقائي: مفعل" : "تقليب تلقائي: متوقف"}</span>
-        </button>
-        <span className="text-xs text-[#a39371]">|</span>
-        <button
-          type="button"
-          onClick={() => setIsMuted(!isMuted)}
-          className="jarida-focusable flex items-center gap-1 text-xs text-[#554a32] hover:text-black transition cursor-pointer p-1 rounded"
-          title={isMuted ? "تفعيل الصوت" : "كتم الصوت"}
-          aria-label={isMuted ? "تفعيل الصوت" : "كتم الصوت"}
-        >
-          {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-        </button>
-        <span className="text-xs text-[#a39371]">|</span>
-        <button
-          type="button"
-          onClick={() => setIsRackOpen(true)}
-          className="jarida-focusable flex items-center gap-1.5 text-xs text-[#554a32] hover:text-black transition cursor-pointer px-1.5 py-0.5 rounded"
-          title="رف الجرائد اليومية"
-        >
-          <Library className="w-3.5 h-3.5" />
-          <span>رف الجرائد</span>
-        </button>
-        <span className="text-xs text-[#a39371]">|</span>
-        <button
-          type="button"
-          onClick={() => setIsChestOpen(true)}
-          className="jarida-focusable flex items-center gap-1.5 text-xs text-[#422c19] hover:text-black transition cursor-pointer px-2 py-0.5 rounded bg-[#ebd7b5]/80 hover:bg-[#dfc79f] border border-[#b89b6c] font-bold shadow-xs"
-          title="صندوق الأرشيف الخشبي (الأعداد السابقة)"
-        >
-          <span className="text-sm">🪵</span>
-          <span>صندوق الأرشيف</span>
-        </button>
-        <span className="text-xs text-[#a39371]">|</span>
-        <button
-          type="button"
-          onClick={() => setIsApkModalOpen(true)}
-          className="jarida-focusable flex items-center gap-1.5 text-xs text-[#1e4620] hover:text-black transition cursor-pointer px-2 py-0.5 rounded bg-[#e1eee2] hover:bg-[#cfdfd0] border border-[#a4c9a7] font-bold shadow-xs"
-          title="تحميل تطبيق أندرويد (APK)"
-        >
-          <Smartphone className="w-3.5 h-3.5 text-[#2d6630]" />
-          <span>تحميل APK 📱</span>
-        </button>
-        <span className="text-xs text-[#a39371]">|</span>
-        <button
-          type="button"
-          onClick={() => setIsLegalModalOpen(true)}
-          className="jarida-focusable flex items-center gap-1 text-xs text-[#705536] hover:text-[#2a1d11] transition cursor-pointer px-2 py-0.5 rounded hover:bg-[#ebdcc4]"
-          title="إخلاء المسؤولية وحقوق النشر والملكية الفكرية"
-        >
-          <Scale className="w-3.5 h-3.5 text-[#8f6d33]" />
-          <span>إخلاء المسؤولية وحقوق النشر ⚖️</span>
-        </button>
-      </div>
+      {/* Unified Compact Navigation & Category Bar */}
+      <header className="jarida-unified-navbar z-20 w-full max-w-5xl mx-auto px-2.5 py-1.5 bg-[#fbf6ec]/95 backdrop-blur-md rounded-xl shadow-xs border border-[#d8c8a5] flex flex-col gap-1.5 mb-1 flex-shrink-0">
+        {/* Row 1: Brand & Key Interactive Controls */}
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          {/* Logo / Brand Title */}
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            <span className="font-serif font-black text-sm text-[#241a0d] flex items-center gap-1">
+              🗞️ جريدة الأفق
+            </span>
+            <span className="hidden sm:inline-block text-[10px] bg-[#ebdcc4] text-[#6d553b] px-1.5 py-0.5 rounded font-sans">
+              العدد اليومي
+            </span>
+          </div>
 
-      {/* Category Filter & Instant Search */}
-      <div className="z-10 w-full max-w-4xl mx-auto px-2 mt-2 mb-1">
-        <CategoryFilterBar
-          categories={categories}
-          activeCategory={activeCategory}
-          onSelectCategory={setActiveCategory}
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          totalFiltered={displayArticles.length}
-          totalAll={allDailyArticles.length}
-        />
-      </div>
+          {/* Controls */}
+          <div className="flex items-center gap-1 sm:gap-1.5 flex-wrap justify-end">
+            {/* Audio Briefing */}
+            <button
+              type="button"
+              onClick={toggleAudioBriefing}
+              className={`jarida-focusable flex items-center gap-1 text-[11px] sm:text-xs px-2 py-1 rounded transition cursor-pointer ${
+                isSpeakingAudio
+                  ? "bg-[#d3c49b] text-black font-bold ring-1 ring-[#947743]"
+                  : "bg-[#ebdcc4]/70 text-[#4c3924] hover:bg-[#decab0]"
+              }`}
+              title={isSpeakingAudio ? "إيقاف الموجز الصوتي" : "الموجز الصوتي لأهم العناوين"}
+            >
+              <Headphones className={`w-3.5 h-3.5 ${isSpeakingAudio ? "animate-pulse text-[#7a5b1e]" : ""}`} />
+              <span className="hidden xs:inline">{isSpeakingAudio ? "إيقاف" : "الموجز 🎙️"}</span>
+            </button>
+
+            {/* Voice Assistant (Gemini Live) */}
+            <VoiceReader
+              articleTitle={currentArticleTitle}
+              articleContent={currentArticleContent}
+            />
+
+            {/* Archive Chest */}
+            <button
+              type="button"
+              onClick={() => setIsChestOpen(true)}
+              className="jarida-focusable flex items-center gap-1 text-[11px] sm:text-xs text-[#422c19] hover:text-black transition cursor-pointer px-2 py-1 rounded bg-[#ebd7b5]/80 hover:bg-[#dfc79f] border border-[#b89b6c] font-bold shadow-2xs"
+              title="خزانة الأرشيف والأعداد السابقة"
+            >
+              <span>🪵</span>
+              <span className="hidden sm:inline">الأرشيف</span>
+            </button>
+
+            {/* Rack */}
+            <button
+              type="button"
+              onClick={() => setIsRackOpen(true)}
+              className="jarida-focusable flex items-center gap-1 text-[11px] sm:text-xs text-[#554a32] hover:text-black transition cursor-pointer px-1.5 py-1 rounded hover:bg-[#ebdcc4]"
+              title="رف الجرائد اليومية"
+            >
+              <Library className="w-3.5 h-3.5" />
+              <span className="hidden md:inline">الرف</span>
+            </button>
+
+            {/* Refresh */}
+            <button
+              type="button"
+              onClick={() => refreshMutation.mutate()}
+              disabled={refreshMutation.isPending}
+              className="jarida-focusable flex items-center text-[#554a32] hover:text-black transition cursor-pointer p-1 rounded hover:bg-[#ebdcc4]"
+              title="تحديث الأخبار الآن"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${refreshMutation.isPending ? "animate-spin" : ""}`} />
+            </button>
+
+            {/* Sound toggle */}
+            <button
+              type="button"
+              onClick={() => setIsMuted(!isMuted)}
+              className="jarida-focusable flex items-center text-[#554a32] hover:text-black transition cursor-pointer p-1 rounded hover:bg-[#ebdcc4]"
+              title={isMuted ? "تفعيل الصوت" : "كتم الصوت"}
+              aria-label={isMuted ? "تفعيل الصوت" : "كتم الصوت"}
+            >
+              {isMuted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
+            </button>
+
+            {/* Download APK (ONLY shown when NOT running in installed APK or PWA) */}
+            {!isNativeApk && (
+              <button
+                type="button"
+                onClick={() => setIsApkModalOpen(true)}
+                className="jarida-focusable flex items-center gap-1 text-[11px] sm:text-xs text-[#1e4620] hover:text-black transition cursor-pointer px-2 py-1 rounded bg-[#e1eee2] hover:bg-[#cfdfd0] border border-[#a4c9a7] font-bold shadow-2xs"
+                title="تحميل تطبيق أندرويد (APK)"
+              >
+                <Smartphone className="w-3.5 h-3.5 text-[#2d6630]" />
+                <span>تحميل APK 📱</span>
+              </button>
+            )}
+
+            {/* Legal Disclaimer */}
+            <button
+              type="button"
+              onClick={() => setIsLegalModalOpen(true)}
+              className="jarida-focusable flex items-center text-[#705536] hover:text-[#2a1d11] transition cursor-pointer p-1 rounded hover:bg-[#ebdcc4]"
+              title="إخلاء المسؤولية وحقوق النشر ⚖️"
+            >
+              <Scale className="w-3.5 h-3.5 text-[#8f6d33]" />
+            </button>
+          </div>
+        </div>
+
+        {/* Row 2: Category Filter & Search integrated seamlessly */}
+        <div className="flex items-center justify-between gap-2 pt-1 border-t border-[#dfd2b5]/70">
+          <div className="flex items-center gap-1 overflow-x-auto no-scrollbar py-0.5 flex-1 min-w-0">
+            {categories.map((cat) => {
+              const isSelected = activeCategory === cat;
+              return (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => setActiveCategory(cat)}
+                  className={`px-2 py-0.5 rounded-full text-[10.5px] sm:text-[11px] font-bold transition flex-shrink-0 cursor-pointer ${
+                    isSelected
+                      ? "bg-[#233c30] text-[#dcb45b] shadow-2xs ring-1 ring-[#dcb45b]/50"
+                      : "bg-[#efe5ce]/80 text-[#4c3f2b] hover:bg-[#e4d6b6] border border-[#d8c8a5]"
+                  }`}
+                >
+                  {cat}
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="relative w-32 sm:w-48 flex-shrink-0">
+            <div className="absolute inset-y-0 right-0 pr-2 flex items-center pointer-events-none text-[#7d6948]">
+              <Search className="w-3 h-3" />
+            </div>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="بحث في الأخبار..."
+              className="w-full pr-6 pl-5 py-0.5 text-[11px] bg-[#f7efdc]/90 text-[#241a0d] placeholder-[#8a7657] border border-[#cfbd97] rounded-full focus:outline-none focus:ring-1 focus:ring-[#233c30]"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                className="absolute inset-y-0 left-0 pl-1.5 flex items-center text-[#7d6948] hover:text-black cursor-pointer"
+                aria-label="مسح البحث"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            )}
+          </div>
+        </div>
+      </header>
 
       {isRackOpen && (
         <div

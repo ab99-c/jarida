@@ -1200,16 +1200,16 @@ body {
  * Preserves existing desktop double-page spread and all data structures.
  * ========================================================================== */
 
-.jarida-topbar {
+.jarida-unified-navbar {
+  width: min(100%, 960px);
   position: relative;
-  align-self: flex-end;
+  align-self: center;
+  flex: 0 0 auto;
 }
 
 @media (min-width: 1024px) {
-  .fb-wrapper:not(.jarida-single-page-mode) .jarida-topbar {
-    position: absolute;
-    top: 1rem;
-    right: 1rem;
+  .jarida-unified-navbar {
+    width: min(100%, 980px);
   }
 }
 
@@ -1231,33 +1231,29 @@ body {
   height: 100dvh;
   min-height: 100dvh;
   padding:
-    max(10px, env(safe-area-inset-top))
-    max(10px, env(safe-area-inset-right))
-    max(12px, env(safe-area-inset-bottom))
-    max(10px, env(safe-area-inset-left));
-  gap: 10px;
+    max(6px, env(safe-area-inset-top))
+    max(6px, env(safe-area-inset-right))
+    max(8px, env(safe-area-inset-bottom))
+    max(6px, env(safe-area-inset-left));
+  gap: 6px;
   justify-content: flex-start;
   overflow: hidden;
 }
 
-.jarida-single-page-mode .jarida-topbar {
-  width: min(100%, 840px);
-  flex: 0 0 auto;
-  align-self: center;
-  border-radius: 14px;
-  padding: 6px 14px;
-  justify-content: center;
-  gap: 10px;
+.jarida-single-page-mode .jarida-unified-navbar {
+  width: min(100%, 860px);
+  border-radius: 12px;
+  padding: 6px 10px;
 }
 
 .jarida-single-page-mode .fb-book {
-  width: min(100%, 840px);
+  width: min(100%, 860px);
   flex: 1 1 auto;
   height: auto;
   max-height: none;
   min-height: 0;
-  padding: clamp(12px, 2.6vw, 24px);
-  border-radius: 10px;
+  padding: clamp(6px, 1.8vw, 16px);
+  border-radius: 8px;
   margin-top: 0;
   margin-bottom: 0;
 }

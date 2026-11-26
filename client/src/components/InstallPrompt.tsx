@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Download, X } from "lucide-react";
+import { isInstalledAppOrApk } from "@/lib/apiBase";
 
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>;
@@ -11,6 +12,8 @@ export default function InstallPrompt() {
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
+    // If running inside APK or standalone mode, never prompt for installation or APK download
+    if (isInstalledAppOrApk()) return;
     if (window.matchMedia("(display-mode: standalone)").matches || ("standalone" in navigator && (navigator as Navigator & { standalone?: boolean }).standalone)) return;
     if (window.localStorage.getItem("jarida-pwa-dismissed") === "1") return;
 
@@ -24,7 +27,7 @@ export default function InstallPrompt() {
     return () => window.removeEventListener("beforeinstallprompt", handleBeforeInstall);
   }, []);
 
-  if (!isVisible || !installEvent) return null;
+  if (!isVisible || !installEvent || isInstalledAppOrApk()) return null;
 
   const install = async () => {
     await installEvent.prompt();
