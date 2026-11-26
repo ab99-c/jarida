@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { trpc } from "@/lib/trpc";
-import { formatArabicEditionDate } from "@shared/date";
+import { formatArabicEditionDate, getArchiveStartDate } from "@shared/date";
 import { Volume2, VolumeX, RefreshCw, Share2, MessageSquare, Send, Check, FileText, BookOpen, Library, X, Headphones, Smartphone, Scale, Search, Archive } from "lucide-react";
 import { isInstalledAppOrApk } from "@/lib/apiBase";
 import VoiceReader from "../components/VoiceReader";
@@ -655,11 +655,16 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isSpeakingAudio, setIsSpeakingAudio] = useState(false);
 
-  // دمج كل الداتا اليومية الحية مع الداتا اليومية الفايتة (الأرشيف اليومي)
+  // الأرشيف كيبدا من شتنبر، والعينات كتخدم غير كاحتياط إلا ماكانتش أخبار حية.
   const allDailyArticles = useMemo(() => {
     const liveList = Array.isArray(articles) ? articles : [];
     // Keep historical sample stories as an offline fallback; never mix them into live editions.
-    return liveList.length > 0 ? liveList : ARCHIVE_DAILY_ARTICLES;
+    const sourceList = liveList.length > 0 ? liveList : ARCHIVE_DAILY_ARTICLES;
+    const archiveStartTime = getArchiveStartDate().getTime();
+    return sourceList.filter((article: any) => {
+      const publishedAt = new Date(article?.publishedAt).getTime();
+      return Number.isFinite(publishedAt) && publishedAt >= archiveStartTime;
+    });
   }, [articles]);
 
   const categories = useMemo(() => {

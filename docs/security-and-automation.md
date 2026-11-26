@@ -12,7 +12,7 @@ This document outlines the security policies, environment variable management, a
 1. **Trigger:** `.github/workflows/daily-sync.yml` runs every day at 06:00 UTC (07:00 in Morocco during winter), or manually from GitHub Actions.
 2. **Collection:** `pnpm auto:sync` runs `pnpm check`, then calls the deployed `jarida.refreshFeed` endpoint. The server reads the configured RSS feeds, validates and deduplicates stories, and stores new articles in the database.
 3. **Failure handling:** The run fails if the endpoint is unavailable or every RSS feed fails. A run with zero new stories is successful when at least one feed was read successfully.
-4. **Archive:** Stored articles remain in the database. The edition API returns up to the latest 1,000 stories, and the archive groups those stories by publication date. The bundled sample stories are used only when no live/database stories are available.
+4. **Archive:** Stored articles remain in the database. The edition API returns articles published since September 1 (up to 5,000), and the archive groups them by publication date. Before September, the archive window starts on September 1 of the previous year. Bundled sample stories are used only when no live/database stories are available.
 5. **Deployment record:** `.daily-edition-sync` records the successful run time, number of new stories, and number of feeds reached. The workflow commits and pushes that record to `origin/main`, triggering the configured Vercel deployment.
 
 Set the repository Actions variable `JARIDA_APP_URL` when the production app uses a different host. It defaults to `https://jarida-tan.vercel.app`.
