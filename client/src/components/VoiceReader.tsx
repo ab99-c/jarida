@@ -173,16 +173,44 @@ export default function VoiceReader({
     const keyToUse = overrideKey !== undefined ? overrideKey : savedKey;
 
     try {
-      // 1. Fetch ephemeral token from backend
+      // 1. Immediately request microphone and unlock Web Audio while user gesture is active
+      const streamPromise = navigator.mediaDevices.getUserMedia({
+        audio: {
+          channelCount: 1,
+          sampleRate: 16000,
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
+      });
+
+      const outCtx = getOutputAudioContext();
+      if (outCtx.state === "suspended") {
+        await outCtx.resume();
+      }
+
+      // 2. Fetch ephemeral token in parallel
       const headers: Record<string, string> = { "Content-Type": "application/json" };
       if (keyToUse && keyToUse.trim()) {
         headers["x-gemini-api-key"] = keyToUse.trim();
       }
 
-      const tokenRes = await fetch("/api/gemini-token", {
+      const tokenPromise = fetch("/api/gemini-token", {
         method: "POST",
         headers,
       });
+
+      let stream: MediaStream;
+      let tokenRes: Response;
+      try {
+        [stream, tokenRes] = await Promise.all([streamPromise, tokenPromise]);
+        micStreamRef.current = stream;
+      } catch (micErr: any) {
+        if (!micStreamRef.current) {
+          throw new Error("يرجى السماح بالوصول إلى الميكروفون لبدء المحادثة الصوتية.");
+        }
+        throw micErr;
+      }
 
       if (!tokenRes.ok) {
         const errorJson = await tokenRes.json().catch(() => ({}));
@@ -203,44 +231,20 @@ export default function VoiceReader({
         throw new Error("رمز المحادثة الصوتية غير متوفر.");
       }
 
-      // 2. Access microphone
-      let stream: MediaStream;
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({
-          audio: {
-            channelCount: 1,
-            sampleRate: 16000,
-            echoCancellation: true,
-            noiseSuppression: true,
-            autoGainControl: true,
-          },
-        });
-        micStreamRef.current = stream;
-      } catch (micErr: any) {
-        throw new Error("يرجى السماح بالوصول إلى الميكروفون لبدء المحادثة الصوتية.");
-      }
-
-      // 3. Connect to Gemini Multimodal Live API
+      // 3. Connect to Gemini Multimodal Live API using the active gemini-3.8-live model
       const ai = new GoogleGenAI({
         apiKey: token,
         apiVersion: "v1alpha",
       });
 
-      const promptInstruction = `أنت المذيع والمحلل الصوتي لجريدة الأفق (Jarida Live). تحدث بأسلوب إذاعي واضح ومهني، بالدارجة المغربية أو العربية الفصحى حسب لغة القارئ. ناقش واشرح المقال الحالي الذي يقرأه المستخدم:
+      const promptInstruction = `أنت المذيع والمحلل الصوتي لجريدة الأفق (Jarida Live). تحدث بأسلوب إذاعي مغربي واضح ومهني ومشوق، بالدارجة المغربية المفهومة أو العربية الفصحى السلسة. ناقش واشرح المقال الحالي الذي يقرأه المستخدم:
 العنوان: ${articleTitle || "بدون عنوان"}
 المحتوى: ${articleContent || "مقال من جريدة الأفق الرقمية"}`;
 
       const session = await ai.live.connect({
-        model: "gemini-2.5-flash-native-audio-preview-09-2025",
+        model: "gemini-3.8-live",
         config: {
           responseModalities: [Modality.AUDIO],
-          speechConfig: {
-            voiceConfig: {
-              prebuiltVoiceConfig: {
-                voiceName: "Charon",
-              },
-            },
-          },
           systemInstruction: {
             parts: [{ text: promptInstruction }],
           },
@@ -248,7 +252,16 @@ export default function VoiceReader({
         callbacks: {
           onopen: () => {
             console.log("[VoiceReader] Gemini Live Session Connected.");
-            setStatus("listening");
+            setStatus("speaking");
+            // Prompt the anchor to greet the listener immediately
+            try {
+              session.sendRealtimeInput({
+                text: `ابدأ الآن فوراً بالترحيب بالقارئ بأسلوب إذاعي واثق وممتع (بالدارجة المغربية) في جريدة الأفق، وقدم باختصار شديد في جملتين موضوع هذا المقال: "${articleTitle || "مقال اليوم"}" وافتح معه باب النقاش وسؤاله عن رأيه.`,
+              });
+            } catch (greetErr) {
+              console.warn("[VoiceReader] Initial greeting trigger error:", greetErr);
+              setStatus("listening");
+            }
           },
           onmessage: (msg: any) => {
             const serverContent = msg?.serverContent;

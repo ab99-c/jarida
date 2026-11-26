@@ -45,21 +45,14 @@ export default async function handler(req, res) {
       apiVersion: "v1alpha",
     });
 
-    // Create an ephemeral token valid for 15 minutes (uses: 1)
+    // Create an ephemeral token valid for 15 minutes (uses: 1) for the current Gemini Live model
     const token = await ai.authTokens.create({
       config: {
         uses: 1,
         liveConnectConstraints: {
-          model: "gemini-2.5-flash-native-audio-preview-09-2025",
+          model: "gemini-3.8-live",
           config: {
             responseModalities: ["AUDIO"],
-            speechConfig: {
-              voiceConfig: {
-                prebuiltVoiceConfig: {
-                  voiceName: "Charon",
-                },
-              },
-            },
           },
         },
       },
