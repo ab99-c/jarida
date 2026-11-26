@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { trpc } from "@/lib/trpc";
 import { formatArabicEditionDate } from "@shared/date";
-import { Volume2, VolumeX, RefreshCw, Share2, MessageSquare, Send, Check, FileText, BookOpen, Library, X, Headphones, Smartphone } from "lucide-react";
+import { Volume2, VolumeX, RefreshCw, Share2, MessageSquare, Send, Check, FileText, BookOpen, Library, X, Headphones, Smartphone, Scale } from "lucide-react";
 import CategoryFilterBar from "../components/CategoryFilterBar";
 import VoiceReader from "../components/VoiceReader";
 import ArchiveChest from "../components/ArchiveChest";
 import ApkDownloadModal from "../components/ApkDownloadModal";
+import LegalModal from "../components/LegalModal";
 import {
   getBottomLeftPeelProgress,
   getBoundedPageChange,
@@ -720,6 +721,7 @@ export default function Home() {
   const [isRackOpen, setIsRackOpen] = useState(true);
   const [isChestOpen, setIsChestOpen] = useState(false);
   const [isApkModalOpen, setIsApkModalOpen] = useState(false);
+  const [isLegalModalOpen, setIsLegalModalOpen] = useState(false);
   const [enteringKey, setEnteringKey] = useState<string | null>(null);
   const dailyEditions = (() => {
     const seen = new Map<string, { key: string; pageIndex: number; count: number; lead: any }>();
@@ -1130,6 +1132,16 @@ export default function Home() {
           <Smartphone className="w-3.5 h-3.5 text-[#2d6630]" />
           <span>تحميل APK 📱</span>
         </button>
+        <span className="text-xs text-[#a39371]">|</span>
+        <button
+          type="button"
+          onClick={() => setIsLegalModalOpen(true)}
+          className="jarida-focusable flex items-center gap-1 text-xs text-[#705536] hover:text-[#2a1d11] transition cursor-pointer px-2 py-0.5 rounded hover:bg-[#ebdcc4]"
+          title="إخلاء المسؤولية وحقوق النشر والملكية الفكرية"
+        >
+          <Scale className="w-3.5 h-3.5 text-[#8f6d33]" />
+          <span>إخلاء المسؤولية وحقوق النشر ⚖️</span>
+        </button>
       </div>
 
       {/* Category Filter & Instant Search */}
@@ -1209,6 +1221,12 @@ export default function Home() {
       <ApkDownloadModal
         isOpen={isApkModalOpen}
         onClose={() => setIsApkModalOpen(false)}
+      />
+
+      {/* Legal & Disclaimer Modal */}
+      <LegalModal
+        isOpen={isLegalModalOpen}
+        onClose={() => setIsLegalModalOpen(false)}
       />
 
       {/* Newspaper Spread Container (Authentic Daily Newspaper Layout / مثل الجرائد اليومية) */}
