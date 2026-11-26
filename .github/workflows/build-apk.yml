@@ -47,6 +47,19 @@ jobs:
           mkdir -p android/capacitor-cordova-android-plugins
           node -e "
             const fs = require('fs');
+            const cfg = {
+              appId: 'com.jaridalive.app',
+              appName: 'جريدة الأفق',
+              webDir: 'dist/public',
+              server: {
+                url: 'https://jarida-tan.vercel.app',
+                cleartext: true
+              },
+              android: {
+                allowMixedContent: true
+              }
+            };
+            fs.writeFileSync('android/app/src/main/assets/capacitor.config.json', JSON.stringify(cfg, null, 2));
             const cv = 'android/capacitor-cordova-android-plugins/cordova.variables.gradle';
             if (!fs.existsSync(cv)) {
               fs.writeFileSync(cv, 'ext {\\n  cdvMinSdkVersion = 24\\n  cdvPluginPostBuildExtras = []\\n  cordovaConfig = [:]\\n}\\n');

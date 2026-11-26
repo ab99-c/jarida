@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { GoogleGenAI, Modality } from "@google/genai";
 import { Mic, Loader2, Square, Volume2, X, Key, ShieldCheck, Sparkles, AlertCircle } from "lucide-react";
+import { getApiBaseUrl } from "@/lib/apiBase";
 
 interface VoiceReaderProps {
   articleTitle?: string;
@@ -195,7 +196,8 @@ export default function VoiceReader({
         headers["x-gemini-api-key"] = keyToUse.trim();
       }
 
-      const tokenPromise = fetch("/api/gemini-token", {
+      const tokenUrl = `${getApiBaseUrl()}/api/gemini-token`;
+      const tokenPromise = fetch(tokenUrl, {
         method: "POST",
         headers,
       });
@@ -212,12 +214,19 @@ export default function VoiceReader({
         throw micErr;
       }
 
-      if (!tokenRes.ok) {
-        const errorJson = await tokenRes.json().catch(() => ({}));
-        const rawErr = errorJson.message || errorJson.error || "";
+      let tokenJson: any = null;
+      try {
+        const text = await tokenRes.text();
+        tokenJson = JSON.parse(text);
+      } catch {
+        throw new Error("تعذر الاتصال بخادم الصوت. يرجى التأكد من اتصال الإنترنت وحاول مجدداً.");
+      }
+
+      if (!tokenRes.ok || !tokenJson?.token) {
+        const rawErr = tokenJson?.message || tokenJson?.error || "";
         if (
           tokenRes.status === 400 ||
-          tokenRes.status === 500 && (rawErr.includes("missing_api_key") || rawErr.includes("GEMINI_API_KEY"))
+          (tokenRes.status === 500 && (rawErr.includes("missing_api_key") || rawErr.includes("GEMINI_API_KEY")))
         ) {
           setStatus("idle");
           setApiKeyModalOpen(true);
@@ -226,10 +235,7 @@ export default function VoiceReader({
         throw new Error(rawErr || "تعذر الحصول على رمز المحادثة الصوتية.");
       }
 
-      const { token } = await tokenRes.json();
-      if (!token) {
-        throw new Error("رمز المحادثة الصوتية غير متوفر.");
-      }
+      const token = tokenJson.token;
 
       // 3. Connect to Gemini Multimodal Live API using the active gemini-3.8-live model
       const ai = new GoogleGenAI({

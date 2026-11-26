@@ -5,11 +5,13 @@ import { GoogleGenAI } from "@google/genai";
  * for real-time Gemini Multimodal Live API sessions.
  */
 export default async function handler(req, res) {
+  // Always attach CORS headers for native Android APK and cross-origin WebViews
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, x-gemini-api-key");
+
   // Handle CORS preflight if needed
   if (req.method === "OPTIONS") {
-    res.setHeader("Access-Control-Allow-Origin", "*");
-    res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type, x-gemini-api-key");
     return res.status(200).end();
   }
 

@@ -1,0 +1,12 @@
+{
+	"appId": "com.jaridalive.app",
+	"appName": "جريدة الأفق",
+	"webDir": "dist/public",
+	"server": {
+		"url": "https://jarida-tan.vercel.app",
+		"cleartext": true
+	},
+	"android": {
+		"allowMixedContent": true
+	}
+}
