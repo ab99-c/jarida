@@ -451,6 +451,7 @@ function ArticleActions({ article }: { article: any }) {
         </div>
             </div>
           </div>
+          </div>
         </div>,
         document.body,
       )}
