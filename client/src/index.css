@@ -1738,74 +1738,25 @@ body {
 }
 
 /* =========================================================================
-   صندوق خشب المانجو للأرشيف القديم (3D Mango Wood Chest Archive)
+   أرشيف الأعداد السابقة (Modern Newspaper Editions Archive)
    ========================================================================= */
 
-.jarida-chest-stage {
-  perspective: 1200px;
+.jarida-archive-overlay {
+  animation: fadeInArchive 0.25s ease-out;
 }
 
-.jarida-chest-bench {
-  background: 
-    linear-gradient(180deg, rgba(30, 20, 10, 0.4) 0%, rgba(20, 12, 6, 0.6) 100%),
-    repeating-linear-gradient(
-      0deg,
-      #825b32 0px,
-      #8c6338 28px,
-      #75502b 29px,
-      #9e7343 30px,
-      #855e34 58px,
-      #694420 60px
-    );
-  box-shadow: 
-    inset 0 0 40px rgba(0, 0, 0, 0.7),
-    0 25px 60px -15px rgba(0, 0, 0, 0.8),
-    0 0 0 1px rgba(180, 130, 70, 0.25);
-  border: 4px solid #4a3420;
-}
-
-.jarida-wood-grain {
-  background-image: 
-    radial-gradient(ellipse at 20% 50%, rgba(210, 160, 90, 0.15) 0%, transparent 60%),
-    radial-gradient(ellipse at 80% 30%, rgba(130, 80, 30, 0.2) 0%, transparent 50%),
-    linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.06) 50%, transparent 100%);
-  opacity: 0.9;
-}
-
-.jarida-chest-lid {
-  background: 
-    linear-gradient(180deg, rgba(50, 32, 16, 0.35) 0%, rgba(25, 15, 8, 0.6) 100%),
-    repeating-linear-gradient(
-      0deg,
-      #91683b 0px,
-      #9c7040 24px,
-      #82592d 25px,
-      #ad7e49 26px,
-      #946a3c 48px,
-      #784e24 50px
-    );
-  border: 3px solid #573c22;
-  box-shadow: 
-    inset 0 2px 8px rgba(255, 230, 170, 0.25),
-    inset 0 -4px 12px rgba(0, 0, 0, 0.6),
-    0 10px 25px rgba(0, 0, 0, 0.5);
-}
-
-.jarida-chest-interior {
-  background: 
-    linear-gradient(180deg, #180f08 0%, #26180e 100%);
-  box-shadow: 
-    inset 0 10px 30px rgba(0, 0, 0, 0.85),
-    inset 0 0 15px rgba(0, 0, 0, 0.7);
+@keyframes fadeInArchive {
+  from { opacity: 0; transform: scale(0.98); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 .jarida-archive-card {
-  transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.28s ease, border-color 0.2s ease;
+  transition: transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.22s ease, border-color 0.2s ease;
 }
 
 .jarida-archive-card:hover {
-  transform: translateY(-8px) rotate(-0.5deg) scale(1.02);
-  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.5) !important;
+  transform: translateY(-5px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.35) !important;
 }
 
 .custom-chest-scrollbar::-webkit-scrollbar {

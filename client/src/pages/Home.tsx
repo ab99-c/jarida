@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { trpc } from "@/lib/trpc";
 import { formatArabicEditionDate } from "@shared/date";
-import { Volume2, VolumeX, RefreshCw, Share2, MessageSquare, Send, Check, FileText, BookOpen, Library, X, Headphones, Smartphone, Scale, Search } from "lucide-react";
+import { Volume2, VolumeX, RefreshCw, Share2, MessageSquare, Send, Check, FileText, BookOpen, Library, X, Headphones, Smartphone, Scale, Search, Archive } from "lucide-react";
 import { isInstalledAppOrApk } from "@/lib/apiBase";
 import VoiceReader from "../components/VoiceReader";
 import ArchiveChest from "../components/ArchiveChest";
@@ -1094,14 +1094,14 @@ export default function Home() {
               articleContent={currentArticleContent}
             />
 
-            {/* Archive Chest */}
+            {/* Archive Gallery */}
             <button
               type="button"
               onClick={() => setIsChestOpen(true)}
-              className="jarida-focusable flex items-center gap-1 text-[11px] sm:text-xs text-[#422c19] hover:text-black transition cursor-pointer px-2 py-1 rounded bg-[#ebd7b5]/80 hover:bg-[#dfc79f] border border-[#b89b6c] font-bold shadow-2xs"
-              title="خزانة الأرشيف والأعداد السابقة"
+              className="jarida-focusable flex items-center gap-1.5 text-[11px] sm:text-xs text-[#2b2013] hover:text-black transition cursor-pointer px-2.5 py-1 rounded bg-[#efe5ce] hover:bg-[#e4d6b6] border border-[#cfbd97] font-bold shadow-2xs"
+              title="أرشيف الأعداد السابقة"
             >
-              <span>🪵</span>
+              <Archive className="w-3.5 h-3.5 text-[#8f6d33]" />
               <span className="hidden sm:inline">الأرشيف</span>
             </button>
 
