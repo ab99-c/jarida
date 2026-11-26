@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { trpc } from "@/lib/trpc";
+import { createPortal } from "react-dom";
 import { formatArabicEditionDate } from "@shared/date";
 import { Volume2, VolumeX, RefreshCw, Share2, MessageSquare, Send, Check, FileText, BookOpen, Library, X, Headphones, Smartphone, Scale, Search, Archive } from "lucide-react";
 import { isInstalledAppOrApk } from "@/lib/apiBase";
@@ -226,7 +227,17 @@ function buildNewspaperPagesFlat(allArticles: any[]): NewspaperPageSheet[] {
   return pages;
 }
 
-function ArticleComments({ article }: { article: any }) {
+function ArticleActionIcon() {
+  return (
+    <span className="relative block h-4 w-4" aria-hidden="true">
+      <MessageSquare className="absolute inset-0 h-4 w-4" />
+      <Share2 className="absolute -bottom-1 -left-1 h-2.5 w-2.5 rounded-full bg-[#f8f1e3] p-[1px]" />
+    </span>
+  );
+}
+
+function ArticleActions({ article }: { article: any }) {
+  const [isOpen, setIsOpen] = useState(false);
   const [authorName, setAuthorName] = useState("");
   const [content, setContent] = useState("");
   const [copied, setCopied] = useState(false);
@@ -238,6 +249,15 @@ function ArticleComments({ article }: { article: any }) {
     { articleId: isPersistedArticle ? articleId : 0 },
     { enabled: isPersistedArticle },
   );
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setIsOpen(false);
+    };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [isOpen]);
   
   const addCommentMutation = trpc.jarida.addComment.useMutation({
     onSuccess: () => {
@@ -288,7 +308,50 @@ function ArticleComments({ article }: { article: any }) {
   };
 
   return (
-    <div className="mt-4 pt-4 border-t border-[#d3c49b]/60 text-right font-sans">
+    <>
+      <div className="flex justify-start mt-3" dir="rtl">
+        <button
+          type="button"
+          onClick={(event) => {
+            event.stopPropagation();
+            setIsOpen(true);
+          }}
+          className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#bda77d] bg-[#f8f1e3] text-[#59482b] shadow-sm transition hover:bg-[#ead9b8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8c7348]"
+          aria-label={`التعليقات والمشاركة (${comments.length})`}
+          title="التعليقات والمشاركة"
+        >
+          <ArticleActionIcon />
+        </button>
+      </div>
+
+      {isOpen && typeof document !== "undefined" && createPortal(
+        <div
+          className="fixed inset-0 z-[300] flex items-center justify-center bg-black/60 p-3 backdrop-blur-sm"
+          dir="rtl"
+          onClick={() => setIsOpen(false)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={`article-actions-title-${articleId}`}
+            className="relative flex max-h-[88vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-[#cbb78f] bg-[#fbf6ec] text-right font-sans shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-[#d3c49b]/70 px-4 py-3">
+              <h3 id={`article-actions-title-${articleId}`} className="flex items-center gap-2 text-sm font-bold text-[#3f321f]">
+                <ArticleActionIcon /> التعليقات والمشاركة
+              </h3>
+              <button
+                type="button"
+                onClick={() => setIsOpen(false)}
+                className="flex h-8 w-8 items-center justify-center rounded-full text-[#59482b] transition hover:bg-[#eadfc9]"
+                aria-label="إغلاق"
+                autoFocus
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="overflow-y-auto p-4">
       {/* Social Share Buttons */}
       <div className="flex items-center gap-2 mb-4 text-xs flex-wrap">
         <span className="text-[#665533] font-bold flex items-center gap-1">
@@ -386,8 +449,12 @@ function ArticleComments({ article }: { article: any }) {
             ))
           )}
         </div>
-      </div>
-    </div>
+            </div>
+          </div>
+        </div>,
+        document.body,
+      )}
+    </>
   );
 }
 
@@ -395,12 +462,12 @@ function NewspaperSheetContent({
   sheet,
   totalSheets,
   totalArticlesCount,
-  showComments = false,
+  showArticleActions = false,
 }: {
   sheet: NewspaperPageSheet;
   totalSheets: number;
   totalArticlesCount: number;
-  showComments?: boolean;
+  showArticleActions?: boolean;
 }) {
   if (sheet.isBlank) {
     return (
@@ -498,7 +565,7 @@ function NewspaperSheetContent({
           </div>
         )}
 
-        {showComments && lead && <ArticleComments article={lead} />}
+        {showArticleActions && lead && <ArticleActions article={lead} />}
       </div>
 
       {/* الشريط السفلي الأزرق الخاص بالجريدة اليومية */}
@@ -548,7 +615,7 @@ function TurningPagePreview({
               sheet={sheet}
               totalSheets={Math.max(1, Math.ceil(totalArticles / Math.max(1, articlesPerView)))}
               totalArticlesCount={totalArticles * ARTICLES_PER_NEWSPAPER_PAGE}
-              showComments={false}
+              showArticleActions={false}
             />
           </div>
         ))
@@ -1323,7 +1390,7 @@ export default function Home() {
                 sheet={sheet}
                 totalSheets={processedArticles.length}
                 totalArticlesCount={allDailyArticles.length}
-                showComments={true}
+                showArticleActions={true}
               />
             </div>
           ))}
