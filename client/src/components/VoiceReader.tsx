@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { GoogleGenAI, Modality } from "@google/genai";
-import { Mic, Loader2, Square, Volume2, X, Radio, PhoneOff, AlertCircle } from "lucide-react";
+import { Mic, Loader2, Volume2, X, Radio, PhoneOff, AlertCircle } from "lucide-react";
 import { getApiBaseUrl } from "@/lib/apiBase";
 
 interface VoiceReaderProps {
@@ -34,15 +34,6 @@ export default function VoiceReader({
   const outputAudioCtxRef = useRef<AudioContext | null>(null);
   const activeSourcesRef = useRef<AudioBufferSourceNode[]>([]);
   const nextScheduledTimeRef = useRef<number>(0);
-
-  const getOutputAudioContext = useCallback(() => {
-    if (!isSessionActiveRef.current) return null;
-    if (!outputAudioCtxRef.current || outputAudioCtxRef.current.state === "closed") {
-      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-      outputAudioCtxRef.current = new AudioCtx({ sampleRate: 24000 });
-    }
-    return outputAudioCtxRef.current;
-  }, []);
 
   const stopAllScheduledAudio = useCallback(() => {
     activeSourcesRef.current.forEach((src) => {
@@ -109,7 +100,7 @@ export default function VoiceReader({
     setStatus("idle");
   }, [stopAllScheduledAudio]);
 
-  // Clean up when unmounting or when modal closes
+  // Clean up when unmounting
   useEffect(() => {
     return () => {
       cleanup();
@@ -121,10 +112,10 @@ export default function VoiceReader({
     (base64Data: string) => {
       if (!isSessionActiveRef.current) return;
       try {
-        const ctx = getOutputAudioContext();
-        if (!ctx) return;
+        const ctx = outputAudioCtxRef.current;
+        if (!ctx || ctx.state === "closed") return;
         if (ctx.state === "suspended") {
-          ctx.resume();
+          ctx.resume().catch(() => {});
         }
 
         const binaryString = window.atob(base64Data);
@@ -153,7 +144,10 @@ export default function VoiceReader({
         source.connect(ctx.destination);
 
         const currentTime = ctx.currentTime;
-        const startTime = Math.max(currentTime, nextScheduledTimeRef.current);
+        if (nextScheduledTimeRef.current < currentTime) {
+          nextScheduledTimeRef.current = currentTime;
+        }
+        const startTime = nextScheduledTimeRef.current;
         source.start(startTime);
         nextScheduledTimeRef.current = startTime + audioBuffer.duration;
 
@@ -169,7 +163,7 @@ export default function VoiceReader({
         console.error("[VoiceReader] Error playing audio chunk:", err);
       }
     },
-    [getOutputAudioContext],
+    [],
   );
 
   const startVoiceSession = async () => {
@@ -178,7 +172,7 @@ export default function VoiceReader({
     isSessionActiveRef.current = true;
 
     try {
-      // 1. Immediately request microphone and unlock Web Audio while user gesture is active
+      // 1. Immediately request microphone
       const streamPromise = navigator.mediaDevices.getUserMedia({
         audio: {
           channelCount: 1,
@@ -188,11 +182,6 @@ export default function VoiceReader({
           autoGainControl: true,
         },
       });
-
-      const outCtx = getOutputAudioContext();
-      if (outCtx && outCtx.state === "suspended") {
-        await outCtx.resume();
-      }
 
       // 2. Fetch ephemeral token in parallel
       const tokenUrl = `${getApiBaseUrl()}/api/gemini-token`;
@@ -255,21 +244,7 @@ export default function VoiceReader({
         },
         callbacks: {
           onopen: () => {
-            if (!isSessionActiveRef.current) {
-              try { session.close(); } catch {}
-              return;
-            }
             console.log("[VoiceReader] Gemini Live Session Connected.");
-            setStatus("speaking");
-            // Prompt the anchor to greet the listener immediately
-            try {
-              session.sendRealtimeInput({
-                text: `ابدأ الآن فوراً بالترحيب بالقارئ بأسلوب إذاعي واثق وممتع (بالدارجة المغربية) في جريدة الأفق، وقدم باختصار شديد في جملتين موضوع هذا المقال: "${articleTitle || "مقال اليوم"}" وافتح معه باب النقاش وسؤاله عن رأيه.`,
-              });
-            } catch (greetErr) {
-              console.warn("[VoiceReader] Initial greeting trigger error:", greetErr);
-              if (isSessionActiveRef.current) setStatus("listening");
-            }
           },
           onmessage: (msg: any) => {
             if (!isSessionActiveRef.current) return;
@@ -312,12 +287,17 @@ export default function VoiceReader({
         return;
       }
 
+      // Store active session reference safely AFTER connect has resolved
       sessionRef.current = session;
+      setStatus("speaking");
 
-      // 4. Capture and stream 16kHz PCM audio to Gemini
+      // 4. Capture and stream 16kHz PCM audio from microphone to Gemini
       const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
       const inputCtx = new AudioCtx();
       inputAudioCtxRef.current = inputCtx;
+      if (inputCtx.state === "suspended") {
+        await inputCtx.resume();
+      }
 
       const source = inputCtx.createMediaStreamSource(stream);
       const processor = inputCtx.createScriptProcessor(4096, 1, 1);
@@ -370,6 +350,15 @@ export default function VoiceReader({
 
       source.connect(processor);
       processor.connect(inputCtx.destination);
+
+      // 5. Prompt the AI Anchor immediately to speak first and greet the listener in Moroccan Darija!
+      try {
+        session.sendRealtimeInput({
+          text: `أنت المذيع الصوتي لجريدة الأفق. تحدث الآن فوراً بصوتك المسموع بالدارجة المغربية ورحب بالقارئ بحرارة، وقدم له في جملتين مختصرتين ملخص هذا الخبر: "${articleTitle || "مقال اليوم"}"، واطلب منه رأيه أو سؤاله لنبدأ النقاش.`,
+        });
+      } catch (greetErr) {
+        console.warn("[VoiceReader] Initial greeting trigger error:", greetErr);
+      }
     } catch (err: any) {
       console.error("[VoiceReader] Initialization failed:", err);
       if (isSessionActiveRef.current) {
@@ -379,11 +368,25 @@ export default function VoiceReader({
     }
   };
 
-  const handleOpenModal = () => {
+  const handleOpenModal = async () => {
     // Stops any ongoing synthesis in the browser before starting AI conversation
     if (typeof window !== "undefined" && "speechSynthesis" in window) {
       window.speechSynthesis.cancel();
     }
+
+    // Eagerly unlock output audio context during the user click gesture
+    try {
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (!outputAudioCtxRef.current || outputAudioCtxRef.current.state === "closed") {
+        outputAudioCtxRef.current = new AudioCtx({ sampleRate: 24000 });
+      }
+      if (outputAudioCtxRef.current.state === "suspended") {
+        await outputAudioCtxRef.current.resume();
+      }
+    } catch (audioErr) {
+      console.warn("[VoiceReader] Could not unlock audio context during click:", audioErr);
+    }
+
     setIsModalOpen(true);
     startVoiceSession();
   };
@@ -392,8 +395,6 @@ export default function VoiceReader({
     cleanup();
     setIsModalOpen(false);
   };
-
-  const isLive = status === "listening" || status === "speaking";
 
   return (
     <>
@@ -441,14 +442,14 @@ export default function VoiceReader({
               </div>
               <div>
                 <h3 className="font-bold text-base font-serif text-[#fbf6ec]">المذيع الصوتي لجريدة الأفق</h3>
-                <p className="text-[11px] text-[#bda482]">نقاش صوتي تفاعلي بالذكاء الاصطناعي</p>
+                <p className="text-[11px] text-[#bda482]">نقاش صوتي حي بالذكاء الاصطناعي (Gemini Live)</p>
               </div>
             </div>
 
             {/* Article Context */}
             <div className="bg-[#1c130b] border border-[#7a5932]/60 rounded-xl p-3 mb-4 text-xs">
               <span className="text-[#d4af37] font-bold block mb-1">موضوع النقاش:</span>
-              <p className="text-[#ded1be] line-clamp-2 leading-relaxed">
+              <p className="text-[#ded1be] line-clamp-2 leading-relaxed font-serif">
                 {articleTitle || "المقال اليومي لجريدة الأفق"}
               </p>
             </div>
@@ -459,7 +460,7 @@ export default function VoiceReader({
                 <div className="flex flex-col items-center gap-2">
                   <Loader2 className="w-8 h-8 animate-spin text-[#d4af37]" />
                   <span className="text-xs font-bold text-[#e8dcbf]">جاري فتح الاتصال بالمذيع الصوتي...</span>
-                  <span className="text-[10px] text-[#9c8466]">يرجى الانتظار بضع ثوانٍ</span>
+                  <span className="text-[10px] text-[#9c8466]">يرجى الانتظار بضع ثوانٍ ليبدأ المذيع بالكلام</span>
                 </div>
               )}
 
@@ -468,8 +469,8 @@ export default function VoiceReader({
                   <div className="w-12 h-12 rounded-full bg-[#3d2716] border-2 border-[#d4af37] flex items-center justify-center text-[#d4af37] shadow-lg animate-pulse">
                     <Volume2 className="w-6 h-6" />
                   </div>
-                  <span className="text-sm font-bold text-[#fbf6ec]">المذيع يتحدث الآن...</span>
-                  <span className="text-[11px] text-[#d8c2a3]">استمع إليه أو قاطعه في أي لحظة للرد عليه</span>
+                  <span className="text-sm font-bold text-[#fbf6ec]">المذيع يتحدث الآن... 🎙️</span>
+                  <span className="text-[11px] text-[#d8c2a3]">استمع إليه أو تحدث في أي وقت لمقاطعته والرد</span>
                 </div>
               )}
 
@@ -481,8 +482,8 @@ export default function VoiceReader({
                       <Mic className="w-6 h-6" />
                     </div>
                   </div>
-                  <span className="text-sm font-bold text-emerald-300">الميكروفون مفتوح: تفضل بالكلام...</span>
-                  <span className="text-[11px] text-[#d8c2a3]">المذيع يستمع إلى صوتك بالدارجة أو العربية</span>
+                  <span className="text-sm font-bold text-emerald-300">الميكروفون مفتوح: تفضل بالتحدث...</span>
+                  <span className="text-[11px] text-[#d8c2a3]">المذيع يستمع إليك بالدارجة المغربية أو العربية</span>
                 </div>
               )}
 
