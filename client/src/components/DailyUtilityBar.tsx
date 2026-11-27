@@ -76,11 +76,13 @@ const FINANCIAL_RATES = [
 interface DailyUtilityBarProps {
   breakingNews?: Array<{ id: string | number; title: string; category?: string }>;
   onSelectArticle?: (id: string | number) => void;
+  onOpenGames?: () => void;
 }
 
 export default function DailyUtilityBar({
   breakingNews = [],
   onSelectArticle,
+  onOpenGames,
 }: DailyUtilityBarProps) {
   const [selectedCity, setSelectedCity] = useState("الرباط");
   const [isExpanded, setIsExpanded] = useState(false);
@@ -147,6 +149,18 @@ export default function DailyUtilityBar({
             </select>
             <span className="font-bold text-[#8c2a1e]">{currentCityData.temp}°C</span>
           </div>
+
+          {/* Games Trigger */}
+          {onOpenGames && (
+            <button
+              type="button"
+              onClick={onOpenGames}
+              className="flex items-center gap-1 text-[10.5px] text-[#42341d] hover:text-black px-2 py-0.5 rounded bg-[#ebdcc4] hover:bg-[#dfcca9] transition border border-[#cfbd97] font-bold cursor-pointer"
+              title="ألعاب وتسلية الأفق (سودوكو، بازل، إكمال الأمثال)"
+            >
+              <span>🎮 الألعاب والتسلية</span>
+            </button>
+          )}
 
           {/* Toggle details drawer */}
           <button

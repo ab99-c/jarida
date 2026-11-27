@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { trpc } from "@/lib/trpc";
 import { formatArabicEditionDate } from "@shared/date";
-import { Volume2, VolumeX, RefreshCw, Share2, MessageSquare, Send, Check, FileText, BookOpen, Library, X, Headphones, Smartphone, Scale, Search, Archive, ChevronDown, ChevronUp, Bookmark, Vote, Sliders, Clock, Sparkles } from "lucide-react";
+import { Volume2, VolumeX, RefreshCw, Share2, MessageSquare, Send, Check, FileText, BookOpen, Library, X, Headphones, Smartphone, Scale, Search, Archive, ChevronDown, ChevronUp, Bookmark, Vote, Sliders, Clock, Sparkles, Gamepad2 } from "lucide-react";
 import { isInstalledAppOrApk } from "@/lib/apiBase";
 import VoiceReader from "../components/VoiceReader";
 import ArchiveChest from "../components/ArchiveChest";
@@ -11,6 +11,7 @@ import DailyUtilityBar from "../components/DailyUtilityBar";
 import BookmarksModal, { getSavedBookmarks, isArticleBookmarked, saveBookmarkItem } from "../components/BookmarksModal";
 import PollModal from "../components/PollModal";
 import ReaderSettingsModal, { getSavedReaderSettings, saveReaderSettings, type ReaderSettings } from "../components/ReaderSettingsModal";
+import GamesModal from "../components/GamesModal";
 import {
   getBottomLeftPeelProgress,
   getBoundedPageChange,
@@ -995,6 +996,8 @@ export default function Home() {
   const [isBookmarksOpen, setIsBookmarksOpen] = useState(false);
   const [isPollOpen, setIsPollOpen] = useState(false);
   const [isReaderSettingsOpen, setIsReaderSettingsOpen] = useState(false);
+  const [isGamesOpen, setIsGamesOpen] = useState(false);
+  const [defaultGameTab, setDefaultGameTab] = useState<"sudoku" | "puzzle" | "completion">("sudoku");
   const [readerSettings, setReaderSettings] = useState<ReaderSettings>(() => getSavedReaderSettings());
   const [savedBookmarksCount, setSavedBookmarksCount] = useState(() => getSavedBookmarks().length);
 
@@ -1600,6 +1603,20 @@ export default function Home() {
               <span className="hidden sm:inline">استطلاع 📊</span>
             </button>
 
+            {/* Games & Leisure (ألعاب وتسلية الأفق) */}
+            <button
+              type="button"
+              onClick={() => {
+                setDefaultGameTab("sudoku");
+                setIsGamesOpen(true);
+              }}
+              className="jarida-focusable flex items-center gap-1 text-[11px] sm:text-xs text-[#2b2013] hover:text-black transition cursor-pointer px-2 py-1 rounded bg-[#efe5ce] hover:bg-[#e4d6b6] border border-[#cfbd97] font-bold shadow-2xs"
+              title="ألعاب وتسلية الأفق (سودوكو، بازل، إكمال الأمثال)"
+            >
+              <Gamepad2 className="w-3.5 h-3.5 text-[#8f6d33]" />
+              <span className="hidden sm:inline">ألعاب 🎮</span>
+            </button>
+
             {/* Reader Settings (المظهر والخط) */}
             <button
               type="button"
@@ -1734,6 +1751,10 @@ export default function Home() {
           <DailyUtilityBar
             breakingNews={allDailyArticles.slice(0, 8)}
             onSelectArticle={navigateToArticle}
+            onOpenGames={() => {
+              setDefaultGameTab("sudoku");
+              setIsGamesOpen(true);
+            }}
           />
         </div>
       )}
@@ -1838,6 +1859,13 @@ export default function Home() {
           setReaderSettings(newSettings);
           saveReaderSettings(newSettings);
         }}
+      />
+
+      {/* Leisure & Mind Games Modal (سودوكو، بازل، إكمال الأمثال) */}
+      <GamesModal
+        isOpen={isGamesOpen}
+        onClose={() => setIsGamesOpen(false)}
+        defaultTab={defaultGameTab}
       />
 
       {/* Newspaper Spread Container (Authentic Daily Newspaper Layout / مثل الجرائد اليومية) */}
