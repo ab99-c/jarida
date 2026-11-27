@@ -1,12 +1,16 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { trpc } from "@/lib/trpc";
 import { formatArabicEditionDate } from "@shared/date";
-import { Volume2, VolumeX, RefreshCw, Share2, MessageSquare, Send, Check, FileText, BookOpen, Library, X, Headphones, Smartphone, Scale, Search, Archive, ChevronDown, ChevronUp } from "lucide-react";
+import { Volume2, VolumeX, RefreshCw, Share2, MessageSquare, Send, Check, FileText, BookOpen, Library, X, Headphones, Smartphone, Scale, Search, Archive, ChevronDown, ChevronUp, Bookmark, Vote, Sliders, Clock, Sparkles } from "lucide-react";
 import { isInstalledAppOrApk } from "@/lib/apiBase";
 import VoiceReader from "../components/VoiceReader";
 import ArchiveChest from "../components/ArchiveChest";
 import ApkDownloadModal from "../components/ApkDownloadModal";
 import LegalModal from "../components/LegalModal";
+import DailyUtilityBar from "../components/DailyUtilityBar";
+import BookmarksModal, { getSavedBookmarks, isArticleBookmarked, saveBookmarkItem } from "../components/BookmarksModal";
+import PollModal from "../components/PollModal";
+import ReaderSettingsModal, { getSavedReaderSettings, saveReaderSettings, type ReaderSettings } from "../components/ReaderSettingsModal";
 import {
   getBottomLeftPeelProgress,
   getBoundedPageChange,
@@ -341,7 +345,19 @@ function buildNewspaperPagesFlat(allArticles: any[]): NewspaperPageSheet[] {
   return pages;
 }
 
-function ArticleComments({ article }: { article: any }) {
+function calculateReadingTime(text: string): number {
+  if (!text) return 1;
+  const wordCount = text.trim().split(/\s+/).filter(Boolean).length;
+  return Math.max(1, Math.ceil(wordCount / 50));
+}
+
+function ArticleInteractions({
+  article,
+  onBookmarkChanged,
+}: {
+  article: any;
+  onBookmarkChanged?: () => void;
+}) {
   const [authorName, setAuthorName] = useState("");
   const [content, setContent] = useState("");
   const [copied, setCopied] = useState(false);
@@ -350,12 +366,76 @@ function ArticleComments({ article }: { article: any }) {
   const [isShareTrayOpen, setIsShareTrayOpen] = useState(false);
 
   const articleId = article.id || 1;
+  const [isBookmarked, setIsBookmarked] = useState(() => isArticleBookmarked(articleId));
+
+  // Sentiment reactions state persisted in localStorage
+  const [userReaction, setUserReaction] = useState<string | null>(null);
+  const [reactionCounts, setReactionCounts] = useState<{ [key: string]: number }>({
+    important: 14,
+    inspiring: 9,
+    surprising: 6,
+    discuss: 11,
+  });
+
+  useEffect(() => {
+    setIsBookmarked(isArticleBookmarked(articleId));
+    try {
+      const stored = localStorage.getItem(`jarida_reactions_${articleId}`);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed.userReaction) setUserReaction(parsed.userReaction);
+        if (parsed.counts) setReactionCounts(parsed.counts);
+      } else {
+        const seed = typeof articleId === "number" ? articleId : (String(articleId).charCodeAt(0) || 5);
+        setReactionCounts({
+          important: 12 + (seed % 17),
+          inspiring: 7 + (seed % 9),
+          surprising: 4 + (seed % 8),
+          discuss: 8 + (seed % 12),
+        });
+      }
+    } catch {}
+  }, [articleId]);
+
+  const handleToggleReaction = (key: string) => {
+    setReactionCounts((prev) => {
+      const updated = { ...prev };
+      let nextReaction: string | null = key;
+      if (userReaction === key) {
+        updated[key] = Math.max(0, (updated[key] || 1) - 1);
+        nextReaction = null;
+      } else {
+        if (userReaction && updated[userReaction]) {
+          updated[userReaction] = Math.max(0, updated[userReaction] - 1);
+        }
+        updated[key] = (updated[key] || 0) + 1;
+      }
+      setUserReaction(nextReaction);
+      try {
+        localStorage.setItem(
+          `jarida_reactions_${articleId}`,
+          JSON.stringify({ userReaction: nextReaction, counts: updated })
+        );
+      } catch {}
+      return updated;
+    });
+  };
+
+  const handleToggleBookmark = () => {
+    const newState = saveBookmarkItem(article);
+    setIsBookmarked(newState);
+    if (onBookmarkChanged) onBookmarkChanged();
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("jarida:bookmarks-updated"));
+    }
+  };
+
   const isPersistedArticle = typeof articleId === "number";
   const { data: comments = [], isLoading: isLoadingComments, isError: isErrorComments, refetch } = trpc.jarida.getComments.useQuery(
     { articleId: isPersistedArticle ? articleId : 0 },
     { enabled: isPersistedArticle },
   );
-  
+
   const addCommentMutation = trpc.jarida.addComment.useMutation({
     onSuccess: () => {
       setAuthorName("");
@@ -395,9 +475,7 @@ function ArticleComments({ article }: { article: any }) {
           url: shareUrl,
         });
         return;
-      } catch {
-        // User cancelled or unsupported, fallback to tray
-      }
+      } catch {}
     }
     setIsShareTrayOpen((prev) => !prev);
   };
@@ -421,84 +499,135 @@ function ArticleComments({ article }: { article: any }) {
   };
 
   return (
-    <div className="relative mt-3 pt-2 border-t border-[#d3c49b]/70 flex items-center justify-between text-xs font-sans">
-      <div className="flex items-center gap-2">
-        {/* Share Icon Button */}
-        <div className="relative">
+    <div className="relative mt-3 pt-2.5 border-t border-[#d3c49b]/70 flex flex-col gap-2 text-xs font-sans">
+      {/* Top action row: Bookmark, Comments, Share & Reading Time */}
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {/* Bookmark Button */}
           <button
             type="button"
-            onClick={handleNativeShare}
-            title="مشاركة المقال"
-            aria-label="مشاركة المقال"
-            className="w-8 h-8 flex items-center justify-center rounded-full bg-[#f4ebdc] text-[#59482b] hover:bg-[#e7d9c1] hover:text-black border border-[#c9b78e] shadow-xs transition active:scale-95 cursor-pointer"
+            onClick={handleToggleBookmark}
+            title={isBookmarked ? "إزالة من قائمة القراءة المحفوظة" : "حفظ المقال للقراءة لاحقاً بدون إنترنت"}
+            className={`h-8 px-2.5 flex items-center gap-1.5 rounded-full border transition active:scale-95 cursor-pointer font-bold text-xs ${
+              isBookmarked
+                ? "bg-[#b38f39] text-white border-[#8c6f2a] shadow-xs"
+                : "bg-[#f4ebdc] text-[#59482b] hover:bg-[#e7d9c1] hover:text-black border-[#c9b78e]"
+            }`}
           >
-            <Share2 className="w-4 h-4" />
+            <Bookmark className={`w-3.5 h-3.5 ${isBookmarked ? "fill-current" : ""}`} />
+            <span>{isBookmarked ? "محفوظ" : "حفظ"}</span>
           </button>
 
-          {/* Fallback Share Tray */}
-          {isShareTrayOpen && (
-            <div className="absolute right-0 bottom-10 z-50 bg-[#fffdf9] p-2 rounded-lg border border-[#c9b78e] shadow-xl flex items-center gap-1.5 whitespace-nowrap animate-in fade-in zoom-in-95 duration-150">
-              <button
-                type="button"
-                onClick={() => { handleShare("whatsapp"); setIsShareTrayOpen(false); }}
-                className="px-2 py-1 bg-[#25D366] text-white rounded text-[11px] font-bold hover:opacity-90 transition cursor-pointer"
-              >
-                واتساب
-              </button>
-              <button
-                type="button"
-                onClick={() => { handleShare("facebook"); setIsShareTrayOpen(false); }}
-                className="px-2 py-1 bg-[#1877F2] text-white rounded text-[11px] font-bold hover:opacity-90 transition cursor-pointer"
-              >
-                فيسبوك
-              </button>
-              <button
-                type="button"
-                onClick={() => { handleShare("twitter"); setIsShareTrayOpen(false); }}
-                className="px-2 py-1 bg-black text-white rounded text-[11px] font-bold hover:opacity-90 transition cursor-pointer"
-              >
-                X
-              </button>
-              <button
-                type="button"
-                onClick={() => handleShare("copy")}
-                className="px-2 py-1 bg-[#ecdcc5] text-[#42341d] rounded text-[11px] font-bold hover:bg-[#dfcca9] transition flex items-center gap-1 cursor-pointer"
-              >
-                {copied ? <Check className="w-3 h-3 text-green-700" /> : null}
-                <span>{copied ? "تم النسخ" : "نسخ"}</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setIsShareTrayOpen(false)}
-                className="p-1 text-[#8c7853] hover:text-black rounded cursor-pointer"
-                aria-label="إغلاق قائمة المشاركة"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          )}
+          {/* Comment Icon Button with Badge */}
+          <button
+            type="button"
+            onClick={() => setIsModalOpen(true)}
+            title="عرض وكتابة التعليقات"
+            aria-label="التعليقات"
+            className="h-8 px-2.5 flex items-center gap-1.5 rounded-full bg-[#f4ebdc] text-[#59482b] hover:bg-[#e7d9c1] hover:text-black border border-[#c9b78e] shadow-xs transition active:scale-95 cursor-pointer font-bold text-xs"
+          >
+            <MessageSquare className="w-3.5 h-3.5" />
+            <span>التعليقات</span>
+            {comments.length > 0 && (
+              <span className="min-w-[17px] h-[17px] px-1 bg-[#8c2a1e] text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                {comments.length}
+              </span>
+            )}
+          </button>
+
+          {/* Share Icon Button */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={handleNativeShare}
+              title="مشاركة المقال"
+              aria-label="مشاركة المقال"
+              className="w-8 h-8 flex items-center justify-center rounded-full bg-[#f4ebdc] text-[#59482b] hover:bg-[#e7d9c1] hover:text-black border border-[#c9b78e] shadow-xs transition active:scale-95 cursor-pointer"
+            >
+              <Share2 className="w-3.5 h-3.5" />
+            </button>
+
+            {/* Fallback Share Tray */}
+            {isShareTrayOpen && (
+              <div className="absolute right-0 bottom-10 z-50 bg-[#fffdf9] p-2 rounded-lg border border-[#c9b78e] shadow-xl flex items-center gap-1.5 whitespace-nowrap animate-in fade-in zoom-in-95 duration-150">
+                <button
+                  type="button"
+                  onClick={() => { handleShare("whatsapp"); setIsShareTrayOpen(false); }}
+                  className="px-2 py-1 bg-[#25D366] text-white rounded text-[11px] font-bold hover:opacity-90 transition cursor-pointer"
+                >
+                  واتساب
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { handleShare("facebook"); setIsShareTrayOpen(false); }}
+                  className="px-2 py-1 bg-[#1877F2] text-white rounded text-[11px] font-bold hover:opacity-90 transition cursor-pointer"
+                >
+                  فيسبوك
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { handleShare("twitter"); setIsShareTrayOpen(false); }}
+                  className="px-2 py-1 bg-black text-white rounded text-[11px] font-bold hover:opacity-90 transition cursor-pointer"
+                >
+                  X
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleShare("copy")}
+                  className="px-2 py-1 bg-[#ecdcc5] text-[#42341d] rounded text-[11px] font-bold hover:bg-[#dfcca9] transition flex items-center gap-1 cursor-pointer"
+                >
+                  {copied ? <Check className="w-3 h-3 text-green-700" /> : null}
+                  <span>{copied ? "تم النسخ" : "نسخ"}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsShareTrayOpen(false)}
+                  className="p-1 text-[#8c7853] hover:text-black rounded cursor-pointer"
+                  aria-label="إغلاق قائمة المشاركة"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Comment Icon Button with Badge */}
-        <button
-          type="button"
-          onClick={() => setIsModalOpen(true)}
-          title="عرض وكتابة التعليقات"
-          aria-label="التعليقات"
-          className="h-8 px-2.5 flex items-center gap-1.5 rounded-full bg-[#f4ebdc] text-[#59482b] hover:bg-[#e7d9c1] hover:text-black border border-[#c9b78e] shadow-xs transition active:scale-95 cursor-pointer font-bold text-xs"
-        >
-          <MessageSquare className="w-4 h-4" />
-          <span>التعليقات</span>
-          {comments.length > 0 && (
-            <span className="min-w-[18px] h-[18px] px-1 bg-[#8c2a1e] text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-              {comments.length}
-            </span>
-          )}
-        </button>
+        {/* Reading Time Badge */}
+        <div className="flex items-center gap-1 text-[11px] text-[#7a684b] font-sans">
+          <Clock className="w-3 h-3 text-[#947743]" />
+          <span>{calculateReadingTime((article?.title || "") + " " + (article?.summary || "") + " " + (article?.content || ""))} دقائق للقراءة</span>
+        </div>
       </div>
 
-      <div className="text-[11px] text-[#7a6b52] italic font-serif">
-        جريدة الأفق • التفاعل الحر
+      {/* Reader Sentiment Reactions Row */}
+      <div className="flex items-center gap-1.5 pt-1 overflow-x-auto no-scrollbar">
+        <span className="text-[10px] text-[#806f52] font-serif font-bold whitespace-nowrap pl-1">انطباعات القراء:</span>
+        {[
+          { key: "important", emoji: "👏", label: "مهم" },
+          { key: "inspiring", emoji: "💡", label: "ملهم" },
+          { key: "surprising", emoji: "😮", label: "مفاجئ" },
+          { key: "discuss", emoji: "🤔", label: "للنقاش" },
+        ].map((item) => {
+          const isSelected = userReaction === item.key;
+          const count = reactionCounts[item.key] || 0;
+          return (
+            <button
+              key={item.key}
+              type="button"
+              onClick={() => handleToggleReaction(item.key)}
+              title={`تفاعل بـ "${item.label}"`}
+              className={`px-2 py-0.5 rounded-full text-[11px] flex items-center gap-1 transition active:scale-95 cursor-pointer border ${
+                isSelected
+                  ? "bg-[#ecd9b5] text-[#2c1e0e] border-[#9c783e] font-bold ring-1 ring-[#9c783e]/50 shadow-xs"
+                  : "bg-[#f8f1e3]/80 text-[#54452e] hover:bg-[#ede0ca] border-[#d9cbb0]"
+              }`}
+            >
+              <span>{item.emoji}</span>
+              <span className="text-[10px]">{item.label}</span>
+              <span className="text-[9px] opacity-75 font-mono">({count})</span>
+            </button>
+          );
+        })}
       </div>
 
       {/* Dedicated Clean Comments Modal */}
@@ -612,16 +741,20 @@ function ArticleComments({ article }: { article: any }) {
   );
 }
 
+const ArticleComments = ArticleInteractions;
+
 function NewspaperSheetContent({
   sheet,
   totalSheets,
   totalArticlesCount,
   showComments = false,
+  onBookmarkChanged,
 }: {
   sheet: NewspaperPageSheet;
   totalSheets: number;
   totalArticlesCount: number;
   showComments?: boolean;
+  onBookmarkChanged?: () => void;
 }) {
   if (sheet.isBlank) {
     return (
@@ -665,7 +798,13 @@ function NewspaperSheetContent({
             <span className="np-source-badge">
               {lead?.source || "وكالة الأفق للأخبار"} {lead?.category ? `• ${lead.category}` : ""}
             </span>
-            <span>{new Date(lead?.publishedAt || Date.now()).toLocaleDateString("ar-MA")}</span>
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center gap-1 text-[10px] bg-[#f0e6d2] text-[#6d553b] px-1.5 py-0.5 rounded font-sans border border-[#ddcfb3]">
+                <Clock className="w-3 h-3 text-[#947743]" />
+                {calculateReadingTime((lead?.title || "") + " " + (lead?.summary || "") + " " + (lead?.content || ""))} دقائق للقراءة
+              </span>
+              <span>{new Date(lead?.publishedAt || Date.now()).toLocaleDateString("ar-MA")}</span>
+            </div>
           </div>
           <h2 className="np-headline-main jarida-article-headline">
             {lead?.title}
@@ -673,6 +812,23 @@ function NewspaperSheetContent({
           <p className="np-sub-headline jarida-article-summary">
             {lead?.summary}
           </p>
+
+          {/* 30-Second TL;DR takeaway box for busy readers */}
+          {lead?.summary && (
+            <div className="np-tldr-box my-2.5 p-2.5 bg-[#f8f2e6] border-r-4 border-r-[#8c7348] border border-[#e2d5b6] rounded-sm text-xs font-sans shadow-2xs">
+              <div className="flex items-center gap-1 font-bold text-[#4a3a1f] mb-1">
+                <Sparkles className="w-3.5 h-3.5 text-[#b38f39]" />
+                <span>خلاصة سريعة في 30 ثانية ⚡</span>
+              </div>
+              <ul className="list-disc list-inside space-y-0.5 text-[#3b3221] text-[11px] leading-relaxed">
+                <li>{lead.summary.split(".")[0] || lead.summary}</li>
+                {lead.summary.split(".")[1] && lead.summary.split(".")[1].trim().length > 5 && (
+                  <li>{lead.summary.split(".")[1].trim()}</li>
+                )}
+              </ul>
+            </div>
+          )}
+
           {lead?.imageUrl && (
             <div className="np-media">
               <img
@@ -719,7 +875,7 @@ function NewspaperSheetContent({
           </div>
         )}
 
-        {showComments && lead && <ArticleComments article={lead} />}
+        {showComments && lead && <ArticleInteractions article={lead} onBookmarkChanged={onBookmarkChanged} />}
       </div>
 
       {/* الشريط السفلي الأزرق الخاص بالجريدة اليومية */}
@@ -835,6 +991,21 @@ export default function Home() {
   const isDoubleTapRef = useRef(false);
   const tapTimeoutRef = useRef<number | null>(null);
 
+  // New interactive reader enhancements state
+  const [isBookmarksOpen, setIsBookmarksOpen] = useState(false);
+  const [isPollOpen, setIsPollOpen] = useState(false);
+  const [isReaderSettingsOpen, setIsReaderSettingsOpen] = useState(false);
+  const [readerSettings, setReaderSettings] = useState<ReaderSettings>(() => getSavedReaderSettings());
+  const [savedBookmarksCount, setSavedBookmarksCount] = useState(() => getSavedBookmarks().length);
+
+  useEffect(() => {
+    const handleBookmarksUpdate = () => {
+      setSavedBookmarksCount(getSavedBookmarks().length);
+    };
+    window.addEventListener("jarida:bookmarks-updated", handleBookmarksUpdate);
+    return () => window.removeEventListener("jarida:bookmarks-updated", handleBookmarksUpdate);
+  }, []);
+
   const {
     data: dailyData,
     refetch,
@@ -908,6 +1079,24 @@ export default function Home() {
 
   const displayArticles = searchQuery.trim() || activeCategory !== "الكل" ? filteredArticles : allDailyArticles;
   const processedArticles = useMemo(() => buildNewspaperPages(displayArticles, false), [displayArticles]);
+
+  const navigateToArticle = useCallback(
+    (articleId: string | number) => {
+      const strId = String(articleId);
+      const pageIdx = processedArticles.findIndex((sheet) => {
+        if (String(sheet.id) === strId) return true;
+        if (String(sheet.leadArticle?.id) === strId) return true;
+        return sheet.allArticles?.some((a: any) => String(a.id) === strId);
+      });
+      if (pageIdx !== -1) {
+        setCurrentPage(pageIdx);
+        if (activePageScrollRef.current) {
+          activePageScrollRef.current.scrollTo({ top: 0, behavior: "smooth" });
+        }
+      }
+    },
+    [processedArticles]
+  );
 
   useEffect(() => {
     setCurrentPage(0);
@@ -1312,7 +1501,7 @@ export default function Home() {
       data-jarida-spread-mode="paired-articles"
       data-jarida-view-mode={viewMode}
       data-jarida-device={deviceKind}
-      className={`fb-wrapper min-h-screen text-[#2b2b2b] select-none relative overflow-x-hidden ${isSinglePage ? "jarida-single-page-mode" : ""} ${isAndroidTV ? "jarida-tv-mode" : ""}`}
+      className={`fb-wrapper min-h-screen text-[#2b2b2b] select-none relative overflow-x-hidden ${isSinglePage ? "jarida-single-page-mode" : ""} ${isAndroidTV ? "jarida-tv-mode" : ""} theme-${readerSettings.theme} font-size-${readerSettings.fontSize} line-height-${readerSettings.lineHeight}`}
       dir="rtl"
       onDoubleClick={(event) => {
         const target = event.target as HTMLElement;
@@ -1382,6 +1571,44 @@ export default function Home() {
             >
               <Archive className="w-3.5 h-3.5 text-[#8f6d33]" />
               <span className="hidden sm:inline">الأرشيف</span>
+            </button>
+
+            {/* Bookmarks (المقالات المحفوظة) */}
+            <button
+              type="button"
+              onClick={() => setIsBookmarksOpen(true)}
+              className="jarida-focusable flex items-center gap-1 text-[11px] sm:text-xs text-[#2b2013] hover:text-black transition cursor-pointer px-2 py-1 rounded bg-[#efe5ce] hover:bg-[#e4d6b6] border border-[#cfbd97] font-bold shadow-2xs"
+              title="المقالات المحفوظة للقراءة بدون إنترنت"
+            >
+              <Bookmark className={`w-3.5 h-3.5 text-[#8f6d33] ${savedBookmarksCount > 0 ? "fill-[#8f6d33]" : ""}`} />
+              <span className="hidden sm:inline">محفوظاتي</span>
+              {savedBookmarksCount > 0 && (
+                <span className="min-w-[16px] h-[16px] px-1 bg-[#8f6d33] text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                  {savedBookmarksCount}
+                </span>
+              )}
+            </button>
+
+            {/* Daily Poll (استطلاع الرأي) */}
+            <button
+              type="button"
+              onClick={() => setIsPollOpen(true)}
+              className="jarida-focusable flex items-center gap-1 text-[11px] sm:text-xs text-[#1e4620] hover:text-black transition cursor-pointer px-2 py-1 rounded bg-[#e8f2e9] hover:bg-[#d8e7da] border border-[#b4d6b8] font-bold shadow-2xs"
+              title="استطلاع رأي القراء اليومي"
+            >
+              <Vote className="w-3.5 h-3.5 text-[#2d6630]" />
+              <span className="hidden sm:inline">استطلاع 📊</span>
+            </button>
+
+            {/* Reader Settings (المظهر والخط) */}
+            <button
+              type="button"
+              onClick={() => setIsReaderSettingsOpen(true)}
+              className="jarida-focusable flex items-center gap-1 text-[11px] sm:text-xs text-[#523d24] hover:text-black transition cursor-pointer px-2 py-1 rounded bg-[#f4ebdc] hover:bg-[#ebdcc4] border border-[#cfbd97] font-bold shadow-2xs"
+              title="تخصيص المظهر، الإضاءة، وحجم الخط"
+            >
+              <Sliders className="w-3.5 h-3.5 text-[#735431]" />
+              <span className="hidden md:inline">المظهر 🎨</span>
             </button>
 
             {/* Rack */}
@@ -1501,6 +1728,16 @@ export default function Home() {
       </header>
       )}
 
+      {/* Daily Moroccan Utility Bar (Weather, Prayer Times, Currency, Stock & Breaking Ticker) */}
+      {isTopBarVisible && (
+        <div className="w-full max-w-5xl mx-auto mb-2 px-1 animate-in fade-in slide-in-from-top-2 duration-200">
+          <DailyUtilityBar
+            breakingNews={allDailyArticles.slice(0, 8)}
+            onSelectArticle={navigateToArticle}
+          />
+        </div>
+      )}
+
       {isRackOpen && (
         <div
           className="jarida-rack-overlay"
@@ -1573,6 +1810,36 @@ export default function Home() {
         onClose={() => setIsLegalModalOpen(false)}
       />
 
+      {/* Bookmarks Modal (Offline Reading Library) */}
+      <BookmarksModal
+        isOpen={isBookmarksOpen}
+        onClose={() => {
+          setIsBookmarksOpen(false);
+          setSavedBookmarksCount(getSavedBookmarks().length);
+        }}
+        onSelectArticle={(id) => {
+          setIsBookmarksOpen(false);
+          navigateToArticle(id);
+        }}
+      />
+
+      {/* Reader Poll Modal */}
+      <PollModal
+        isOpen={isPollOpen}
+        onClose={() => setIsPollOpen(false)}
+      />
+
+      {/* Reader Display & Typography Settings */}
+      <ReaderSettingsModal
+        isOpen={isReaderSettingsOpen}
+        onClose={() => setIsReaderSettingsOpen(false)}
+        settings={readerSettings}
+        onUpdateSettings={(newSettings) => {
+          setReaderSettings(newSettings);
+          saveReaderSettings(newSettings);
+        }}
+      />
+
       {/* Newspaper Spread Container (Authentic Daily Newspaper Layout / مثل الجرائد اليومية) */}
       <div className="fb-book relative text-[#111] my-auto flex flex-col justify-between">
         {!isSinglePage && <div className="fb-spine" aria-hidden="true" />}
@@ -1638,6 +1905,7 @@ export default function Home() {
                 totalSheets={processedArticles.length}
                 totalArticlesCount={allDailyArticles.length}
                 showComments={true}
+                onBookmarkChanged={() => setSavedBookmarksCount(getSavedBookmarks().length)}
               />
             </div>
           ))}

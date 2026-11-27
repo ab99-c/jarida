@@ -1776,3 +1776,75 @@ body {
 .custom-chest-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #966b3e;
 }
+
+/* =========================================================
+   Reading Themes & Typography Customization (جريدة الأفق)
+   ========================================================= */
+.theme-sepia .jarida-paper-page,
+.theme-sepia .fb-face,
+.theme-sepia .jarida-spread {
+  background-color: #fcf8f0 !important;
+  color: #2b2319 !important;
+}
+
+.theme-light .jarida-paper-page,
+.theme-light .fb-face,
+.theme-light .jarida-spread {
+  background-color: #ffffff !important;
+  color: #111111 !important;
+  background-image: none !important;
+}
+
+.theme-dark .jarida-paper-page,
+.theme-dark .fb-face,
+.theme-dark .jarida-spread {
+  background-color: #1c150e !important;
+  color: #eddcc5 !important;
+  background-image: none !important;
+}
+.theme-dark .np-article-box,
+.theme-dark .np-lead-block,
+.theme-dark .np-grid {
+  border-color: #3d2f21 !important;
+}
+.theme-dark .np-headline-main,
+.theme-dark .np-article-title {
+  color: #f7eee2 !important;
+}
+.theme-dark .np-article-text,
+.theme-dark .np-sub-headline,
+.theme-dark .np-lead-body {
+  color: #cfbd9f !important;
+}
+
+/* Font Size Scales */
+.font-size-large .jarida-article-headline,
+.font-size-large .np-headline-main {
+  font-size: 1.25em !important;
+}
+.font-size-large .jarida-article-summary,
+.font-size-large .jarida-article-body,
+.font-size-large .np-sub-headline,
+.font-size-large .np-article-text {
+  font-size: 1.15em !important;
+}
+
+.font-size-xlarge .jarida-article-headline,
+.font-size-xlarge .np-headline-main {
+  font-size: 1.45em !important;
+}
+.font-size-xlarge .jarida-article-summary,
+.font-size-xlarge .jarida-article-body,
+.font-size-xlarge .np-sub-headline,
+.font-size-xlarge .np-article-text {
+  font-size: 1.3em !important;
+}
+
+.line-height-compact .jarida-article-body,
+.line-height-compact .np-article-text {
+  line-height: 1.4 !important;
+}
+.line-height-relaxed .jarida-article-body,
+.line-height-relaxed .np-article-text {
+  line-height: 1.85 !important;
+}
