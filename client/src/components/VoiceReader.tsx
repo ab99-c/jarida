@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { GoogleGenAI, Modality } from "@google/genai";
-import { Mic, Loader2, Square, Volume2, X, Sparkles, AlertCircle } from "lucide-react";
+import { Mic, Loader2, Square, Volume2, X, Radio, PhoneOff, AlertCircle } from "lucide-react";
 import { getApiBaseUrl } from "@/lib/apiBase";
 
 interface VoiceReaderProps {
@@ -18,9 +18,13 @@ export default function VoiceReader({
 }: VoiceReaderProps) {
   const [status, setStatus] = useState<VoiceStatus>("idle");
   const [errorMessage, setErrorMessage] = useState<string>("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const statusRef = useRef<VoiceStatus>("idle");
   statusRef.current = status;
+
+  // Track whether the current voice session is strictly active
+  const isSessionActiveRef = useRef(false);
 
   // Session & Audio references
   const sessionRef = useRef<any>(null);
@@ -32,6 +36,7 @@ export default function VoiceReader({
   const nextScheduledTimeRef = useRef<number>(0);
 
   const getOutputAudioContext = useCallback(() => {
+    if (!isSessionActiveRef.current) return null;
     if (!outputAudioCtxRef.current || outputAudioCtxRef.current.state === "closed") {
       const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
       outputAudioCtxRef.current = new AudioCtx({ sampleRate: 24000 });
@@ -42,20 +47,23 @@ export default function VoiceReader({
   const stopAllScheduledAudio = useCallback(() => {
     activeSourcesRef.current.forEach((src) => {
       try {
-        src.stop();
+        src.stop(0);
         src.disconnect();
       } catch {}
     });
     activeSourcesRef.current = [];
-    if (outputAudioCtxRef.current) {
+    if (outputAudioCtxRef.current && outputAudioCtxRef.current.state !== "closed") {
       nextScheduledTimeRef.current = outputAudioCtxRef.current.currentTime;
     } else {
       nextScheduledTimeRef.current = 0;
     }
   }, []);
 
+  // Complete hard-kill cleanup: guarantees 100% shutdown of microphone, audio, and websocket
   const cleanup = useCallback(() => {
-    // 1. Close Live API session
+    isSessionActiveRef.current = false;
+
+    // 1. Immediately close Live API session
     if (sessionRef.current) {
       try {
         sessionRef.current.close();
@@ -63,10 +71,13 @@ export default function VoiceReader({
       sessionRef.current = null;
     }
 
-    // 2. Stop microphone tracks
+    // 2. Immediately stop all microphone tracks so mic icon on phone turns OFF
     if (micStreamRef.current) {
       try {
-        micStreamRef.current.getTracks().forEach((track) => track.stop());
+        micStreamRef.current.getTracks().forEach((track) => {
+          track.stop();
+          track.enabled = false;
+        });
       } catch {}
       micStreamRef.current = null;
     }
@@ -74,6 +85,7 @@ export default function VoiceReader({
     // 3. Disconnect and close input Web Audio
     if (processorNodeRef.current) {
       try {
+        processorNodeRef.current.onaudioprocess = null;
         processorNodeRef.current.disconnect();
       } catch {}
       processorNodeRef.current = null;
@@ -97,7 +109,7 @@ export default function VoiceReader({
     setStatus("idle");
   }, [stopAllScheduledAudio]);
 
-  // Clean up when unmounting
+  // Clean up when unmounting or when modal closes
   useEffect(() => {
     return () => {
       cleanup();
@@ -107,8 +119,10 @@ export default function VoiceReader({
   // Convert Base64 24kHz PCM to AudioBuffer and schedule smooth sequential playback
   const playAudioChunk = useCallback(
     (base64Data: string) => {
+      if (!isSessionActiveRef.current) return;
       try {
         const ctx = getOutputAudioContext();
+        if (!ctx) return;
         if (ctx.state === "suspended") {
           ctx.resume();
         }
@@ -132,6 +146,8 @@ export default function VoiceReader({
           channelData[i] = int16 < 0 ? int16 / 32768 : int16 / 32767;
         }
 
+        if (!isSessionActiveRef.current) return;
+
         const source = ctx.createBufferSource();
         source.buffer = audioBuffer;
         source.connect(ctx.destination);
@@ -145,7 +161,7 @@ export default function VoiceReader({
         source.onended = () => {
           const idx = activeSourcesRef.current.indexOf(source);
           if (idx !== -1) activeSourcesRef.current.splice(idx, 1);
-          if (activeSourcesRef.current.length === 0 && statusRef.current === "speaking") {
+          if (activeSourcesRef.current.length === 0 && statusRef.current === "speaking" && isSessionActiveRef.current) {
             setStatus("listening");
           }
         };
@@ -159,6 +175,7 @@ export default function VoiceReader({
   const startVoiceSession = async () => {
     setErrorMessage("");
     setStatus("connecting");
+    isSessionActiveRef.current = true;
 
     try {
       // 1. Immediately request microphone and unlock Web Audio while user gesture is active
@@ -173,7 +190,7 @@ export default function VoiceReader({
       });
 
       const outCtx = getOutputAudioContext();
-      if (outCtx.state === "suspended") {
+      if (outCtx && outCtx.state === "suspended") {
         await outCtx.resume();
       }
 
@@ -188,8 +205,13 @@ export default function VoiceReader({
       let tokenRes: Response;
       try {
         [stream, tokenRes] = await Promise.all([streamPromise, tokenPromise]);
+        if (!isSessionActiveRef.current) {
+          stream.getTracks().forEach((t) => t.stop());
+          return;
+        }
         micStreamRef.current = stream;
       } catch (micErr: any) {
+        if (!isSessionActiveRef.current) return;
         if (!micStreamRef.current) {
           throw new Error("يرجى السماح بالوصول إلى الميكروفون لبدء المحادثة الصوتية.");
         }
@@ -199,18 +221,21 @@ export default function VoiceReader({
       let tokenJson: any = null;
       try {
         const text = await tokenRes.text();
+        if (!isSessionActiveRef.current) return;
         tokenJson = JSON.parse(text);
       } catch {
+        if (!isSessionActiveRef.current) return;
         throw new Error("تعذر الاتصال بخادم الصوت. يرجى التأكد من اتصال الإنترنت وحاول مجدداً.");
       }
 
       if (!tokenRes.ok || !tokenJson?.token) {
+        if (!isSessionActiveRef.current) return;
         throw new Error("المساعد الصوتي غير متوفر حالياً. يرجى المحاولة لاحقاً.");
       }
 
       const token = tokenJson.token;
 
-      // 3. Connect to Gemini Multimodal Live API using the active gemini-3.8-live model
+      // 3. Connect to Gemini Multimodal Live API using gemini-3.8-live
       const ai = new GoogleGenAI({
         apiKey: token,
         apiVersion: "v1alpha",
@@ -230,6 +255,10 @@ export default function VoiceReader({
         },
         callbacks: {
           onopen: () => {
+            if (!isSessionActiveRef.current) {
+              try { session.close(); } catch {}
+              return;
+            }
             console.log("[VoiceReader] Gemini Live Session Connected.");
             setStatus("speaking");
             // Prompt the anchor to greet the listener immediately
@@ -239,10 +268,11 @@ export default function VoiceReader({
               });
             } catch (greetErr) {
               console.warn("[VoiceReader] Initial greeting trigger error:", greetErr);
-              setStatus("listening");
+              if (isSessionActiveRef.current) setStatus("listening");
             }
           },
           onmessage: (msg: any) => {
+            if (!isSessionActiveRef.current) return;
             const serverContent = msg?.serverContent;
 
             // Handle interruption: clear ongoing playback
@@ -260,22 +290,27 @@ export default function VoiceReader({
                 }
               }
             }
-
-            if (serverContent?.turnComplete) {
-              // After playback ends, onended will toggle back to listening
-            }
           },
           onerror: (err: any) => {
             console.error("[VoiceReader] Session error:", err);
-            setErrorMessage("حدث خطأ في الاتصال الصوتي مع جيميناي.");
-            cleanup();
+            if (isSessionActiveRef.current) {
+              setErrorMessage("حدث انقطاع في الاتصال الصوتي. يمكنك المحاولة مجدداً.");
+              cleanup();
+            }
           },
           onclose: (e: any) => {
             console.log("[VoiceReader] Session closed:", e);
-            cleanup();
+            if (isSessionActiveRef.current) {
+              cleanup();
+            }
           },
         },
       });
+
+      if (!isSessionActiveRef.current) {
+        try { session.close(); } catch {}
+        return;
+      }
 
       sessionRef.current = session;
 
@@ -285,16 +320,14 @@ export default function VoiceReader({
       inputAudioCtxRef.current = inputCtx;
 
       const source = inputCtx.createMediaStreamSource(stream);
-      // Buffer size 4096 gives ~85ms latency chunks at 48k or ~256ms at 16k
       const processor = inputCtx.createScriptProcessor(4096, 1, 1);
       processorNodeRef.current = processor;
 
       processor.onaudioprocess = (e) => {
-        if (!sessionRef.current) return;
+        if (!isSessionActiveRef.current || !sessionRef.current) return;
 
         const inputChannelData = e.inputBuffer.getChannelData(0);
 
-        // Resample to 16,000 Hz if needed
         let pcmData16k: Float32Array;
         if (inputCtx.sampleRate !== 16000) {
           const ratio = inputCtx.sampleRate / 16000;
@@ -308,14 +341,12 @@ export default function VoiceReader({
           pcmData16k = inputChannelData;
         }
 
-        // Convert Float32Array (-1.0 to 1.0) to 16-bit PCM little-endian
         const pcm16 = new Int16Array(pcmData16k.length);
         for (let i = 0; i < pcmData16k.length; i++) {
           const s = Math.max(-1, Math.min(1, pcmData16k[i]));
           pcm16[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
         }
 
-        // Base64 encode
         const bytes = new Uint8Array(pcm16.buffer);
         let binary = "";
         for (let i = 0; i < bytes.byteLength; i++) {
@@ -324,12 +355,14 @@ export default function VoiceReader({
         const base64Audio = window.btoa(binary);
 
         try {
-          sessionRef.current.sendRealtimeInput({
-            audio: {
-              data: base64Audio,
-              mimeType: "audio/pcm;rate=16000",
-            },
-          });
+          if (isSessionActiveRef.current && sessionRef.current) {
+            sessionRef.current.sendRealtimeInput({
+              audio: {
+                data: base64Audio,
+                mimeType: "audio/pcm;rate=16000",
+              },
+            });
+          }
         } catch (sendErr) {
           console.warn("[VoiceReader] Failed to send realtime audio:", sendErr);
         }
@@ -339,17 +372,25 @@ export default function VoiceReader({
       processor.connect(inputCtx.destination);
     } catch (err: any) {
       console.error("[VoiceReader] Initialization failed:", err);
-      setErrorMessage(err?.message || "فشل الاتصال بالمساعد الصوتي.");
-      cleanup();
+      if (isSessionActiveRef.current) {
+        setErrorMessage(err?.message || "فشل الاتصال بالمساعد الصوتي.");
+        cleanup();
+      }
     }
   };
 
-  const handleToggle = () => {
-    if (status === "idle" || status === "error") {
-      startVoiceSession();
-    } else {
-      cleanup();
+  const handleOpenModal = () => {
+    // Stops any ongoing synthesis in the browser before starting AI conversation
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
     }
+    setIsModalOpen(true);
+    startVoiceSession();
+  };
+
+  const handleCloseModal = () => {
+    cleanup();
+    setIsModalOpen(false);
   };
 
   const isLive = status === "listening" || status === "speaking";
@@ -357,64 +398,128 @@ export default function VoiceReader({
   return (
     <>
       <div className={`relative inline-flex items-center gap-1 ${className}`} dir="rtl">
+        {/* Trigger Button: Strictly requires explicit user click to open */}
         <button
           type="button"
-          onClick={handleToggle}
-          className={`jarida-focusable flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full transition-all duration-200 cursor-pointer font-sans shadow-sm ${
-            isLive
-              ? "bg-[#6b5435] text-[#fbf6ec] ring-2 ring-[#d4c5b0] hover:bg-[#584428]"
-              : status === "connecting"
-                ? "bg-[#e8dcbf] text-[#6b5435] cursor-wait"
-                : "bg-[#f5e6cc] text-[#554a32] hover:bg-[#ebd8b7] hover:text-black border border-[#d3c49b]"
-          }`}
-          title={
-            isLive
-              ? "انقر لإنهاء المحادثة الصوتية"
-              : "محادثة صوتية حية ومباشرة مع مذيع الأفق الذكي حول المقال"
-          }
-          aria-live="polite"
+          onClick={handleOpenModal}
+          className="jarida-focusable flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full transition-all duration-200 cursor-pointer font-sans shadow-xs bg-[#f5e6cc] text-[#554a32] hover:bg-[#ebd8b7] hover:text-black border border-[#d3c49b]"
+          title="محادثة صوتية حية ومباشرة مع مذيع الأفق الذكي حول المقال"
+          aria-label="ناقش الخبر صوتياً"
         >
-          {status === "connecting" ? (
-            <>
-              <Loader2 className="w-3.5 h-3.5 animate-spin text-[#6b5435]" />
-              <span className="font-medium">جاري الاتصال...</span>
-            </>
-          ) : isLive ? (
-            <>
-              {status === "speaking" ? (
-                <Volume2 className="w-3.5 h-3.5 animate-pulse text-[#d4c5b0]" />
-              ) : (
-                <span className="relative flex h-2.5 w-2.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-                </span>
-              )}
-              <span className="font-bold">
-                {status === "speaking" ? "المذيع يتحدث..." : "🎙️ تفضل، أنا كنسمعك..."}
-              </span>
-              <Square className="w-3 h-3 mr-1 text-[#fbf6ec]/80 hover:text-red-300 transition" />
-            </>
-          ) : (
-            <>
-              <Mic className="w-3.5 h-3.5 text-[#6b5435]" />
-              <span className="font-medium">🎙️ ناقش الخبر صوتياً</span>
-            </>
-          )}
+          <Mic className="w-3.5 h-3.5 text-[#6b5435]" />
+          <span className="font-medium">🎙️ ناقش الخبر صوتياً</span>
         </button>
-
-        {/* Error Tooltip / Badge if permission denied or connection failed */}
-        {errorMessage && status === "idle" && (
-          <span
-            className="absolute top-full mt-1.5 right-0 z-30 whitespace-nowrap text-[11px] bg-red-100 text-red-800 border border-red-300 px-2.5 py-1 rounded shadow-md flex items-center gap-1.5 cursor-pointer"
-            role="alert"
-            onClick={() => setErrorMessage("")}
-            title="انقر للإغلاق"
-          >
-            <span>{errorMessage}</span>
-            <X className="w-3 h-3 hover:text-black transition flex-shrink-0" />
-          </span>
-        )}
       </div>
+
+      {/* Dedicated Interactive Voice Modal */}
+      {isModalOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200"
+          onClick={handleCloseModal}
+          dir="rtl"
+        >
+          <div
+            className="bg-[#2a1d13] text-[#f4ebdc] w-full max-w-md rounded-2xl shadow-2xl border-2 border-[#b48d56]/70 overflow-hidden flex flex-col p-5 animate-in zoom-in-95 duration-200 relative"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Top Close Button */}
+            <button
+              type="button"
+              onClick={handleCloseModal}
+              className="absolute top-4 left-4 w-8 h-8 rounded-full bg-[#1b120a] border border-[#a8824f]/40 text-[#eddcc4] hover:text-white hover:bg-[#3d2716] transition flex items-center justify-center cursor-pointer shadow-md"
+              aria-label="إغلاق الصوت"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            {/* Modal Header */}
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-9 h-9 rounded-full bg-[#3d2716] border border-[#d4af37]/60 flex items-center justify-center text-[#d4af37]">
+                <Radio className="w-5 h-5 animate-pulse" />
+              </div>
+              <div>
+                <h3 className="font-bold text-base font-serif text-[#fbf6ec]">المذيع الصوتي لجريدة الأفق</h3>
+                <p className="text-[11px] text-[#bda482]">نقاش صوتي تفاعلي بالذكاء الاصطناعي</p>
+              </div>
+            </div>
+
+            {/* Article Context */}
+            <div className="bg-[#1c130b] border border-[#7a5932]/60 rounded-xl p-3 mb-4 text-xs">
+              <span className="text-[#d4af37] font-bold block mb-1">موضوع النقاش:</span>
+              <p className="text-[#ded1be] line-clamp-2 leading-relaxed">
+                {articleTitle || "المقال اليومي لجريدة الأفق"}
+              </p>
+            </div>
+
+            {/* Live Interactive State Display */}
+            <div className="flex flex-col items-center justify-center py-5 bg-[#170f08] border border-[#523920] rounded-xl mb-4 text-center">
+              {status === "connecting" && (
+                <div className="flex flex-col items-center gap-2">
+                  <Loader2 className="w-8 h-8 animate-spin text-[#d4af37]" />
+                  <span className="text-xs font-bold text-[#e8dcbf]">جاري فتح الاتصال بالمذيع الصوتي...</span>
+                  <span className="text-[10px] text-[#9c8466]">يرجى الانتظار بضع ثوانٍ</span>
+                </div>
+              )}
+
+              {status === "speaking" && (
+                <div className="flex flex-col items-center gap-2">
+                  <div className="w-12 h-12 rounded-full bg-[#3d2716] border-2 border-[#d4af37] flex items-center justify-center text-[#d4af37] shadow-lg animate-pulse">
+                    <Volume2 className="w-6 h-6" />
+                  </div>
+                  <span className="text-sm font-bold text-[#fbf6ec]">المذيع يتحدث الآن...</span>
+                  <span className="text-[11px] text-[#d8c2a3]">استمع إليه أو قاطعه في أي لحظة للرد عليه</span>
+                </div>
+              )}
+
+              {status === "listening" && (
+                <div className="flex flex-col items-center gap-2">
+                  <div className="relative">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-60"></span>
+                    <div className="w-12 h-12 rounded-full bg-emerald-900/60 border-2 border-emerald-400 flex items-center justify-center text-emerald-300 shadow-lg relative">
+                      <Mic className="w-6 h-6" />
+                    </div>
+                  </div>
+                  <span className="text-sm font-bold text-emerald-300">الميكروفون مفتوح: تفضل بالكلام...</span>
+                  <span className="text-[11px] text-[#d8c2a3]">المذيع يستمع إلى صوتك بالدارجة أو العربية</span>
+                </div>
+              )}
+
+              {status === "error" && (
+                <div className="flex flex-col items-center gap-2 px-3 text-red-400">
+                  <AlertCircle className="w-8 h-8 text-red-400" />
+                  <span className="text-xs font-bold">{errorMessage || "تعذر إكمال الاتصال الصوتي."}</span>
+                  <button
+                    type="button"
+                    onClick={startVoiceSession}
+                    className="mt-1 px-3 py-1 bg-[#3d2716] text-[#eddcc4] border border-[#a8824f] text-[11px] rounded-lg hover:bg-[#52341d] cursor-pointer"
+                  >
+                    إعادة المحاولة 🔄
+                  </button>
+                </div>
+              )}
+
+              {status === "idle" && (
+                <div className="flex flex-col items-center gap-2">
+                  <Mic className="w-8 h-8 text-[#a88657]" />
+                  <span className="text-xs text-[#bda482]">جاهز لبدء المحادثة الصوتية</span>
+                </div>
+              )}
+            </div>
+
+            {/* Obvious, Full-Stop Exit Button */}
+            <button
+              type="button"
+              onClick={handleCloseModal}
+              className="w-full py-2.5 px-4 rounded-xl bg-red-700 hover:bg-red-800 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg transition active:scale-98 cursor-pointer border border-red-500/50"
+            >
+              <PhoneOff className="w-4 h-4" />
+              <span>إنهاء المحادثة وإغلاق الصوت فوراً (Stop)</span>
+            </button>
+          </div>
+        </div>
+      )}
     </>
   );
 }

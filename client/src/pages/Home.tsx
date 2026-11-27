@@ -1054,6 +1054,10 @@ export default function Home() {
   }, []);
 
   const requestPageChange = useCallback((step: number) => {
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+      setIsSpeakingAudio(false);
+    }
     const turn = prepareTurn(step);
     if (!turn) return;
     playFlipSound();
