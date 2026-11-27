@@ -22,12 +22,15 @@ export default function ArchiveChest({
   onSelectEdition,
 }: ArchiveChestProps) {
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedMonth, setSelectedMonth] = useState<string>("all");
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
 
   const filteredEditions = useMemo(() => {
-    if (!searchQuery.trim()) return editions;
-    const q = searchQuery.toLowerCase();
     return editions.filter((ed) => {
+      const matchesMonth = selectedMonth === "all" || ed.key.startsWith(selectedMonth);
+      if (!matchesMonth) return false;
+      if (!searchQuery.trim()) return true;
+      const q = searchQuery.toLowerCase();
       const title = ed.lead?.title?.toLowerCase() || "";
       const summary = ed.lead?.summary?.toLowerCase() || "";
       const dateStr = new Date(ed.key)
@@ -40,7 +43,7 @@ export default function ArchiveChest({
         .toLowerCase();
       return title.includes(q) || summary.includes(q) || dateStr.includes(q);
     });
-  }, [editions, searchQuery]);
+  }, [editions, searchQuery, selectedMonth]);
 
   if (!isOpen) return null;
 
@@ -95,24 +98,77 @@ export default function ArchiveChest({
           </p>
         </div>
 
-        {/* Toolbar: Search & Count */}
-        <div className="w-full flex flex-wrap items-center justify-between gap-3 mb-5 px-1">
-          <div className="relative flex-1 min-w-[220px]">
-            <input
-              type="text"
-              placeholder="ابحث في عناوين وتقارير الأرشيف..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full text-xs sm:text-sm pr-9 pl-4 py-2 rounded-xl bg-[#140e09] border border-[#7a5932]/70 text-[#f7efe1] placeholder-[#8c7457] focus:outline-none focus:ring-1 focus:ring-[#d4af37] focus:border-[#d4af37]"
-            />
-            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#a88657]" />
+        {/* Toolbar: Search & Month Filters */}
+        <div className="w-full flex flex-col gap-3 mb-5 px-1">
+          <div className="w-full flex flex-wrap items-center justify-between gap-3">
+            <div className="relative flex-1 min-w-[220px]">
+              <input
+                type="text"
+                placeholder="ابحث في عناوين وتقارير الأرشيف..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full text-xs sm:text-sm pr-9 pl-4 py-2 rounded-xl bg-[#140e09] border border-[#7a5932]/70 text-[#f7efe1] placeholder-[#8c7457] focus:outline-none focus:ring-1 focus:ring-[#d4af37] focus:border-[#d4af37]"
+              />
+              <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#a88657]" />
+            </div>
+
+            <div className="flex items-center gap-2 text-xs text-[#d8c2a3] bg-[#2d1e12]/80 px-3 py-2 rounded-xl border border-[#5a3f24]">
+              <Layers className="w-3.5 h-3.5 text-[#d4af37]" />
+              <span>
+                الأعداد المعروضة: <strong>{filteredEditions.length}</strong>
+              </span>
+            </div>
           </div>
 
-          <div className="flex items-center gap-2 text-xs text-[#d8c2a3] bg-[#2d1e12]/80 px-3 py-2 rounded-xl border border-[#5a3f24]">
-            <Layers className="w-3.5 h-3.5 text-[#d4af37]" />
-            <span>
-              إجمالي الأعداد المؤرشفة: <strong>{filteredEditions.length}</strong>
+          {/* Month Quick Tabs (Starting from Month 9 - September) */}
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
+            <span className="text-[11px] font-bold text-[#bba17f] flex-shrink-0 ml-1">
+              تصفح حسب الشهر:
             </span>
+            <button
+              type="button"
+              onClick={() => setSelectedMonth("all")}
+              className={`px-3 py-1 rounded-full text-xs font-bold transition flex-shrink-0 cursor-pointer ${
+                selectedMonth === "all"
+                  ? "bg-[#d4af37] text-black shadow-sm"
+                  : "bg-[#2d1e12] text-[#d8c2a3] hover:bg-[#3d2a1b] border border-[#6b4c2b]"
+              }`}
+            >
+              جميع الأعداد
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedMonth("2026-11")}
+              className={`px-3 py-1 rounded-full text-xs font-bold transition flex-shrink-0 cursor-pointer ${
+                selectedMonth === "2026-11"
+                  ? "bg-[#d4af37] text-black shadow-sm"
+                  : "bg-[#2d1e12] text-[#d8c2a3] hover:bg-[#3d2a1b] border border-[#6b4c2b]"
+              }`}
+            >
+              نونبر 2026 (شهر 11)
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedMonth("2026-10")}
+              className={`px-3 py-1 rounded-full text-xs font-bold transition flex-shrink-0 cursor-pointer ${
+                selectedMonth === "2026-10"
+                  ? "bg-[#d4af37] text-black shadow-sm"
+                  : "bg-[#2d1e12] text-[#d8c2a3] hover:bg-[#3d2a1b] border border-[#6b4c2b]"
+              }`}
+            >
+              أكتوبر 2026 (شهر 10)
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedMonth("2026-09")}
+              className={`px-3 py-1 rounded-full text-xs font-bold transition flex-shrink-0 cursor-pointer ${
+                selectedMonth === "2026-09"
+                  ? "bg-[#d4af37] text-black shadow-sm"
+                  : "bg-[#2d1e12] text-[#d8c2a3] hover:bg-[#3d2a1b] border border-[#6b4c2b]"
+              }`}
+            >
+              شتنبر 2026 (شهر 9 - الانطلاق) 🌟
+            </button>
           </div>
         </div>
 

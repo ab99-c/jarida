@@ -26,6 +26,7 @@ const VIEW_MODE_STORAGE_KEY = "jarida-view-mode";
 const ARTICLES_PER_NEWSPAPER_PAGE = 5;
 
 const ARCHIVE_DAILY_ARTICLES = [
+  // --- شهر 11 (نونبر 2026) ---
   {
     id: "archive-1",
     title: "تطورات الشأن الوطني: تعزيز الشراكات الاستراتيجية وإجراءات أمنية مشددة بالفنيدق",
@@ -128,23 +129,137 @@ const ARCHIVE_DAILY_ARTICLES = [
   },
   {
     id: "archive-11",
-    title: "القمة المناخية: إشادة دولية بالمبادرات المغربية في الاقتصاد الأخضر",
-    summary: "ممثلو الوفود الدولية يؤكدون ريادة المغرب الإقليمية في إنتاج الهيدروجين الأخضر والتكيف مع التغيرات المناخية.",
-    content: "عرض المشاريع النموذجية للمملكة في تدوير المياه وتحلية البحر واستعمال الطاقات النظيفة في القطاع الصناعي.",
-    source: "وكالة الأفق",
-    category: "بيئة واقتصاد",
-    imageUrl: "https://images.unsplash.com/photo-1497435334941-8c899ee9e8e9?auto=format&fit=crop&w=700&q=80",
-    publishedAt: new Date("2026-11-11T14:15:00Z"),
+    title: "ذكرى المسيرة الخضراء المظفرة: مشاريع تنموية كبرى تكرس النهضة الشاملة بالأقاليم الجنوبية",
+    summary: "المملكة المغربية تخلد الذكرى الخمسين للمسيرة الخضراء المظفرة بافتتاح مشاريع استراتيجية كبرى في مدن العيون والداخلة وبوجدور.",
+    content: "تتواصل دينامية البناء والتحديث في الصحراء المغربية بمشاريع الميناء الأطلسي بالداخلة وشبكات الربط الطرقي السريع، تجسيداً للرؤية الملكية السامية.",
+    source: "جريدة الأفق",
+    category: "شؤون وطنية",
+    imageUrl: "https://images.unsplash.com/photo-1539650116574-8efeb43e2750?auto=format&fit=crop&w=700&q=80",
+    publishedAt: new Date("2026-11-06T10:00:00Z"),
   },
   {
     id: "archive-12",
-    title: "المعرض الدولي للكتاب والتراث: إقبال قياسي واحتفاء بالأدب المغربي",
-    summary: "اختتام فعاليات المعرض الثقافي بمشاركة أكثر من 50 دولة وندوات فكرية تسلط الضوء على عمق الهوية والتراث الوطني.",
-    content: "تتويج مؤلفين مغاربة بجوائز الاستحقاق وندوات حوارية مفتوحة حول الكتاب والإبداع في العصر الرقمي.",
-    source: "هيئة التحرير",
-    category: "ثقافة وفنون",
-    imageUrl: "https://images.unsplash.com/photo-1457369804613-52c61a468e7d?auto=format&fit=crop&w=700&q=80",
-    publishedAt: new Date("2026-11-09T10:00:00Z"),
+    title: "الاستعدادات للمسيرة الخضراء: تدشين مشاريع هيكلية ومستشفيات جامعية بالأقاليم الجنوبية",
+    summary: "إعطاء الانطلاقة لمشاريع صحية وتعليمية ومناطق صناعية جديدة تواكب الدينامية الاستثمارية الدولية بالصحراء المغربية.",
+    content: "مشاريع القرب تعزز التنمية البشرية والعدالة المجالية، وتكرس مكانة الأقاليم الجنوبية كبوابة استراتيجية للمملكة نحو العمق الإفريقي.",
+    source: "وكالة الأفق",
+    category: "شؤون وطنية",
+    imageUrl: "https://images.unsplash.com/photo-1578575437130-527eed3abbec?auto=format&fit=crop&w=700&q=80",
+    publishedAt: new Date("2026-11-02T11:00:00Z"),
+  },
+
+  // --- شهر 10 (أكتوبر 2026) ---
+  {
+    id: "archive-13",
+    title: "المعرض الدولي للفلاحة والتكنولوجيا الزراعية يحتفي بالابتكار المستدام في مواجهة الجفاف",
+    summary: "مشاركة أزيد من 70 دولة في المعرض الفلاحي لتقديم حلول السقي بالتنقيط الذكي واستعمال الذكاء الاصطناعي في إدارة المحاصيل الزراعية.",
+    content: "شهد المعرض إبرام شراكات استثمارية هامة لدعم الفلاحين الصغار وتشجيع التحول نحو زراعات بديلة متكيفة مع التغيرات المناخية بالمغرب.",
+    source: "جريدة الأفق",
+    category: "اقتصاد",
+    imageUrl: "https://images.unsplash.com/photo-1625246333195-78d9c38ad449?auto=format&fit=crop&w=700&q=80",
+    publishedAt: new Date("2026-10-27T09:30:00Z"),
+  },
+  {
+    id: "archive-14",
+    title: "تدشين الشطر الأول من محطة تحلية مياه البحر الكبرى بالدار البيضاء",
+    summary: "خطوة عملاقة نحو تأمين الأمن المائي لجهة الدار البيضاء-سطات بطاقة إنتاجية تناهز 300 مليون متر مكعب سنوياً باستخدام الطاقة النظيفة.",
+    content: "تعد هذه المحطة الأكبر من نوعها على الصعيد الإفريقي، وتندرج ضمن البرنامج الوطني للتزود بالماء الشروب ومياه السقي 2020-2027.",
+    source: "وكالة الأفق",
+    category: "بيئة وتنمية",
+    imageUrl: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=700&q=80",
+    publishedAt: new Date("2026-10-21T14:00:00Z"),
+  },
+  {
+    id: "archive-15",
+    title: "المغرب يرسخ ريادته الإقليمية في صناعة بطاريات السيارات الكهربائية بتوقيع اتفاقيات صناعية كبرى",
+    summary: "مجموعات صناعية دولية تضخ استثمارات بمليارات الدراهم في المنظومة الصناعية بطنجة والقنيطرة لإنتاج الكاثود وبطاريات الجيل الجديد.",
+    content: "تتيح هذه المنشآت تعزيز الاندماج المحلي لصناعة السيارات المغربية ومضاعفة الصادرات نحو أوروبا وأمريكا الشمالية.",
+    source: "الأفق الاقتصادي",
+    category: "اقتصاد",
+    imageUrl: "https://images.unsplash.com/photo-1558441719-8b489c63f749?auto=format&fit=crop&w=700&q=80",
+    publishedAt: new Date("2026-10-15T11:45:00Z"),
+  },
+  {
+    id: "archive-16",
+    title: "مونديال 2030: تقدم قياسي في أشغال الملعب الكبير للدار البيضاء وتوسعة شبكة الـ LGV",
+    summary: "لجنة كأس العالم المشتركة تشيد بجدية ووتيرة إنجاز الملاعب المغربية في الدار البيضاء والرباط وطنجة وفاس ومراكش وأكادير.",
+    content: "أشغال تهيئة الطرق المحيطة والمحطات السككية الجديدة تسير وفق الجدولة الزمنية المعتمدة لتقديم نسخة استثنائية لكأس العالم 2030.",
+    source: "الأفق الرياضي",
+    category: "رياضة",
+    imageUrl: "https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&w=700&q=80",
+    publishedAt: new Date("2026-10-09T16:15:00Z"),
+  },
+  {
+    id: "archive-17",
+    title: "افتتاح الدورة التشريعية البرلمانية الخريفية: رهانات تنزيل الحماية الاجتماعية وقانون المالية الجديد",
+    summary: "البرلمان المغربي يفتتح سنته التشريعية الجديدة بالتركيز على إصلاح المنظومة الصحية ودعم المقاولات الصغرى والتشغيل في صفوف الشباب.",
+    content: "دعوات برلمانية لمواصلة التعبئة الوطنية وتكريس العدالة الاجتماعية والمجالية في جميع جهات المملكة الـ 12.",
+    source: "جريدة الأفق",
+    category: "شؤون وطنية",
+    imageUrl: "https://images.unsplash.com/photo-1541872703-74c5e44368f9?auto=format&fit=crop&w=700&q=80",
+    publishedAt: new Date("2026-10-04T10:30:00Z"),
+  },
+
+  // --- شهر 9 (شتنبر 2026 - انطلاق جريدة الأفق) ---
+  {
+    id: "archive-18",
+    title: "الجمعية العامة للأمم المتحدة: دعم دولي واسع لمغربية الصحراء ولمبادرة الحكم الذاتي",
+    summary: "خطابات الوفود الدولية بنيويورك تؤكد نجاعة المبادرة المغربية للحكم الذاتي كأساس وحيد ودائم للحل السياسي العادل في الصحراء.",
+    content: "انتصار دبلوماسي جديد للمملكة يكرس سيادتها ويفتح آفاقاً جديدة للاستقرار والتعاون في شمال إفريقيا والساحل.",
+    source: "وكالة الأفق",
+    category: "دبلوماسية",
+    imageUrl: "https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?auto=format&fit=crop&w=700&q=80",
+    publishedAt: new Date("2026-09-28T12:00:00Z"),
+  },
+  {
+    id: "archive-19",
+    title: "قمة الهيدروجين الأخضر بالرباط: توقيع عقود استثمارية لإنتاج وتصدير الأمونيا الخضراء",
+    summary: "المغرب يرسخ تموضعه كمركز عالمي لإنتاج الوقود النظيف بفضل العرض المتميز والإمكانيات الطبيعية الهائلة في الطاقة الشمسية والريحية.",
+    content: "تخصيص أراضٍ استثمارية واعدة بالأقاليم الجنوبية وجنوب المملكة لاستقبال استثمارات تحالفات طاقية كبرى.",
+    source: "الأفق الاقتصادي",
+    category: "بيئة وتنمية",
+    imageUrl: "https://images.unsplash.com/photo-1509391366360-2e959784a276?auto=format&fit=crop&w=700&q=80",
+    publishedAt: new Date("2026-09-23T15:20:00Z"),
+  },
+  {
+    id: "archive-20",
+    title: "انتعاش قياسي في صادرات الصناعات الغذائية ومنتوجات الصيد البحري المغربية",
+    summary: "المكتب الوطني للسلامة الصحية والجمارك يسجلان نمواً برقمين في الصادرات الفلاحية والبحرية مع فتح وجهات جديدة في إفريقيا وأمريكا اللاتينية.",
+    content: "جودة المنتوج الوطني والشهادات البيئية المتقدمة تدعم ثقة المستهلك الدولي في المنتوجات الحاملة لعلامة صنع في المغرب.",
+    source: "جريدة الأفق",
+    category: "اقتصاد",
+    imageUrl: "https://images.unsplash.com/photo-1498837167922-ddd27525d352?auto=format&fit=crop&w=700&q=80",
+    publishedAt: new Date("2026-09-17T09:00:00Z"),
+  },
+  {
+    id: "archive-21",
+    title: "المبادرة الملكية الأطلسية: اجتماع وزاري بالرباط يفعّل لجان التنسيق لربط دول الساحل بالمحيط",
+    summary: "وزراء خارجية دول الساحل الإفريقي يجددون امتنانهم للمبادرة الملكية الاستراتيجية الرامية لفك العزلة وتوفير البنيات التحتية اللوجستية.",
+    content: "إعداد خطط عمل مشتركة لربط شبكات الطرق والموانئ المغربية بتشاد والنيجر ومالي وبوركينا فاسو لتعزيز التنمية الاقتصادية المشتركة.",
+    source: "وكالة الأفق",
+    category: "دبلوماسية",
+    imageUrl: "https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?auto=format&fit=crop&w=700&q=80",
+    publishedAt: new Date("2026-09-11T13:40:00Z"),
+  },
+  {
+    id: "archive-22",
+    title: "الدخول المدرسي والجامعي 2026-2027: تعميم مدارس الريادة وتحديث منظومة التكوين المهني",
+    summary: "أزيد من 8 ملايين تلميذ يلتحقون بحجرات الدراسة وسط تدابير جديدة لتحسين التعلمات ومحاربة الهدر المدرسي وتطوير اللغات الأجنبية.",
+    content: "توسيع شبكة مدارس الريادة لتشمل آلاف المؤسسات التعليمية الابتدائية والإعدادية بجميع أقاليم المملكة بنجاح ملحوظ.",
+    source: "جريدة الأفق",
+    category: "شؤون وطنية",
+    imageUrl: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=700&q=80",
+    publishedAt: new Date("2026-09-06T08:30:00Z"),
+  },
+  {
+    id: "archive-23",
+    title: "افتتاح مشروع الربط المائي الاستراتيجي وتدشين جريدة الأفق الرقمية الذكية",
+    summary: "انطلاق العمل بنظام تحويل فائض المياه بين الأحواض لضمان الأمن المائي للمدن الكبرى، وتدشين منصة 'جريدة الأفق' كصحيفة رقمية تفاعلية شاملة.",
+    content: "حدث تاريخي مزدوج يجمع بين صمود البنية التحتية المائية الوطنية وانطلاق مشروع صحفي ذكي يقدم الأخبار اليومية بالذكاء الاصطناعي والصوت التفاعلي.",
+    source: "جريدة الأفق",
+    category: "الواجهة الرئيسية",
+    imageUrl: "https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&w=700&q=80",
+    publishedAt: new Date("2026-09-01T08:00:00Z"),
   },
 ];
 
@@ -231,6 +346,8 @@ function ArticleComments({ article }: { article: any }) {
   const [content, setContent] = useState("");
   const [copied, setCopied] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isShareTrayOpen, setIsShareTrayOpen] = useState(false);
 
   const articleId = article.id || 1;
   const isPersistedArticle = typeof articleId === "number";
@@ -269,6 +386,22 @@ function ArticleComments({ article }: { article: any }) {
   const shareUrl = typeof window !== "undefined" ? `${window.location.origin}/#article-${articleId}` : "";
   const shareTitle = article.title || "جريدة الأفق";
 
+  const handleNativeShare = async () => {
+    if (typeof navigator !== "undefined" && navigator.share) {
+      try {
+        await navigator.share({
+          title: shareTitle,
+          text: `اقرأ في جريدة الأفق: "${shareTitle}"`,
+          url: shareUrl,
+        });
+        return;
+      } catch {
+        // User cancelled or unsupported, fallback to tray
+      }
+    }
+    setIsShareTrayOpen((prev) => !prev);
+  };
+
   const handleShare = (platform: string) => {
     const text = `اقرأ هذا المقال: "${shareTitle}" في جريدة الأفق`;
     if (platform === "whatsapp") {
@@ -288,105 +421,193 @@ function ArticleComments({ article }: { article: any }) {
   };
 
   return (
-    <div className="mt-4 pt-4 border-t border-[#d3c49b]/60 text-right font-sans">
-      {/* Social Share Buttons */}
-      <div className="flex items-center gap-2 mb-4 text-xs flex-wrap">
-        <span className="text-[#665533] font-bold flex items-center gap-1">
-          <Share2 className="w-3.5 h-3.5" /> مشاركة:
-        </span>
-        <button
-          type="button"
-          onClick={() => handleShare("whatsapp")}
-          className="px-2.5 py-1.5 bg-[#25D366] text-white rounded hover:opacity-90 transition font-medium cursor-pointer"
-        >
-          واتساب
-        </button>
-        <button
-          type="button"
-          onClick={() => handleShare("facebook")}
-          className="px-2.5 py-1.5 bg-[#1877F2] text-white rounded hover:opacity-90 transition font-medium cursor-pointer"
-        >
-          فيسبوك
-        </button>
-        <button
-          type="button"
-          onClick={() => handleShare("twitter")}
-          className="px-2.5 py-1.5 bg-black text-white rounded hover:opacity-90 transition font-medium cursor-pointer"
-        >
-          X (تويتر)
-        </button>
-        <button
-          type="button"
-          onClick={() => handleShare("copy")}
-          className="px-2.5 py-1.5 bg-[#e0ceb1] text-black rounded hover:bg-[#d3c49b] transition font-medium flex items-center gap-1 cursor-pointer"
-        >
-          {copied ? <Check className="w-3 h-3 text-green-700" /> : null}
-          <span>{copied ? "تم النسخ" : "نسخ الرابط"}</span>
-        </button>
-      </div>
-
-      {/* Comments Section */}
-      <div className="bg-[#f0e3cc]/50 p-3 rounded-lg border border-[#d3c49b]">
-        <h4 className="text-xs font-bold text-[#554a32] mb-2 flex items-center gap-1">
-          <MessageSquare className="w-3.5 h-3.5" /> تعليقات القراء ({comments.length})
-        </h4>
-
-        {/* Comment Form */}
-        <form onSubmit={handleCommentSubmit} className="space-y-2 mb-3">
-          <input
-            type="text"
-            placeholder="اسمك الكريم..."
-            value={authorName}
-            onChange={(e) => setAuthorName(e.target.value)}
-            className="w-full text-xs px-2.5 py-1.5 rounded border border-[#c9b78e] bg-white text-black focus:outline-none focus:ring-1 focus:ring-[#8c7348]"
-            required
-            disabled={!isPersistedArticle}
-          />
-          <textarea
-            placeholder="اكتب تعليقك هنا..."
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            rows={2}
-            disabled={!isPersistedArticle}
-            className="w-full text-xs px-2.5 py-1.5 rounded border border-[#c9b78e] bg-white text-black focus:outline-none focus:ring-1 focus:ring-[#8c7348] resize-none"
-            required
-          />
-          {errorMsg && (
-            <p className="text-[11px] text-red-600 bg-red-50 p-1 rounded border border-red-200">{errorMsg}</p>
-          )}
+    <div className="relative mt-3 pt-2 border-t border-[#d3c49b]/70 flex items-center justify-between text-xs font-sans">
+      <div className="flex items-center gap-2">
+        {/* Share Icon Button */}
+        <div className="relative">
           <button
-            type="submit"
-            disabled={addCommentMutation.isPending}
-            className="w-full bg-[#59482b] hover:bg-[#42341d] text-white text-xs py-1.5 rounded transition font-bold flex items-center justify-center gap-1 cursor-pointer"
+            type="button"
+            onClick={handleNativeShare}
+            title="مشاركة المقال"
+            aria-label="مشاركة المقال"
+            className="w-8 h-8 flex items-center justify-center rounded-full bg-[#f4ebdc] text-[#59482b] hover:bg-[#e7d9c1] hover:text-black border border-[#c9b78e] shadow-xs transition active:scale-95 cursor-pointer"
           >
-            <Send className="w-3 h-3" />
-            <span>{addCommentMutation.isPending ? "جاري الإرسال..." : "نشر التعليق"}</span>
+            <Share2 className="w-4 h-4" />
           </button>
-        </form>
 
-        {/* Comments List */}
-        <div className="space-y-2 max-h-36 overflow-y-auto pr-1">
-          {isLoadingComments ? (
-            <p className="text-[11px] text-[#776644] text-center italic py-1">جاري تحميل التعليقات...</p>
-          ) : isErrorComments ? (
-            <p className="text-[11px] text-red-600 text-center py-1">تعذر تحميل التعليقات.</p>
-          ) : comments.length === 0 ? (
-            <p className="text-[11px] text-[#776644] text-center italic py-1">لا توجد تعليقات بعد. كن أول المعلقين!</p>
-          ) : (
-            comments.map((comment: any) => (
-              <div key={comment.id} className="bg-white/80 p-2 rounded border border-[#e2d5b3] text-xs">
-                <div className="flex justify-between items-center mb-1">
-                  <span className="font-bold text-black">{comment.authorName}</span>
-                  <span className="text-[10px] text-[#887755]">
-                    {new Date(comment.createdAt).toLocaleDateString("ar-MA")}
-                  </span>
-                </div>
-                <p className="text-[#333] leading-normal">{comment.content}</p>
-              </div>
-            ))
+          {/* Fallback Share Tray */}
+          {isShareTrayOpen && (
+            <div className="absolute right-0 bottom-10 z-50 bg-[#fffdf9] p-2 rounded-lg border border-[#c9b78e] shadow-xl flex items-center gap-1.5 whitespace-nowrap animate-in fade-in zoom-in-95 duration-150">
+              <button
+                type="button"
+                onClick={() => { handleShare("whatsapp"); setIsShareTrayOpen(false); }}
+                className="px-2 py-1 bg-[#25D366] text-white rounded text-[11px] font-bold hover:opacity-90 transition cursor-pointer"
+              >
+                واتساب
+              </button>
+              <button
+                type="button"
+                onClick={() => { handleShare("facebook"); setIsShareTrayOpen(false); }}
+                className="px-2 py-1 bg-[#1877F2] text-white rounded text-[11px] font-bold hover:opacity-90 transition cursor-pointer"
+              >
+                فيسبوك
+              </button>
+              <button
+                type="button"
+                onClick={() => { handleShare("twitter"); setIsShareTrayOpen(false); }}
+                className="px-2 py-1 bg-black text-white rounded text-[11px] font-bold hover:opacity-90 transition cursor-pointer"
+              >
+                X
+              </button>
+              <button
+                type="button"
+                onClick={() => handleShare("copy")}
+                className="px-2 py-1 bg-[#ecdcc5] text-[#42341d] rounded text-[11px] font-bold hover:bg-[#dfcca9] transition flex items-center gap-1 cursor-pointer"
+              >
+                {copied ? <Check className="w-3 h-3 text-green-700" /> : null}
+                <span>{copied ? "تم النسخ" : "نسخ"}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsShareTrayOpen(false)}
+                className="p-1 text-[#8c7853] hover:text-black rounded cursor-pointer"
+                aria-label="إغلاق قائمة المشاركة"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
           )}
         </div>
+
+        {/* Comment Icon Button with Badge */}
+        <button
+          type="button"
+          onClick={() => setIsModalOpen(true)}
+          title="عرض وكتابة التعليقات"
+          aria-label="التعليقات"
+          className="h-8 px-2.5 flex items-center gap-1.5 rounded-full bg-[#f4ebdc] text-[#59482b] hover:bg-[#e7d9c1] hover:text-black border border-[#c9b78e] shadow-xs transition active:scale-95 cursor-pointer font-bold text-xs"
+        >
+          <MessageSquare className="w-4 h-4" />
+          <span>التعليقات</span>
+          {comments.length > 0 && (
+            <span className="min-w-[18px] h-[18px] px-1 bg-[#8c2a1e] text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+              {comments.length}
+            </span>
+          )}
+        </button>
       </div>
+
+      <div className="text-[11px] text-[#7a6b52] italic font-serif">
+        جريدة الأفق • التفاعل الحر
+      </div>
+
+      {/* Dedicated Clean Comments Modal */}
+      {isModalOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200"
+          onClick={() => setIsModalOpen(false)}
+        >
+          <div
+            className="bg-[#faf6ee] text-[#2c2416] w-full max-w-lg rounded-xl shadow-2xl border-2 border-[#bfa87a] overflow-hidden flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+            dir="rtl"
+          >
+            {/* Modal Header */}
+            <div className="bg-[#42341d] text-[#f4ebdc] px-4 py-3 flex items-center justify-between border-b border-[#bfa87a]">
+              <div className="flex items-center gap-2">
+                <MessageSquare className="w-5 h-5 text-[#dfcca9]" />
+                <h3 className="font-bold text-sm sm:text-base font-serif">تعليقات القراء ({comments.length})</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsModalOpen(false)}
+                className="w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center text-white transition cursor-pointer"
+                aria-label="إغلاق"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-4 overflow-y-auto space-y-4 flex-1 font-sans text-right">
+              <div className="bg-[#f0e4cf] p-2.5 rounded-lg border border-[#d6c5a0] text-xs leading-relaxed text-[#4a3b22]">
+                <span className="font-bold">المقال:</span> {article.title}
+              </div>
+
+              {/* Comment Form */}
+              <form onSubmit={handleCommentSubmit} className="space-y-2 bg-[#fffdfa] p-3 rounded-lg border border-[#d6c5a0] shadow-xs">
+                <h4 className="text-xs font-bold text-[#42341d]">أضف تعليقك أو رأيك:</h4>
+                <input
+                  type="text"
+                  placeholder="اسمك الكريم..."
+                  value={authorName}
+                  onChange={(e) => setAuthorName(e.target.value)}
+                  className="w-full text-xs px-3 py-2 rounded border border-[#c9b78e] bg-white text-black focus:outline-none focus:ring-1 focus:ring-[#8c7348]"
+                  required
+                  disabled={!isPersistedArticle}
+                />
+                <textarea
+                  placeholder="شاركنا رأيك في هذا الخبر..."
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  rows={3}
+                  disabled={!isPersistedArticle}
+                  className="w-full text-xs px-3 py-2 rounded border border-[#c9b78e] bg-white text-black focus:outline-none focus:ring-1 focus:ring-[#8c7348] resize-none"
+                  required
+                />
+                {errorMsg && (
+                  <p className="text-[11px] text-red-600 bg-red-50 p-2 rounded border border-red-200">{errorMsg}</p>
+                )}
+                <button
+                  type="submit"
+                  disabled={addCommentMutation.isPending}
+                  className="w-full bg-[#59482b] hover:bg-[#42341d] text-white text-xs py-2 rounded transition font-bold flex items-center justify-center gap-1.5 cursor-pointer shadow-xs active:scale-[0.99]"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                  <span>{addCommentMutation.isPending ? "جاري الإرسال..." : "إرسال التعليق"}</span>
+                </button>
+              </form>
+
+              {/* Comments List */}
+              <div className="space-y-2.5">
+                <h4 className="text-xs font-bold text-[#554a32] border-b border-[#e0d3b6] pb-1">
+                  التعليقات السابقة ({comments.length})
+                </h4>
+                {isLoadingComments ? (
+                  <p className="text-xs text-[#776644] text-center italic py-4">جاري تحميل التعليقات...</p>
+                ) : isErrorComments ? (
+                  <p className="text-xs text-red-600 text-center py-4">تعذر تحميل التعليقات.</p>
+                ) : comments.length === 0 ? (
+                  <div className="text-center py-6 text-[#8a795d]">
+                    <MessageSquare className="w-8 h-8 mx-auto mb-1 opacity-40" />
+                    <p className="text-xs">لا توجد تعليقات بعد. كن أول من يشارك برأيه!</p>
+                  </div>
+                ) : (
+                  comments.map((comment: any) => (
+                    <div key={comment.id} className="bg-white p-3 rounded-lg border border-[#e2d5b3] text-xs shadow-xs">
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="font-bold text-[#2c2416] text-[13px]">{comment.authorName}</span>
+                        <span className="text-[10px] text-[#887755]">
+                          {new Date(comment.createdAt).toLocaleDateString("ar-MA", {
+                            year: "numeric",
+                            month: "short",
+                            day: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit"
+                          })}
+                        </span>
+                      </div>
+                      <p className="text-[#3c3426] leading-relaxed whitespace-pre-wrap">{comment.content}</p>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -732,7 +953,7 @@ export default function Home() {
       if (existing) existing.count += n;
       else seen.set(page.dayKey, { key: page.dayKey, pageIndex, count: n, lead: page.leadArticle });
     });
-    return Array.from(seen.values()).slice(0, 16);
+    return Array.from(seen.values());
   })();
 
   const openEditionFromRack = (pageIndex: number, key: string) => {
@@ -1229,7 +1450,7 @@ export default function Home() {
             <div className="jarida-rack">
               <div className="jarida-rack-pole" aria-hidden="true" />
               <div className="jarida-rack-tiers">
-                {dailyEditions.map((ed, edIndex) => (
+                {dailyEditions.slice(0, 16).map((ed, edIndex) => (
                   <button
                     key={ed.key}
                     type="button"
