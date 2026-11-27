@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { trpc } from "@/lib/trpc";
 import { formatArabicEditionDate } from "@shared/date";
-import { Volume2, VolumeX, RefreshCw, Share2, MessageSquare, Send, Check, FileText, BookOpen, Library, X, Headphones, Smartphone, Scale, Search, Archive } from "lucide-react";
+import { Volume2, VolumeX, RefreshCw, Share2, MessageSquare, Send, Check, FileText, BookOpen, Library, X, Headphones, Smartphone, Scale, Search, Archive, ChevronDown, ChevronUp } from "lucide-react";
 import { isInstalledAppOrApk } from "@/lib/apiBase";
 import VoiceReader from "../components/VoiceReader";
 import ArchiveChest from "../components/ArchiveChest";
@@ -831,6 +831,9 @@ export default function Home() {
   const touchStartY = useRef<number | null>(null);
   const touchStartedInteractive = useRef(false);
   const activePageScrollRef = useRef<HTMLDivElement | null>(null);
+  const lastTouchTapRef = useRef<{ time: number; x: number; y: number }>({ time: 0, x: 0, y: 0 });
+  const isDoubleTapRef = useRef(false);
+  const tapTimeoutRef = useRef<number | null>(null);
 
   const {
     data: dailyData,
@@ -972,6 +975,8 @@ export default function Home() {
   const isAndroidTV = deviceKind === "android-tv";
   const isAndroid = deviceKind === "android-phone" || deviceKind === "android-tv";
   const isNativeApk = useMemo(() => isInstalledAppOrApk(), []);
+  // البار الفوقية: في الـ APK كتكون مخفية حتى يضغط القارئ مرتين بأصبعه (Double Tap)
+  const [isTopBarVisible, setIsTopBarVisible] = useState(() => !isInstalledAppOrApk());
 
   const ARTICLES_PER_SPREAD = 2;
   const articlesPerView = 1;
@@ -1166,11 +1171,35 @@ export default function Home() {
   const handleTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
     const target = event.target as HTMLElement | null;
     // الأزرار (بما فيهم زوايا الورقة) عندها المعالجة ديالها، باش ما يوقعش تقليب مزدوج
-    touchStartedInteractive.current = Boolean(
-      target?.closest("button, a, input, textarea, select, label"),
+    const isInteractive = Boolean(
+      target?.closest("button, a, input, textarea, select, label, [role='dialog'], .np-article-meta")
     );
-    touchStartX.current = event.touches[0]?.clientX ?? null;
-    touchStartY.current = event.touches[0]?.clientY ?? null;
+    touchStartedInteractive.current = isInteractive;
+    const touch = event.touches[0];
+    touchStartX.current = touch?.clientX ?? null;
+    touchStartY.current = touch?.clientY ?? null;
+
+    // رصد الضغط مرتين بأصبع اليد (Double Tap) لإظهار/إخفاء البار الفوقية
+    if (!isInteractive && touch && event.touches.length === 1 && touchStartX.current !== null && touchStartY.current !== null) {
+      const now = Date.now();
+      const timeDiff = now - lastTouchTapRef.current.time;
+      const dist = Math.hypot(
+        touchStartX.current - lastTouchTapRef.current.x,
+        touchStartY.current - lastTouchTapRef.current.y
+      );
+
+      if (timeDiff > 40 && timeDiff < 360 && dist < 35) {
+        if (tapTimeoutRef.current) {
+          clearTimeout(tapTimeoutRef.current);
+          tapTimeoutRef.current = null;
+        }
+        isDoubleTapRef.current = true;
+        setIsTopBarVisible((prev) => !prev);
+        lastTouchTapRef.current = { time: 0, x: 0, y: 0 };
+        return;
+      }
+      lastTouchTapRef.current = { time: now, x: touchStartX.current, y: touchStartY.current };
+    }
   };
 
   const handleTouchMove = (event: React.TouchEvent<HTMLDivElement>) => {
@@ -1179,6 +1208,10 @@ export default function Home() {
     if (touchStartedInteractive.current || startX === null || startY === null) return;
     const x = event.touches[0]?.clientX ?? startX;
     const y = event.touches[0]?.clientY ?? startY;
+
+    if (Math.hypot(x - startX, y - startY) > 10) {
+      lastTouchTapRef.current = { time: 0, x: 0, y: 0 };
+    }
 
     if (dragRef.current) {
       if (dragRef.current.source === "touch") updateDrag(x, y);
@@ -1277,9 +1310,30 @@ export default function Home() {
       data-jarida-device={deviceKind}
       className={`fb-wrapper min-h-screen text-[#2b2b2b] select-none relative overflow-x-hidden ${isSinglePage ? "jarida-single-page-mode" : ""} ${isAndroidTV ? "jarida-tv-mode" : ""}`}
       dir="rtl"
+      onDoubleClick={(event) => {
+        const target = event.target as HTMLElement;
+        if (target.closest("button, a, input, textarea, select, label, [role='dialog']")) return;
+        setIsTopBarVisible((prev) => !prev);
+      }}
     >
+      {/* Floating Pill when top bar is hidden (especially in APK for full immersion) */}
+      {!isTopBarVisible && (
+        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-30 animate-in fade-in slide-in-from-top-2 duration-200">
+          <button
+            type="button"
+            onClick={() => setIsTopBarVisible(true)}
+            className="opacity-80 hover:opacity-100 bg-[#2d1e12]/90 text-[#ecdcc5] border border-[#a8824f]/70 px-3 py-1 rounded-full text-[11px] font-sans shadow-lg backdrop-blur-md flex items-center gap-1.5 transition active:scale-95 cursor-pointer"
+            title="انقر مرتين بأصبعك على الشاشة أو اضغط هنا لإظهار شريط الأدوات"
+          >
+            <ChevronDown className="w-3.5 h-3.5 text-[#d4af37]" />
+            <span>شريط الأدوات (اضغط مرتين 👆)</span>
+          </button>
+        </div>
+      )}
+
       {/* Unified Compact Navigation & Category Bar */}
-      <header className="jarida-unified-navbar z-20 w-full max-w-5xl mx-auto px-2.5 py-1.5 bg-[#fbf6ec]/95 backdrop-blur-md rounded-xl shadow-xs border border-[#d8c8a5] flex flex-col gap-1.5 mb-1 flex-shrink-0">
+      {isTopBarVisible && (
+        <header className="jarida-unified-navbar z-20 w-full max-w-5xl mx-auto px-2.5 py-1.5 bg-[#fbf6ec]/95 backdrop-blur-md rounded-xl shadow-xs border border-[#d8c8a5] flex flex-col gap-1.5 mb-1 flex-shrink-0 animate-in fade-in slide-in-from-top-3 duration-200">
         {/* Row 1: Brand & Key Interactive Controls */}
         <div className="flex items-center justify-between gap-2 flex-wrap">
           {/* Logo / Brand Title */}
@@ -1381,6 +1435,17 @@ export default function Home() {
             >
               <Scale className="w-3.5 h-3.5 text-[#8f6d33]" />
             </button>
+
+            {/* Hide Top Bar Button */}
+            <button
+              type="button"
+              onClick={() => setIsTopBarVisible(false)}
+              className="jarida-focusable flex items-center gap-1 text-[11px] sm:text-xs text-[#705536] hover:text-black transition cursor-pointer px-2 py-1 rounded hover:bg-[#ebdcc4] border border-transparent hover:border-[#cfbd97]"
+              title="إخفاء الشريط الفوقي (يمكن إظهاره بالضغط مرتين بأصبعك)"
+            >
+              <ChevronUp className="w-3.5 h-3.5" />
+              <span className="hidden xs:inline">إخفاء ⌃</span>
+            </button>
           </div>
         </div>
 
@@ -1430,6 +1495,7 @@ export default function Home() {
           </div>
         </div>
       </header>
+      )}
 
       {isRackOpen && (
         <div
@@ -1514,10 +1580,33 @@ export default function Home() {
           dir="rtl"
           onClick={(event) => {
             const target = event.target as HTMLElement;
-            if (target.closest("button, a, input, textarea")) return;
+            if (target.closest("button, a, input, textarea, select, label, [role='dialog']")) return;
+            if (isDoubleTapRef.current) {
+              isDoubleTapRef.current = false;
+              return;
+            }
             const bounds = event.currentTarget.getBoundingClientRect();
-            // النقر على جهة اليسار يرفع الورقة من تحت اليسار نحو اليمين (التالي)، والنقر على جهة اليمين يرجع الورقة السابقة
-            requestPageChange(event.clientX - bounds.left < bounds.width / 2 ? 1 : -1);
+            const step = event.clientX - bounds.left < bounds.width / 2 ? 1 : -1;
+
+            if (tapTimeoutRef.current) {
+              clearTimeout(tapTimeoutRef.current);
+              tapTimeoutRef.current = null;
+            }
+            // مهلة خفيفة لتفادي التقليب عند الضغط المزدوج بالأصبع
+            tapTimeoutRef.current = window.setTimeout(() => {
+              requestPageChange(step);
+              tapTimeoutRef.current = null;
+            }, 230);
+          }}
+          onDoubleClick={(event) => {
+            const target = event.target as HTMLElement;
+            if (target.closest("button, a, input, textarea, select, label, [role='dialog']")) return;
+            if (tapTimeoutRef.current) {
+              clearTimeout(tapTimeoutRef.current);
+              tapTimeoutRef.current = null;
+            }
+            isDoubleTapRef.current = true;
+            setIsTopBarVisible((prev) => !prev);
           }}
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
